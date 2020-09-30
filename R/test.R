@@ -69,15 +69,15 @@ test_it = function()
 
   items = tibble(item_id=sprintf('i%03i',1:60),item_score=sample(1:4,60,replace=T),beta=rnorm(60))
 
-  theta = rnorm(10000)
+  theta = rnorm(100000)
 
   dat = r_score(items)(theta)
   dat[dat>1]=1L
 
-  dat[1:5000,1:20]=NA_integer_
-  dat[5001:10000,41:60]=NA_integer_
+  dat[1:50000,1:20]=NA_integer_
+  dat[50001:100000,41:60]=NA_integer_
 
-  test = est(dat)
+  system.time({test = est(dat)})
   plot(test$start$a,items$item_score)
   plot(test$start$beta,items$beta)
   plot(test$start$theta,theta)

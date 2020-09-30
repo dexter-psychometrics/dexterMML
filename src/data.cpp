@@ -206,7 +206,7 @@ Rcpp::List start_lr(const arma::vec& theta,
 
 			h.at(0,1) = h.at(1,0);
 			
-			vec delta = h.i() * g;
+			vec delta = solve(h,g);
 			
 			a += delta.at(0,0);
 			b += delta.at(1,0);

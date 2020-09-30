@@ -9,10 +9,6 @@ prox_dich <- function(isum, psum, inp, pni, icnp, pcni, ip, pi, max_iter = 20L, 
     .Call(`_dexterMML_prox_dich`, isum, psum, inp, pni, icnp, pcni, ip, pi, max_iter, min_change)
 }
 
-start_2pl <- function(ng, group, theta, ip, ix, inp, icnp) {
-    .Call(`_dexterMML_start_2pl`, ng, group, theta, ip, ix, inp, icnp)
-}
-
 start_lr <- function(theta, ip, ix, inp, icnp, ibeta) {
     .Call(`_dexterMML_start_lr`, theta, ip, ix, inp, icnp, ibeta)
 }
