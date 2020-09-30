@@ -154,3 +154,74 @@ Rcpp::List prox_dich(const arma::ivec& isum, const arma::ivec& psum,
 	return Rcpp::List::create(
 		Named("theta") = theta, Named("beta") = beta);
 }
+
+
+// weights misschien nog doen
+// dichotoom logistische regressie voor startwaardes 2PL
+// [[Rcpp::export]]
+Rcpp::List start_lr(const arma::vec& theta, 
+					const arma::ivec& ip, const arma::ivec& ix,
+					const arma::ivec& inp, const arma::ivec& icnp,
+					const arma::vec& ibeta)
+{
+	
+	const int nit = ibeta.n_elem, np = theta.n_elem;
+
+	
+	vec beta(ibeta.memptr(),nit);
+	vec alpha(nit);
+	
+	const int max_iter = 20;
+	const double convergence = 1e-6;
+
+#pragma omp parallel for
+	for(int i=0; i<nit; i++)
+	{
+		vec g(2);
+		mat h(2,2);
+		double a = 1;
+		double b = -beta[i];
+		double ll_old=0;
+		for(int iter =0; iter<max_iter; iter++)
+		{
+			double ll =0;
+			g.zeros();
+			h.zeros();
+			for(int j=icnp[i]; j<icnp[i+1]; j++)
+			{
+				int p = ip[j];
+				double prob = 1/(1+std::exp(-a*theta[p]-b));
+				if(ix[j]==1)
+					ll += std::log(prob);
+				else
+					ll += std::log(1-prob);
+				
+				g[0] += (ix[j]-prob) * theta[p];
+				g[1] += ix[j]-prob;
+				
+				h.at(0,0) += prob * (1-prob) * theta[p] * theta[p];
+				h.at(1,0) += prob * (1-prob) * theta[p];
+				h.at(1,1) += prob * (1-prob);
+			}
+
+			h.at(0,1) = h.at(1,0);
+			
+			vec delta = h.i() * g;
+			
+			a += delta.at(0,0);
+			b += delta.at(1,0);
+			
+			if(iter>0 && std::abs(ll-ll_old)<convergence)
+				break;
+				
+			ll_old = ll;
+		}
+
+		beta[i]=-b/a;
+		alpha[i]=a;
+	}
+	return Rcpp::List::create(Named("alpha") = alpha, Named("beta") = beta);
+}
+//https://thelaziestprogrammer.com/sharrington/math-of-machine-learning/solving-logreg-newtons-method
+
+

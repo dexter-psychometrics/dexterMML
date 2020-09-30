@@ -18,7 +18,7 @@ est = function(dat, discriminations=TRUE)
   {
     # dichotomous case
     if(any(pre$isum==pre$inp))
-      stop('found items without 0 score')
+      stop('found items without 0 scores')
 
     #starting values
     # prox algorithm for dichotomous
@@ -40,15 +40,11 @@ est = function(dat, discriminations=TRUE)
     a=NULL
     if(discriminations)
     {
-      f = sapply(seq_along(beta), function(i)
-      {
-        indx = 1L+(pre$icnp[i]:(pre$icnp[i+1L]-1L))
-        prs = 1L+pre$ip[indx]
-        g = glm(pre$ix[indx]~theta[prs], weights = pre$pni[prs], family='binomial',start=c(-beta[i]/2,2))
-        coef(g)
-      })
-      a = f[2,]
-      beta = -f[1,]/a
+      j = dexterMML:::start_lr(theta, pre$ip, pre$ix,
+                   pre$inp, pre$icnp,
+                   beta)
+      a = drop(j$alpha)
+      beta = drop(j$beta)
     }
     # so far
     return(list(start = list(a=a,beta=beta,theta=theta),
@@ -69,16 +65,17 @@ test_it = function()
 {
   library(dexter)
   library(dplyr)
+  library(dexterMML)
 
   items = tibble(item_id=sprintf('i%03i',1:60),item_score=sample(1:4,60,replace=T),beta=rnorm(60))
 
-  theta = rnorm(1000)
+  theta = rnorm(10000)
 
   dat = r_score(items)(theta)
   dat[dat>1]=1L
 
-  dat[1:500,1:20]=NA_integer_
-  dat[501:1000,41:60]=NA_integer_
+  dat[1:5000,1:20]=NA_integer_
+  dat[5001:10000,41:60]=NA_integer_
 
   test = est(dat)
   plot(test$start$a,items$item_score)

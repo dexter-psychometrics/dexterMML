@@ -37,10 +37,45 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// start_2pl
+arma::vec start_2pl(const int ng, const arma::ivec& group, const arma::vec& theta, const arma::ivec& ip, const arma::ivec& ix, const arma::ivec& inp, const arma::ivec& icnp);
+RcppExport SEXP _dexterMML_start_2pl(SEXP ngSEXP, SEXP groupSEXP, SEXP thetaSEXP, SEXP ipSEXP, SEXP ixSEXP, SEXP inpSEXP, SEXP icnpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const int >::type ng(ngSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type group(groupSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type ip(ipSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type ix(ixSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type inp(inpSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type icnp(icnpSEXP);
+    rcpp_result_gen = Rcpp::wrap(start_2pl(ng, group, theta, ip, ix, inp, icnp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// start_lr
+Rcpp::List start_lr(const arma::vec& theta, const arma::ivec& ip, const arma::ivec& ix, const arma::ivec& inp, const arma::ivec& icnp, const arma::vec& ibeta);
+RcppExport SEXP _dexterMML_start_lr(SEXP thetaSEXP, SEXP ipSEXP, SEXP ixSEXP, SEXP inpSEXP, SEXP icnpSEXP, SEXP ibetaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type ip(ipSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type ix(ixSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type inp(inpSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type icnp(icnpSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type ibeta(ibetaSEXP);
+    rcpp_result_gen = Rcpp::wrap(start_lr(theta, ip, ix, inp, icnp, ibeta));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_mat_pre", (DL_FUNC) &_dexterMML_mat_pre, 1},
     {"_dexterMML_prox_dich", (DL_FUNC) &_dexterMML_prox_dich, 10},
+    {"_dexterMML_start_2pl", (DL_FUNC) &_dexterMML_start_2pl, 7},
+    {"_dexterMML_start_lr", (DL_FUNC) &_dexterMML_start_lr, 6},
     {NULL, NULL, 0}
 };
 
