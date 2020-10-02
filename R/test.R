@@ -40,15 +40,24 @@ est = function(dat, discriminations=TRUE)
     a=NULL
     if(discriminations)
     {
-      j = dexterMML:::start_lr(theta, pre$ip, pre$ix,
+      j = start_lr(theta, pre$ip, pre$ix,
                    pre$inp, pre$icnp,
                    beta)
       a = drop(j$alpha)
       beta = drop(j$beta)
     }
+
+  # see if we can do an em cycle
+
+    theta_grid = seq(-4,4,.5)
+    em = dexterMML:::estimate_2pl_dich(a, beta, pre$pni, pre$pcni, pre$pi, pre$px,
+                           theta_grid)
+
     # so far
     return(list(start = list(a=a,beta=beta,theta=theta),
+                item_em_step = em,
                 pre = pre))
+
 
 
   }
@@ -69,13 +78,13 @@ test_it = function()
 
   items = tibble(item_id=sprintf('i%03i',1:60),item_score=sample(1:4,60,replace=T),beta=rnorm(60))
 
-  theta = rnorm(100000)
+  theta = rnorm(10000)
 
   dat = r_score(items)(theta)
   dat[dat>1]=1L
 
-  dat[1:50000,1:20]=NA_integer_
-  dat[50001:100000,41:60]=NA_integer_
+  dat[1:5000,1:20]=NA_integer_
+  dat[5001:10000,41:60]=NA_integer_
 
   system.time({test = est(dat)})
   plot(test$start$a,items$item_score)

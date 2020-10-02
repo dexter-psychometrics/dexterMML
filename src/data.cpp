@@ -165,7 +165,7 @@ Rcpp::List start_lr(const arma::vec& theta,
 					const arma::vec& ibeta)
 {
 	
-	const int nit = ibeta.n_elem, np = theta.n_elem;
+	const int nit = ibeta.n_elem;
 
 	
 	vec beta(ibeta.memptr(),nit);
