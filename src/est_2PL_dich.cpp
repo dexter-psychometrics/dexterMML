@@ -24,7 +24,7 @@ vec gaussian_pts(const double mu, const double s, const vec& theta)
 }
 */
 
-const double SMALL = 1e-8;
+
 inline double SQR(double v){ return v*v; }
 
 
@@ -35,24 +35,20 @@ vec gaussian_pts(const double mu, const double s, const vec& theta)
 	const int pts = 1000;
 	double half = (theta[1] - theta[0])/2;
 	const double stp = (theta[1] - theta[0])/pts;	
-	
-	if(std::abs(accu(theta)/nt - mu) < SMALL )
-		out = exp(-0.5*square((theta - mu)/s));
-	else
+
+	// I know this is a simple known integral, cannot be bothered right now.
+	for(int i=0; i<nt; i++)
 	{
-		// I know this is a simple known integral, cannot be bothered right now.
-		for(int i=0; i<nt; i++)
+		double t = stp/2 + theta[i] - half;
+		long double ss = 0;			
+		for(int j=1; j<pts; j++)
 		{
-			double t = stp/2 + theta[i] - half;
-			long double ss = 0;			
-			for(int j=1; j<pts; j++)
-			{
-				ss += std::exp(-0.5*SQR((t-mu)/s));
-				t+= stp;
-			}
-			out[i] = ss/(pts-1);
-		}	
-	}
+			ss += std::exp(-0.5*SQR((t-mu)/s));
+			t+= stp;
+		}
+		out[i] = ss/(pts-1);
+	}	
+
 	out = out / accu(out);
 	
 	return out;
@@ -312,7 +308,7 @@ Rcpp::List estimate_2pl_dich_multigroup(const arma::vec& a_start, const arma::ve
 	
 	vec sum_theta(ng), sum_sigma2(ng);
 	
-	const int max_iter = 500;
+	const int max_iter = 100;
 	const double tol = 1e-8;
 	
 	for(int iter=0; iter<max_iter; iter++)
@@ -361,8 +357,8 @@ Rcpp::List estimate_2pl_dich_multigroup(const arma::vec& a_start, const arma::ve
 			}
 		}
 		
-		//printf("iter: %i, logl: %f, max a: %f, max b: %f, var g1: %f, g2: %f\n",nn,loglikelihood,maxdif_a,maxdif_b,tmp,sigma[1]);
-		//fflush(stdout);
+		printf("iter: %i, logl: %f, max a: %f, max b: %f\n",nn,loglikelihood,maxdif_a,maxdif_b);
+		fflush(stdout);
 	}
 	return Rcpp::List::create(Named("a")=a, Named("b")=b, Named("thetabar") = thetabar, Named("mu") = mu, Named("var") = sigma);
 
