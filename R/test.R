@@ -66,8 +66,9 @@ est = function(dat, group = NULL)
                    beta)
     a = drop(j$alpha)
     beta = drop(j$beta)
-
+    #a=rep(1,length(beta))
   theta_grid = seq(-6,6,.6)
+
 
     if(is.null(group))
     {

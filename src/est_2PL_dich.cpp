@@ -15,14 +15,42 @@ using Rcpp::Named;
 
 // no groups
 
-
+/*
 vec gaussian_pts(const double mu, const double s, const vec& theta)
 {
 	vec out = exp(-0.5*square((theta - mu)/s));
 	out = out / accu(out);
 	return out;
 }
+*/
 
+const double SMALL = 1e-8;
+inline double SQR(double v){ return v*v; }
+
+vec gaussian_pts(const double mu, const double s, const vec& theta)
+{
+	const int nt = theta.n_elem;
+	vec out(nt);
+	const int pts = 1000;
+	const double stp = (theta[1] - theta[0])/pts;	
+	
+	if(accu(theta)/nt - mu < SMALL)
+		out = exp(-0.5*square((theta - mu)/s));
+	else
+	{
+		// I know this is a simple known integral, cannot be bothered right now.
+		for(int i=0; i<nt; i++)
+		{
+			double t = stp/2 + theta[i];
+			long double ss = 0;			
+			for(int j=1; j<pts; j++)
+				ss += std::exp(0.5*SQR((t-mu)/s));
+			out[i] = ss/(pts-1);
+		}	
+	}
+	out = out / accu(out);
+	return out;
+}
 
 void estep_2pl_dich(const vec& a, const vec& b, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
 				const vec& theta, mat& r0, mat& r1, vec& thetabar, double& sumsig2, const double mu=0, const double sigma=1)
@@ -278,7 +306,7 @@ Rcpp::List estimate_2pl_dich_multigroup(const arma::vec& a_start, const arma::ve
 	
 	vec sum_theta(ng), sum_sigma2(ng);
 	
-	const int max_iter = 150;
+	const int max_iter = 500;
 	const double tol = 1e-8;
 	
 	for(int iter=0; iter<max_iter; iter++)
@@ -310,8 +338,11 @@ Rcpp::List estimate_2pl_dich_multigroup(const arma::vec& a_start, const arma::ve
 			nn+=itr;		
 			
 		}
+		
+		double tmp = std::sqrt(sum_sigma2[ref_group]/gn[ref_group]);
 		for(int g=0;g<ng;g++)
 		{
+			
 			if(g==ref_group)
 			{
 				mu[g] = 0;
@@ -324,8 +355,8 @@ Rcpp::List estimate_2pl_dich_multigroup(const arma::vec& a_start, const arma::ve
 			}
 		}
 		
-		printf("iter: %i, logl: %f, max a: %f, max b: %f\n",nn,loglikelihood,maxdif_a,maxdif_b);
-		fflush(stdout);
+		//printf("iter: %i, logl: %f, max a: %f, max b: %f, var g1: %f, g2: %f\n",nn,loglikelihood,maxdif_a,maxdif_b,tmp,sigma[1]);
+		//fflush(stdout);
 	}
 	return Rcpp::List::create(Named("a")=a, Named("b")=b, Named("thetabar") = thetabar, Named("mu") = mu, Named("var") = sigma);
 
