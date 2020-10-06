@@ -28,7 +28,7 @@ thissen_main(stouffer,seq(-4,4,0.5))
 Gaussian.pts <-
   function(mu,sigma,theta) {
     curve <- exp(-0.5*((theta - mu)/sigma)^2)
-    curve <- curve/sum(curve)
+    curve/sum(curve)
   }
 
 trace.line.pts <-
