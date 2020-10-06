@@ -53,19 +53,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// test
-void test(arma::vec& r1, arma::vec& r0, arma::vec& theta, arma::vec& p);
-RcppExport SEXP _dexterMML_test(SEXP r1SEXP, SEXP r0SEXP, SEXP thetaSEXP, SEXP pSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec& >::type r1(r1SEXP);
-    Rcpp::traits::input_parameter< arma::vec& >::type r0(r0SEXP);
-    Rcpp::traits::input_parameter< arma::vec& >::type theta(thetaSEXP);
-    Rcpp::traits::input_parameter< arma::vec& >::type p(pSEXP);
-    test(r1, r0, theta, p);
-    return R_NilValue;
-END_RCPP
-}
 // estimate_2pl_dich
 Rcpp::List estimate_2pl_dich(const arma::vec& a_start, const arma::vec& b_start, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, arma::vec& theta, const double mu, const double sigma);
 RcppExport SEXP _dexterMML_estimate_2pl_dich(SEXP a_startSEXP, SEXP b_startSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP thetaSEXP, SEXP muSEXP, SEXP sigmaSEXP) {
@@ -85,13 +72,35 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// estimate_2pl_dich_multigroup
+Rcpp::List estimate_2pl_dich_multigroup(const arma::vec& a_start, const arma::vec& b_start, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, arma::vec& theta, const arma::vec& mu_start, const arma::vec& sigma_start, const arma::ivec& gn, const arma::ivec& pgroup, const int ref_group);
+RcppExport SEXP _dexterMML_estimate_2pl_dich_multigroup(SEXP a_startSEXP, SEXP b_startSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP thetaSEXP, SEXP mu_startSEXP, SEXP sigma_startSEXP, SEXP gnSEXP, SEXP pgroupSEXP, SEXP ref_groupSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type a_start(a_startSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type b_start(b_startSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pni(pniSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pcni(pcniSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pi(piSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type px(pxSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type mu_start(mu_startSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type sigma_start(sigma_startSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type gn(gnSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pgroup(pgroupSEXP);
+    Rcpp::traits::input_parameter< const int >::type ref_group(ref_groupSEXP);
+    rcpp_result_gen = Rcpp::wrap(estimate_2pl_dich_multigroup(a_start, b_start, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_mat_pre", (DL_FUNC) &_dexterMML_mat_pre, 1},
     {"_dexterMML_prox_dich", (DL_FUNC) &_dexterMML_prox_dich, 10},
     {"_dexterMML_start_lr", (DL_FUNC) &_dexterMML_start_lr, 6},
-    {"_dexterMML_test", (DL_FUNC) &_dexterMML_test, 4},
     {"_dexterMML_estimate_2pl_dich", (DL_FUNC) &_dexterMML_estimate_2pl_dich, 9},
+    {"_dexterMML_estimate_2pl_dich_multigroup", (DL_FUNC) &_dexterMML_estimate_2pl_dich_multigroup, 12},
     {NULL, NULL, 0}
 };
 

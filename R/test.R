@@ -4,7 +4,7 @@
 
 #' 2pl dichotomous items, 1 population
 #'
-est = function(dat, discriminations=TRUE)
+est = function(dat, group = NULL)
 {
   mode(dat) = 'integer'
   pre = lapply(mat_pre(dat), drop)
@@ -30,29 +30,54 @@ est = function(dat, discriminations=TRUE)
     theta = drop(prox$theta)
     beta = drop(prox$beta)
 
-    # normalize
-    m_ = weighted.mean(theta, pre$pni)
-    theta = theta - m_
-    s_ = sqrt(weighted.mean(theta^2,pre$pni))
-    theta = theta/s_
-    beta = (beta-m_)/s_
-
-    a=NULL
-    if(discriminations)
+    if(is.null(group))
     {
-      j = start_lr(theta, pre$ip, pre$ix,
-                   pre$inp, pre$icnp,
-                   beta)
-      a = drop(j$alpha)
-      beta = drop(j$beta)
+
+      # normalize
+      m_ = weighted.mean(theta, pre$pni)
+      theta = theta - m_
+      s_ = sqrt(weighted.mean(theta^2,pre$pni))
+      theta = theta/s_
+      beta = (beta-m_)/s_
+    }
+    else
+    {
+      # normalize
+      group = as.factor(group)
+      lev = levels(group)
+      group = as.integer(group)
+      group_n = as.integer(table(group))
+      ref_group = which.max(group_n)
+      m_ = weighted.mean(theta[group==ref_group], pre$pni[group==ref_group])
+      theta = theta - m_
+      s_ = sqrt(weighted.mean(theta[group==ref_group]^2,pre$pni[group==ref_group]))
+      theta = theta/s_
+      beta = (beta-m_)/s_
+
+      split_theta = split(theta,group)
+      start_mu = sapply(split_theta, mean)
+      start_var = sapply(split(theta,group), var)
+      group = group -1L
     }
 
-  # see if we can do an em cycle
+    # starting values for a
+    j = start_lr(theta, pre$ip, pre$ix,
+                   pre$inp, pre$icnp,
+                   beta)
+    a = drop(j$alpha)
+    beta = drop(j$beta)
 
-    theta_grid = seq(-4,4,.5)
-    em = dexterMML:::estimate_2pl_dich(a, beta, pre$pni, pre$pcni, pre$pi, pre$px,
-                           theta_grid)
+  theta_grid = seq(-6,6,.6)
 
+    if(is.null(group))
+    {
+      em = estimate_2pl_dich(a, beta, pre$pni, pre$pcni, pre$pi, pre$px,
+                             theta_grid)
+    } else
+    {
+      em = estimate_2pl_dich_multigroup(a, beta, pre$pni, pre$pcni, pre$pi, pre$px,
+                                         theta_grid, start_mu, start_var, group_n, group)
+    }
     # so far
     return(list(start = list(a=a,beta=beta,theta=theta),
                 item_em_step = em,
@@ -66,30 +91,5 @@ est = function(dat, discriminations=TRUE)
     # see https://web.archive.org/web/20190719030511/https://www.rasch.org/rmt/rmt84k.htm
     stop('not started poly yet')
   }
-
-}
-
-
-test_it = function()
-{
-  library(dexter)
-  library(dplyr)
-  library(dexterMML)
-
-  items = tibble(item_id=sprintf('i%03i',1:60),item_score=sample(1:4,60,replace=T),beta=rnorm(60))
-
-  theta = rnorm(10000)
-
-  dat = r_score(items)(theta)
-  dat[dat>1]=1L
-
-  dat[1:5000,1:20]=NA_integer_
-  dat[5001:10000,41:60]=NA_integer_
-
-  system.time({test = est(dat)})
-  plot(test$start$a,items$item_score)
-  plot(test$start$beta,items$beta)
-  plot(test$start$theta,theta)
-
 
 }

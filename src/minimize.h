@@ -28,7 +28,7 @@ void lnsrch(const arma::vec& xold, const double fold, const arma::vec& g, arma::
 	}
 	alamin=TOLX/test;
 	alam=1.0;
-	for (;;) {
+	for (int iter=0; iter<200; iter++) {
 		for (i=0;i<n;i++) x[i]=xold[i]+alam*p[i];
 		f=func(x);
 		if (alam < alamin) {
@@ -59,6 +59,7 @@ void lnsrch(const arma::vec& xold, const double fold, const arma::vec& g, arma::
 		f2 = f;
 		alam=std::max(tmplam,0.1*alam);
 	}
+	Rcpp::stop("max iter in lnsrch reached");
 }
 
 
@@ -137,5 +138,5 @@ void dfpmin(arma::vec& p, const double gtol, int &iter, double &fret, T &funcd)
 			for (int j=0;j<n;j++) xi[i] -= hessin.at(i,j)*g[j];
 		}
 	}
-	throw("too many iterations in dfpmin");
+	Rcpp::stop("too many iterations in dfpmin");
 }

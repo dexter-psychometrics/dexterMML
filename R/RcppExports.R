@@ -13,11 +13,11 @@ start_lr <- function(theta, ip, ix, inp, icnp, ibeta) {
     .Call(`_dexterMML_start_lr`, theta, ip, ix, inp, icnp, ibeta)
 }
 
-test <- function(r1, r0, theta, p) {
-    invisible(.Call(`_dexterMML_test`, r1, r0, theta, p))
-}
-
 estimate_2pl_dich <- function(a_start, b_start, pni, pcni, pi, px, theta, mu = 0, sigma = 1) {
     .Call(`_dexterMML_estimate_2pl_dich`, a_start, b_start, pni, pcni, pi, px, theta, mu, sigma)
+}
+
+estimate_2pl_dich_multigroup <- function(a_start, b_start, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group = 0L) {
+    .Call(`_dexterMML_estimate_2pl_dich_multigroup`, a_start, b_start, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group)
 }
 
