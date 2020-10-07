@@ -232,7 +232,7 @@ void estep_2pl_dich(const vec& a, const vec& b, const ivec& pni, const ivec& pcn
 #pragma omp parallel
 	{
 		vec posterior(nt);
-# pragma omp for reduction(+:r0,r1,sigma2, dev)
+# pragma omp for reduction(+:r0,r1,sigma2, dev, sumtheta)
 		for(int p=0; p<np;p++)
 		{
 			int g = pgroup[p];
@@ -281,7 +281,7 @@ Rcpp::List estimate_2pl_dich_multigroup(const arma::vec& a_start, const arma::ve
 	
 	mat r0(nt,nit, fill::zeros), r1(nt,nit, fill::zeros);
 	
-	vec pars(2);
+	
 	vec thetabar(np,fill::zeros);
 	
 	vec sigma = sigma_start, mu=mu_start;
@@ -291,20 +291,21 @@ Rcpp::List estimate_2pl_dich_multigroup(const arma::vec& a_start, const arma::ve
 	
 	const int max_iter = 100;
 	const double tol = 1e-8;
+	int iter = 0;
 	
-	for(int iter=0; iter<max_iter; iter++)
+	for(; iter<max_iter; iter++)
 	{
 		estep_2pl_dich(a, b, pni, pcni, pi, px, 
 						theta, r0, r1, thetabar, sum_theta, sum_sigma2, mu, sigma, pgroup);
 		
 		
-		double loglikelihood=0;
-		int nn=0;
 		double maxdif_a=0, maxdif_b=0;
+#pragma omp parallel for reduction(max: maxdif_a, maxdif_b)
 		for(int i=0; i<nit; i++)
-		{		
-			ll_2pl_dich f(r1.colptr(i), r0.colptr(i), theta.memptr(), nt);
+		{	
 			
+			ll_2pl_dich f(r1.colptr(i), r0.colptr(i), theta.memptr(), nt);
+			vec pars(2);
 			pars[0] = a[i];
 			pars[1] = b[i];
 			int itr=0;
@@ -317,12 +318,8 @@ Rcpp::List estimate_2pl_dich_multigroup(const arma::vec& a_start, const arma::ve
 			
 			a[i] = pars[0];
 			b[i] = pars[1];
-			loglikelihood += ll;
-			nn+=itr;		
-			
 		}
 		
-
 		for(int g=0;g<ng;g++)
 		{
 			
@@ -338,10 +335,16 @@ Rcpp::List estimate_2pl_dich_multigroup(const arma::vec& a_start, const arma::ve
 			}
 		}
 		
-		printf("iter: %i, logl: %f, max a: %f, max b: %f\n",nn,loglikelihood,maxdif_a,maxdif_b);
+		//printf("iter: %i, logl: %f, max a: %f, max b: %f\n",nn,loglikelihood,maxdif_a,maxdif_b);
+		if(maxdif_a < .0001 && maxdif_b < .0001)
+			break;
+		printf("\r% 3i", iter);
 		fflush(stdout);
 	}
-	return Rcpp::List::create(Named("a")=a, Named("b")=b, Named("thetabar") = thetabar, Named("mu") = mu, Named("var") = sigma);
+	printf("\n");
+	fflush(stdout);
+	
 
+	return Rcpp::List::create(Named("a")=a, Named("b")=b, Named("thetabar") = thetabar, Named("mu") = mu, Named("var") = sigma, Named("niter")=iter);
 }
 
