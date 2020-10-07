@@ -15,15 +15,6 @@ using Rcpp::Named;
 
 // no groups
 
-/*
-vec gaussian_pts(const double mu, const double s, const vec& theta)
-{
-	vec out = exp(-0.5*square((theta - mu)/s));
-	out = out / accu(out);
-	return out;
-}
-*/
-
 
 inline double SQR(double v){ return v*v; }
 
@@ -32,27 +23,17 @@ vec gaussian_pts(const double mu, const double s, const vec& theta)
 {
 	const int nt = theta.n_elem;
 	vec out(nt);
-	const int pts = 1000;
 	double half = (theta[1] - theta[0])/2;
-	const double stp = (theta[1] - theta[0])/pts;	
 
-	// I know this is a simple known integral, cannot be bothered right now.
 	for(int i=0; i<nt; i++)
-	{
-		double t = stp/2 + theta[i] - half;
-		long double ss = 0;			
-		for(int j=1; j<pts; j++)
-		{
-			ss += std::exp(-0.5*SQR((t-mu)/s));
-			t+= stp;
-		}
-		out[i] = ss/(pts-1);
-	}	
+		out[i] = R::pnorm(theta[i]+half,mu,s,true,false) - R::pnorm(theta[i]-half,mu,s,true,false);
 
 	out = out / accu(out);
 	
 	return out;
 }
+
+
 
 void estep_2pl_dich(const vec& a, const vec& b, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
 				const vec& theta, mat& r0, mat& r1, vec& thetabar, double& sumsig2, const double mu=0, const double sigma=1)
