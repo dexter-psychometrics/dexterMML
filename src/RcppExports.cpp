@@ -94,6 +94,27 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// oakes
+arma::mat oakes(const arma::vec& a_fixed, const arma::vec& b_fixed, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, arma::vec& theta, const arma::vec& mu_fixed, const arma::vec& sigma_fixed, const arma::ivec& gn, const arma::ivec& pgroup);
+RcppExport SEXP _dexterMML_oakes(SEXP a_fixedSEXP, SEXP b_fixedSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP thetaSEXP, SEXP mu_fixedSEXP, SEXP sigma_fixedSEXP, SEXP gnSEXP, SEXP pgroupSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type a_fixed(a_fixedSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type b_fixed(b_fixedSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pni(pniSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pcni(pcniSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pi(piSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type px(pxSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type mu_fixed(mu_fixedSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type sigma_fixed(sigma_fixedSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type gn(gnSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pgroup(pgroupSEXP);
+    rcpp_result_gen = Rcpp::wrap(oakes(a_fixed, b_fixed, pni, pcni, pi, px, theta, mu_fixed, sigma_fixed, gn, pgroup));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_mat_pre", (DL_FUNC) &_dexterMML_mat_pre, 1},
@@ -101,6 +122,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_start_lr", (DL_FUNC) &_dexterMML_start_lr, 6},
     {"_dexterMML_estimate_2pl_dich", (DL_FUNC) &_dexterMML_estimate_2pl_dich, 9},
     {"_dexterMML_estimate_2pl_dich_multigroup", (DL_FUNC) &_dexterMML_estimate_2pl_dich_multigroup, 12},
+    {"_dexterMML_oakes", (DL_FUNC) &_dexterMML_oakes, 11},
     {NULL, NULL, 0}
 };
 

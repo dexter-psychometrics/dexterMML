@@ -21,3 +21,7 @@ estimate_2pl_dich_multigroup <- function(a_start, b_start, pni, pcni, pi, px, th
     .Call(`_dexterMML_estimate_2pl_dich_multigroup`, a_start, b_start, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group)
 }
 
+oakes <- function(a_fixed, b_fixed, pni, pcni, pi, px, theta, mu_fixed, sigma_fixed, gn, pgroup) {
+    .Call(`_dexterMML_oakes`, a_fixed, b_fixed, pni, pcni, pi, px, theta, mu_fixed, sigma_fixed, gn, pgroup)
+}
+

@@ -4,7 +4,7 @@
 
 #' 2pl dichotomous items, 1 population
 #'
-est = function(dat, group = NULL)
+est = function(dat, group = NULL,se=FALSE)
 {
   mode(dat) = 'integer'
   pre = lapply(mat_pre(dat), drop)
@@ -79,10 +79,13 @@ est = function(dat, group = NULL)
       em = estimate_2pl_dich_multigroup(a, beta, pre$pni, pre$pcni, pre$pi, pre$px,
                                          theta_grid, start_mu, start_var, group_n, group)
     }
+    J = oakes(em$a, em$b, pre$pni, pre$pcni, pre$pi, pre$px,
+                                     theta_grid, em$mu, em$sd, group_n, group)  
+  
     # so far
     return(list(start = list(a=a,beta=beta,theta=theta),
                 item_em_step = em,
-                pre = pre))
+                pre = pre, J=J))
 
 
 

@@ -204,7 +204,44 @@ Rcpp::List estimate_2pl_dich(const arma::vec& a_start, const arma::vec& b_start,
 
 // multiple group
 
+// this is a reduced version of the estep
+long double LL_2pl_dich(const vec& a, const vec& b, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
+				const vec& theta, const vec& mu, const vec& sigma, const ivec& pgroup)
 
+{
+	const int nit = a.n_elem, nt = theta.n_elem, np = pni.n_elem, ng = mu.n_elem;
+	mat itrace(nt,nit);
+	
+	mat posterior0(nt,ng);
+	for(int g=0; g<ng; g++)
+		posterior0.col(g) = gaussian_pts(mu[g],sigma[g],theta);
+	
+	for(int i=0; i<nit; i++)
+		itrace.col(i) = 1/(1+exp(-a[i]*(theta-b[i])));
+	
+	long double ll=0;
+	
+#pragma omp parallel
+	{
+		vec posterior(nt);
+# pragma omp for reduction(+:ll)
+		for(int p=0; p<np;p++)
+		{
+			int g = pgroup[p];
+			posterior = posterior0.col(g);
+			
+			for(int indx = pcni[p]; indx<pcni[p+1]; indx++)
+			{
+				if(px[indx] == 1)
+					posterior %= itrace.col(pi[indx]);
+				else
+					posterior %= 1-itrace.col(pi[indx]);
+			}	
+			ll += std::log(accu(posterior));
+		}
+	}
+	return ll;
+}
 
 
 void estep_2pl_dich(const vec& a, const vec& b, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
@@ -246,7 +283,8 @@ void estep_2pl_dich(const vec& a, const vec& b, const ivec& pni, const ivec& pcn
 					posterior %= 1-itrace.col(pi[indx]);
 			}	
 			double sp = accu(posterior);
-			ll+=std::log(sp);
+			// LL according to Bock/Aitkin 1981 eq (5) and (6), omitting constant C casue I don't know what C is
+			ll += std::log(sp); 
 			posterior = posterior / sp;
 			sumtheta[g] += thetabar[p] = accu(posterior % theta);
 			
@@ -345,6 +383,99 @@ Rcpp::List estimate_2pl_dich_multigroup(const arma::vec& a_start, const arma::ve
 	fflush(stdout);
 	
 	return Rcpp::List::create(Named("a")=a, Named("b")=b, Named("thetabar") = thetabar, Named("mu") = mu, Named("sd") = sigma, 
-							Named("LL") = ll, Named("niter")=iter); //actually returns ll obefore final iteration 
+									Named("LL") = ll, Named("niter")=iter); 
 }
 
+// [[Rcpp::export]]
+arma::mat oakes(const arma::vec& a_fixed, const arma::vec& b_fixed, 
+				const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
+				arma::vec& theta, const arma::vec& mu_fixed, const arma::vec& sigma_fixed, const arma::ivec& gn, const arma::ivec& pgroup)
+{	
+	const int nit = a_fixed.n_elem, nt = theta.n_elem, np = pni.n_elem, ng=gn.n_elem;
+	
+	mat a(nit,2),b(nit,2);
+	mat mu(ng,2), sigma(ng,2);
+	
+	mat r0(nt,nit, fill::zeros), r1(nt,nit, fill::zeros);	
+	
+	vec thetabar(np,fill::zeros);
+	
+	
+	vec sum_theta(ng), sum_sigma2(ng);
+	
+	const double tol = 1e-8;
+	double ll;
+	
+	const double delta = 1e-05;
+	vec signed_delta(2);
+	signed_delta[0] = -delta;
+	signed_delta[1] = delta;
+
+	
+	const int npar = 2 * (nit+ng);
+	mat jacob(npar, npar);
+
+	for(int j=0; j<npar; j++)
+	{
+		a.col(0) = a_fixed; a.col(1) = a_fixed; 
+		b.col(0) = b_fixed; b.col(1) = b_fixed;
+		mu.col(0) = mu_fixed;mu.col(1) = mu_fixed;
+		sigma.col(0) = sigma_fixed;	sigma.col(1) = sigma_fixed;
+
+		for(int d=0; d<=1; d++)
+		{
+			if(j % 2 ==0)
+			{ 
+				if(j < 2*nit)
+					a.at(j / 2, d) += signed_delta[d]; 
+				else
+					mu.at((j-(2*nit)) / 2, d) += signed_delta[d]; 
+			}
+			else
+			{
+				if(j < 2*nit)
+					b.at(j / 2, d) += signed_delta[d]; 
+				else
+					sigma.at((j-(2*nit)) / 2, d) += signed_delta[d]; 
+			}
+
+			estep_2pl_dich(a.col(d), b.col(d), pni, pcni, pi, px, 
+							theta, r0, r1, thetabar, sum_theta, sum_sigma2, mu.col(d), sigma.col(d), pgroup, ll);
+
+#pragma omp parallel for
+			for(int i=0; i<nit; i++)
+			{				
+				ll_2pl_dich f(r1.colptr(i), r0.colptr(i), theta.memptr(), nt);
+				vec pars(2);
+				pars[0] = a.at(i,d);
+				pars[1] = b.at(i,d);
+				int itr=0;
+				double ll_itm=0;
+				
+				dfpmin(pars, tol, itr, ll_itm, f);
+				
+				a.at(i,d) = pars[0];
+				b.at(i,d) = pars[1];
+			}
+			//printf("before groups\n");
+			//fflush(stdout);
+			for(int g=0;g<ng;g++)
+			{			
+				mu.at(d,g) = sum_theta[g]/gn[g];	
+				sigma.at(d,g) = std::sqrt(sum_sigma2[g]/gn[g] - mu.at(d,g) * mu.at(d,g)); // directe afhankelijkheid, is dat wel ok?
+			}
+		}
+		for(int i=0; i<nit; i++)
+		{
+			jacob.at(j,i) = (a.at(i,1) - a.at(i,0))/(2*delta);
+			jacob.at(j,nit+i) = (b.at(i,1) - b.at(i,0))/(2*delta);
+		}
+		for(int g=0; g<ng; g++)
+		{
+			int p = 2 * nit + g; 
+			jacob.at(j,p) = (mu.at(g,1) - mu.at(g,0))/(2*delta);
+			jacob.at(j,p+ng) = (sigma.at(g,1) - sigma.at(g,0))/(2*delta);
+		}		
+	}
+	return jacob;
+}
