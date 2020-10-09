@@ -67,7 +67,7 @@ est = function(dat, group = NULL,se=FALSE)
     a = drop(j$alpha)
     beta = drop(j$beta)
     #a=rep(1,length(beta))
-  theta_grid = seq(-6,6,.6)
+    theta_grid = seq(-6,6,.6)
 
 
     if(is.null(group))
@@ -79,18 +79,25 @@ est = function(dat, group = NULL,se=FALSE)
       em = estimate_2pl_dich_multigroup(a, beta, pre$pni, pre$pcni, pre$pi, pre$px,
                                          theta_grid, start_mu, start_var, group_n, group)
     }
-    J=NULL
+    items = tibble(item_id=colnames(dat),a=drop(em$a),b=drop(em$b))
+    pop = tibble(group=lev,mu=drop(em$mu),sigma=drop(em$sd))
+
     if(se)
+    {
       J = oakes(em$a, em$b, pre$pni, pre$pcni, pre$pi, pre$px,
                                        theta_grid, em$mu, em$sd, group_n, group)
+      # to do: figure out hessian for mu,sigma
+      J=J[1:ncol(em$obs),1:ncol(em$obs)]
+      hess = em$obs+(J+t(J))/2
+      SE=sqrt(-diag(solve(hess)))
+      items$se_a=SE[1:ncol(dat)]
+      items$se_b=SE[(1+ncol(dat)):(2*ncol(dat))]
 
+    }
     # so far
     return(list(start = list(a=a,beta=beta,theta=theta),
-                item_em_step = em,
-                pre = pre, J=J))
-
-
-
+                items=items,pop=pop,theta=em$thetabar,ll=em$LL,niter=em$niter,
+                pre = pre))
   }
   else
   {

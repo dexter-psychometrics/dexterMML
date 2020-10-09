@@ -140,6 +140,28 @@ struct ll_2pl_dich
 			Rcpp::stop("inf gradient");
 		}
 	}
+	
+	void hess(const vec& ab, mat& h)
+	{
+		h.zeros();
+		const double a = ab[0], b = ab[1];
+		for(int i=0;i<n;i++)
+		{
+			double e = std::exp(a*(b-theta[i])), t=theta[i];
+			h.at(0,0) += (r0[i]*(e+1) - r0[i] - r1[i]*(e+1)*e - (2*r0[i]-r1[i]*e)*e) \
+					* SQR(b-t)/SQR(e+1);
+			
+			h.at(0,1) += (a*r0[i]*(t-b) - a*(b-t)*(2*r0[i]-r1[i]*e)*e \
+							+ r0[i]*(a*(b-t)+1)*(e+1) \
+							- r1[i]*(a*(b-t) + 1)*(e+1)*e) \
+							/ SQR(e+1);			
+			
+			e = std::exp(a*(b+t));
+			
+			h.at(1,1) -= SQR(a)*(r0[i]+r1[i])*e/(std::exp(2*a*b) + std::exp(2*a*t) + 2*e);
+		}
+		h.at(1,0) = h.at(0,1);
+	}
 };
 
 
@@ -379,11 +401,29 @@ Rcpp::List estimate_2pl_dich_multigroup(const arma::vec& a_start, const arma::ve
 			break;
 		
 	}
+	// for not only items
+	mat obs(nit*2,nit*2,fill::zeros);
+	mat h(2,2);
+	for(int i=0; i<nit; i++)
+	{				
+		ll_2pl_dich f(r1.colptr(i), r0.colptr(i), theta.memptr(), nt);
+		vec pars(2);
+		pars[0] = a[i];
+		pars[1] = b[i];
+		f.hess(pars,h);
+		obs.at(i,i) = h.at(0,0);
+		obs.at(nit+i,nit+i) = h.at(1,1);
+		obs.at(i,nit+i) = h.at(1,0);
+		obs.at(nit+i,i) = h.at(1,0);
+	}
+
+	
+	
 	printf("\n");
 	fflush(stdout);
 	
 	return Rcpp::List::create(Named("a")=a, Named("b")=b, Named("thetabar") = thetabar, Named("mu") = mu, Named("sd") = sigma, 
-									Named("LL") = ll, Named("niter")=iter); 
+									Named("LL") = ll, Named("niter")=iter,Named("obs")=obs); 
 }
 
 // [[Rcpp::export]]
@@ -414,6 +454,9 @@ arma::mat oakes(const arma::vec& a_fixed, const arma::vec& b_fixed,
 	
 	const int npar = 2 * (nit+ng);
 	mat jacob(npar, npar);
+
+
+
 
 	for(int j=0; j<npar; j++)
 	{
@@ -471,5 +514,6 @@ arma::mat oakes(const arma::vec& a_fixed, const arma::vec& b_fixed,
 			jacob.at(p+ng,j) = (sigma.at(g,1) - sigma.at(g,0))/(2*delta);
 		}		
 	}
+	
 	return jacob;
 }
