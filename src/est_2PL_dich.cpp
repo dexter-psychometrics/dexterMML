@@ -424,21 +424,15 @@ arma::mat oakes(const arma::vec& a_fixed, const arma::vec& b_fixed,
 
 		for(int d=0; d<=1; d++)
 		{
-			if(j % 2 ==0)
-			{ 
-				if(j < 2*nit)
-					a.at(j / 2, d) += signed_delta[d]; 
-				else
-					mu.at((j-(2*nit)) / 2, d) += signed_delta[d]; 
-			}
+			if(j<nit)
+				a.at(j,d) += signed_delta[d]; 
+			else if(j < 2*nit)
+				b.at(j - nit, d) += signed_delta[d]; 
+			else if(j < 2*nit+ng)
+				mu.at(j-2*nit, d) += signed_delta[d]; 
 			else
-			{
-				if(j < 2*nit)
-					b.at(j / 2, d) += signed_delta[d]; 
-				else
-					sigma.at((j-(2*nit)) / 2, d) += signed_delta[d]; 
-			}
-
+				sigma.at(j-2*nit-ng, d) += signed_delta[d]; 
+			
 			estep_2pl_dich(a.col(d), b.col(d), pni, pcni, pi, px, 
 							theta, r0, r1, thetabar, sum_theta, sum_sigma2, mu.col(d), sigma.col(d), pgroup, ll);
 
@@ -461,20 +455,20 @@ arma::mat oakes(const arma::vec& a_fixed, const arma::vec& b_fixed,
 			//fflush(stdout);
 			for(int g=0;g<ng;g++)
 			{			
-				mu.at(d,g) = sum_theta[g]/gn[g];	
-				sigma.at(d,g) = std::sqrt(sum_sigma2[g]/gn[g] - mu.at(d,g) * mu.at(d,g)); // directe afhankelijkheid, is dat wel ok?
+				mu.at(g,d) = sum_theta[g]/gn[g];	
+				sigma.at(g,d) = std::sqrt(sum_sigma2[g]/gn[g] - mu.at(g,d) * mu.at(g,d)); // directe afhankelijkheid, is dat wel ok?
 			}
 		}
 		for(int i=0; i<nit; i++)
 		{
-			jacob.at(j,i) = (a.at(i,1) - a.at(i,0))/(2*delta);
-			jacob.at(j,nit+i) = (b.at(i,1) - b.at(i,0))/(2*delta);
+			jacob.at(i,j) = (a.at(i,1) - a.at(i,0))/(2*delta);
+			jacob.at(nit+i,j) = (b.at(i,1) - b.at(i,0))/(2*delta);
 		}
 		for(int g=0; g<ng; g++)
 		{
 			int p = 2 * nit + g; 
-			jacob.at(j,p) = (mu.at(g,1) - mu.at(g,0))/(2*delta);
-			jacob.at(j,p+ng) = (sigma.at(g,1) - sigma.at(g,0))/(2*delta);
+			jacob.at(p,j) = (mu.at(g,1) - mu.at(g,0))/(2*delta);
+			jacob.at(p+ng,j) = (sigma.at(g,1) - sigma.at(g,0))/(2*delta);
 		}		
 	}
 	return jacob;
