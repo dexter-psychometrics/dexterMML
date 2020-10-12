@@ -30,35 +30,35 @@ est = function(dat, group = NULL,se=FALSE)
     theta = drop(prox$theta)
     beta = drop(prox$beta)
 
+
     if(is.null(group))
     {
-
-      # normalize
-      m_ = weighted.mean(theta, pre$pni)
-      theta = theta - m_
-      s_ = sqrt(weighted.mean(theta^2,pre$pni))
-      theta = theta/s_
-      beta = (beta-m_)/s_
-    }
-    else
+      has_groups=FALSE
+      group = integer(nrow(dat))
+      ref_group = 0L
+      group_n = nrow(dat)
+      group_id = 'population'
+    } else
     {
-      # normalize
+      has_groups = TRUE
       group = as.factor(group)
-      lev = levels(group)
-      group = as.integer(group)
+      group_id = levels(group)
+      group = as.integer(group) -1L
       group_n = as.integer(table(group))
-      ref_group = which.max(group_n)
-      m_ = weighted.mean(theta[group==ref_group], pre$pni[group==ref_group])
-      theta = theta - m_
-      s_ = sqrt(weighted.mean(theta[group==ref_group]^2,pre$pni[group==ref_group]))
-      theta = theta/s_
-      beta = (beta-m_)/s_
+      ref_group = which.max(group_n) -1L
 
-      split_theta = split(theta,group)
-      start_mu = sapply(split_theta, mean)
-      start_var = sapply(split(theta,group), var)
-      group = group -1L
     }
+
+    #normalize
+    m_ = weighted.mean(theta[group==ref_group], pre$pni[group==ref_group])
+    theta = theta - m_
+    s_ = sqrt(weighted.mean(theta[group==ref_group]^2,pre$pni[group==ref_group]))
+    theta = theta/s_
+    beta = (beta-m_)/s_
+
+    split_theta = split(theta,group)
+    start_mu = sapply(split_theta, mean)
+    start_var = sapply(split(theta,group), var)
 
     # starting values for a
     j = start_lr(theta, pre$ip, pre$ix,
@@ -66,38 +66,39 @@ est = function(dat, group = NULL,se=FALSE)
                    beta)
     a = drop(j$alpha)
     beta = drop(j$beta)
-    #a=rep(1,length(beta))
+
     theta_grid = seq(-6,6,.6)
 
+    em = estimate_2pl_dich_multigroup(a, beta, pre$pni, pre$pcni, pre$pi, pre$px,
+                                         theta_grid, start_mu, start_var, group_n, group, ref_group)
 
-    if(is.null(group))
-    {
-      em = estimate_2pl_dich(a, beta, pre$pni, pre$pcni, pre$pi, pre$px,
-                             theta_grid)
-    } else
-    {
-      em = estimate_2pl_dich_multigroup(a, beta, pre$pni, pre$pcni, pre$pi, pre$px,
-                                         theta_grid, start_mu, start_var, group_n, group)
-    }
     items = tibble(item_id=colnames(dat),a=drop(em$a),b=drop(em$b))
-    pop = tibble(group=lev,mu=drop(em$mu),sigma=drop(em$sd))
+    pop = tibble(group=group_id,mu=drop(em$mu),sigma=drop(em$sd))
 
     if(se)
     {
-      J = oakes(em$a, em$b, pre$pni, pre$pcni, pre$pi, pre$px,
-                                       theta_grid, em$mu, em$sd, group_n, group)
-      # to do: figure out hessian for mu,sigma
-      J=J[1:ncol(em$obs),1:ncol(em$obs)]
-      hess = em$obs+(J+t(J))/2
-      SE=sqrt(-diag(solve(hess)))
-      items$se_a=SE[1:ncol(dat)]
-      items$se_b=SE[(1+ncol(dat)):(2*ncol(dat))]
+      nit = nrow(items)
+      npop = nrow(pop)
 
+      res = Oakes_2pl_dich(items$a, items$b, em$r0, em$r1,
+                           pre$pni, pre$pcni, pre$pi, pre$px, theta_grid,
+                           pop$mu, pop$sigma, group_n, group,ref_group)
+
+      SE = sqrt(-diag(solve(res$H)))
+
+      items$se_a=SE[seq(1,2*nit,2)]
+      items$se_b=SE[seq(2,2*nit,2)]
+      if(has_groups)
+      {
+        pop$se_mu = NA_real_
+        pop$se_sigma = NA_real_
+        pop$se_mu[-(ref_group+1)] = SE[seq(2*nit+1,length(SE),2)]
+        pop$se_sigma[-(ref_group+1)] = SE[seq(2*nit+2,length(SE),2)]
+      }
     }
     # so far
-    return(list(start = list(a=a,beta=beta,theta=theta),
-                items=items,pop=pop,theta=em$thetabar,ll=em$LL,niter=em$niter,
-                pre = pre))
+    return(list(start = list(a=a,beta=beta,theta=theta),pre = pre,
+                items=items, pop=pop,theta=em$thetabar,ll=em$LL,niter=em$niter))
   }
   else
   {

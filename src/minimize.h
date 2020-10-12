@@ -1,3 +1,5 @@
+#ifndef DXM_MINIMIZE_
+#define DXM_MINIMIZE_
 
 #include <RcppArmadillo.h>
 
@@ -140,3 +142,5 @@ void dfpmin(arma::vec& p, const double gtol, int &iter, double &fret, T &funcd)
 	}
 	Rcpp::stop("too many iterations in dfpmin");
 }
+
+#endif

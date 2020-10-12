@@ -13,15 +13,11 @@ start_lr <- function(theta, ip, ix, inp, icnp, ibeta) {
     .Call(`_dexterMML_start_lr`, theta, ip, ix, inp, icnp, ibeta)
 }
 
-estimate_2pl_dich <- function(a_start, b_start, pni, pcni, pi, px, theta, mu = 0, sigma = 1) {
-    .Call(`_dexterMML_estimate_2pl_dich`, a_start, b_start, pni, pcni, pi, px, theta, mu, sigma)
-}
-
 estimate_2pl_dich_multigroup <- function(a_start, b_start, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group = 0L) {
     .Call(`_dexterMML_estimate_2pl_dich_multigroup`, a_start, b_start, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group)
 }
 
-oakes <- function(a_fixed, b_fixed, pni, pcni, pi, px, theta, mu_fixed, sigma_fixed, gn, pgroup) {
-    .Call(`_dexterMML_oakes`, a_fixed, b_fixed, pni, pcni, pi, px, theta, mu_fixed, sigma_fixed, gn, pgroup)
+Oakes_2pl_dich <- function(a, b, r0, r1, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, ref_group = 0L) {
+    .Call(`_dexterMML_Oakes_2pl_dich`, a, b, r0, r1, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, ref_group)
 }
 

@@ -53,25 +53,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// estimate_2pl_dich
-Rcpp::List estimate_2pl_dich(const arma::vec& a_start, const arma::vec& b_start, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, arma::vec& theta, const double mu, const double sigma);
-RcppExport SEXP _dexterMML_estimate_2pl_dich(SEXP a_startSEXP, SEXP b_startSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP thetaSEXP, SEXP muSEXP, SEXP sigmaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::vec& >::type a_start(a_startSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type b_start(b_startSEXP);
-    Rcpp::traits::input_parameter< const arma::ivec& >::type pni(pniSEXP);
-    Rcpp::traits::input_parameter< const arma::ivec& >::type pcni(pcniSEXP);
-    Rcpp::traits::input_parameter< const arma::ivec& >::type pi(piSEXP);
-    Rcpp::traits::input_parameter< const arma::ivec& >::type px(pxSEXP);
-    Rcpp::traits::input_parameter< arma::vec& >::type theta(thetaSEXP);
-    Rcpp::traits::input_parameter< const double >::type mu(muSEXP);
-    Rcpp::traits::input_parameter< const double >::type sigma(sigmaSEXP);
-    rcpp_result_gen = Rcpp::wrap(estimate_2pl_dich(a_start, b_start, pni, pcni, pi, px, theta, mu, sigma));
-    return rcpp_result_gen;
-END_RCPP
-}
 // estimate_2pl_dich_multigroup
 Rcpp::List estimate_2pl_dich_multigroup(const arma::vec& a_start, const arma::vec& b_start, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, arma::vec& theta, const arma::vec& mu_start, const arma::vec& sigma_start, const arma::ivec& gn, const arma::ivec& pgroup, const int ref_group);
 RcppExport SEXP _dexterMML_estimate_2pl_dich_multigroup(SEXP a_startSEXP, SEXP b_startSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP thetaSEXP, SEXP mu_startSEXP, SEXP sigma_startSEXP, SEXP gnSEXP, SEXP pgroupSEXP, SEXP ref_groupSEXP) {
@@ -94,24 +75,27 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// oakes
-arma::mat oakes(const arma::vec& a_fixed, const arma::vec& b_fixed, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, arma::vec& theta, const arma::vec& mu_fixed, const arma::vec& sigma_fixed, const arma::ivec& gn, const arma::ivec& pgroup);
-RcppExport SEXP _dexterMML_oakes(SEXP a_fixedSEXP, SEXP b_fixedSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP thetaSEXP, SEXP mu_fixedSEXP, SEXP sigma_fixedSEXP, SEXP gnSEXP, SEXP pgroupSEXP) {
+// Oakes_2pl_dich
+Rcpp::List Oakes_2pl_dich(const arma::vec& a, const arma::vec& b, arma::mat& r0, arma::mat& r1, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, arma::vec& theta, const arma::vec& mu, const arma::vec& sigma, const arma::ivec& gn, const arma::ivec& pgroup, const int ref_group);
+RcppExport SEXP _dexterMML_Oakes_2pl_dich(SEXP aSEXP, SEXP bSEXP, SEXP r0SEXP, SEXP r1SEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP thetaSEXP, SEXP muSEXP, SEXP sigmaSEXP, SEXP gnSEXP, SEXP pgroupSEXP, SEXP ref_groupSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::vec& >::type a_fixed(a_fixedSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type b_fixed(b_fixedSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type a(aSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type b(bSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type r0(r0SEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type r1(r1SEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type pni(pniSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type pcni(pcniSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type pi(piSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type px(pxSEXP);
     Rcpp::traits::input_parameter< arma::vec& >::type theta(thetaSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type mu_fixed(mu_fixedSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type sigma_fixed(sigma_fixedSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type sigma(sigmaSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type gn(gnSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type pgroup(pgroupSEXP);
-    rcpp_result_gen = Rcpp::wrap(oakes(a_fixed, b_fixed, pni, pcni, pi, px, theta, mu_fixed, sigma_fixed, gn, pgroup));
+    Rcpp::traits::input_parameter< const int >::type ref_group(ref_groupSEXP);
+    rcpp_result_gen = Rcpp::wrap(Oakes_2pl_dich(a, b, r0, r1, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, ref_group));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -120,9 +104,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_mat_pre", (DL_FUNC) &_dexterMML_mat_pre, 1},
     {"_dexterMML_prox_dich", (DL_FUNC) &_dexterMML_prox_dich, 10},
     {"_dexterMML_start_lr", (DL_FUNC) &_dexterMML_start_lr, 6},
-    {"_dexterMML_estimate_2pl_dich", (DL_FUNC) &_dexterMML_estimate_2pl_dich, 9},
     {"_dexterMML_estimate_2pl_dich_multigroup", (DL_FUNC) &_dexterMML_estimate_2pl_dich_multigroup, 12},
-    {"_dexterMML_oakes", (DL_FUNC) &_dexterMML_oakes, 11},
+    {"_dexterMML_Oakes_2pl_dich", (DL_FUNC) &_dexterMML_Oakes_2pl_dich, 14},
     {NULL, NULL, 0}
 };
 
