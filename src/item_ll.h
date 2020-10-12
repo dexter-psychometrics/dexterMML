@@ -80,4 +80,66 @@ struct ll_2pl_dich
 	}
 };
 
+// polytomous nrm (can also be used for dichotmous nrm or rasch)
+// this uses Timo's b parametrisation
+struct ll_nrm
+{
+	arma::mat r; //rows for categories, columns for theta
+	arma::mat exp_theta_a;
+	
+	int nt;
+	int ncat;
+	
+	// a should include 0 cat
+	ll_nrm(const arma::ivec& a, const arma::vec& theta, double* rp) 
+	{
+		ncat = a.n_elem;
+		nt = theta.n_elem;
+		r = arma::mat(rp,ncat,nt);
+		exp_theta_a = arma::mat(ncat,nt);
+
+		for(int t=0;t<nt;t++)
+			for(int k=0;k<ncat;k++)
+				exp_theta_a.at(k,t) = std::exp(a[k] * theta[t]);		
+	}
+	
+	double operator()(const arma::vec& b)
+	{
+		double ll=0;
+		for(int t=0;t<nt;t++)
+			ll -= accu(r.col(t) % arma::log(exp_theta_a.col(t) % b/accu(exp_theta_a.col(t) % b)));
+
+		return ll;
+	}
+
+	void df(const arma::vec& b, arma::vec& g)
+	{
+		g.zeros();
+		for(int t=0; t<nt; t++)
+		{
+			double s = accu(exp_theta_a.col(t) % b);
+			g += r.col(t) % exp_theta_a.col(t)/s + 1/b;
+		}
+	}
+	
+	void hess(const arma::vec& b, arma::mat& h)
+	{
+		h.zeros();
+		for(int t=0; t<nt; t++)
+		{
+			double s = SQR(accu(exp_theta_a.col(t) % b));
+			for(int i=0; i<ncat;i++)
+			{
+				h.at(i,i) += SQR(exp_theta_a.at(i,t))/s;
+				for(int j=i+1;j<ncat; j++)
+					h.at(i,j) += exp_theta_a.at(i,t) * exp_theta_a.at(j,t)/s;
+			}
+		}
+		for(int i=0;i<ncat;i++)
+			for(int j=i+1; j<ncat; j++)
+				h.at(j,i) = h.at(i,j);	
+	}
+
+};
+
 #endif
