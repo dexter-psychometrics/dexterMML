@@ -7,21 +7,24 @@
 est = function(dat, group = NULL,se=FALSE)
 {
   mode(dat) = 'integer'
-  pre = lapply(mat_pre(dat), drop)
+  max_score = max(dat,na.rm=TRUE)
+  pre = lapply(mat_pre(dat, max_score), drop)
 
   if(any(pre$imax < 1))
      stop('found items with maximum score 0')
+  if(any(pre$icat[1,]==0))
+    stop('found items without a zero score')
 
-  # assume for now max>1 means poly and not teacher weighted
 
-  if(max(pre$imax) == 1L)
+  if(all(pre$ncat==2))
   {
     # dichotomous case
-    if(any(pre$isum==pre$inp))
-      stop('found items without 0 scores')
+    # to do: this only when discr desired
+    # if item score other than 0/1 to do: recode
 
     #starting values
     # prox algorithm for dichotomous
+    # for adaptive data the prox algo may be very wrong, just have to test
     prox = prox_dich(
       pre$isum, pre$psum,
       pre$inp, pre$pni, pre$icnp, pre$pcni,
@@ -102,6 +105,12 @@ est = function(dat, group = NULL,se=FALSE)
   }
   else
   {
+    # this changes the respons vectors in pre
+    a = categorize(pre$inp, pre$pni, pre$icnp, pre$pcni,pre$ip, pre$pi,
+                       pre$icat, pre$ncat, pre$ix, pre$px)
+
+
+    # nominal response model
     # see https://web.archive.org/web/20190719030511/https://www.rasch.org/rmt/rmt84k.htm
     stop('not started poly yet')
   }

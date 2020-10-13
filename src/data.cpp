@@ -6,16 +6,17 @@ using Rcpp::Named;
 
 
 
-// will assume no missing categories for now
+// to do: min should be >=0
 // gives two data sets:
 // person, item, score
 // item, person, score
 // [[Rcpp::export]]
-Rcpp::List mat_pre(arma::imat& dat)
+Rcpp::List mat_pre(arma::imat& dat, const int max_score)
 {
 	const int nit = dat.n_cols, np = dat.n_rows;
 	
-	ivec isum(nit,fill::zeros), imax(nit,fill::zeros), inp(nit,fill::zeros);
+	imat icat(max_score+1,nit, fill::zeros);
+	ivec inp(nit,fill::zeros);
 	ivec psum(np,fill::zeros), pni(np,fill::zeros);
 
 // margins
@@ -25,13 +26,12 @@ Rcpp::List mat_pre(arma::imat& dat)
 
 		for(int p=0; p<np; p++)
 		{
-			if(rsp[p]>=0)
+			if(rsp[p]>=0) // NA test
 			{
-				isum[i] += rsp[p];
 				psum[p] += rsp[p];				
 				inp[i]++;
 				pni[p]++;
-				imax[i] = std::max(imax[i],rsp[p]);				
+				icat.at(rsp[p],i)++;			
 			}		
 		}	
 	}
@@ -66,10 +66,76 @@ Rcpp::List mat_pre(arma::imat& dat)
 			}
 		}
 	}
+	
+	ivec imax(nit), isum(nit,fill::zeros), ncat(nit, fill::zeros);
+	for(int i=0;i<nit;i++)
+	{
+		for(int k = max_score; k>=0; k++)
+			if(icat.at(k,i)>0)
+			{
+				imax[i] = k;
+				break;
+			}
+		for(int k=0; k<=max_score; k++) if(icat.at(k,i)>0)
+		{
+			isum[i] += k * icat.at(k,i);
+			ncat[i]++;
+		}
+	}
+	
 	return Rcpp::List::create(
 		Named("pi") = pi, Named("px") = px, Named("ip") = ip, Named("ix") = ix,
 		Named("inp") = inp, Named("icnp") = icnp, Named("pni") = pni, Named("pcni") = pcni,
-		Named("imax") = imax, Named("isum") = isum, Named("psum") = psum);
+		Named("icat") = icat, Named("ncat") = ncat, Named("imax") = imax, Named("isum") = isum, Named("psum") = psum);
+}
+
+// ix and px changed in place if necessary
+// returns matrix a
+// [[Rcpp::export]]
+arma::imat categorize(const arma::ivec& inp, const arma::ivec& pni,
+						const arma::ivec& icnp, const arma::ivec& pcni,
+						const arma::ivec& ip, const arma::ivec& pi,				
+						const arma::imat& icat, const arma::vec& ncat,
+						arma::ivec& ix, arma::ivec& px)
+{
+	
+	const int max_cat = max(ncat), nit = icat.n_cols, np = pni.n_elem;
+	imat a(max_cat, nit, fill::zeros);
+	imat ai(icat.n_rows, icat.n_cols,fill::zeros);
+		
+	bool recode = false;
+	for(int i=0; i<nit; i++)
+	{
+		int k=0;
+		for(int j=0; j<ncat[i]; j++)
+		{
+			if(icat.at(j,i) == 0) 
+				recode = true;
+			else
+			{
+				a.at(k,i) = j;
+				ai.at(j,i) = k;
+				k++;
+			}
+		}			
+	}
+	
+	if(recode)
+	{	
+#pragma omp parallel for	
+		for(int i=0; i<nit; i++)
+		{
+			for(int j=icnp[i]; j<icnp[i+1]; j++)
+				ix[j] = ai.at(ix[j],i);
+		}
+#pragma omp parallel for	
+		for(int p=0; p<np; p++)
+		{
+			for(int j=pcni[p]; j<pcni[p+1]; j++)
+				px[j] = ai.at(px[j],pi[j]);
+		}
+	}	
+	return a;
 }
 
 
@@ -208,8 +274,8 @@ Rcpp::List start_lr(const arma::vec& theta,
 			
 			vec delta = solve(h,g);
 			
-			a += delta.at(0,0);
-			b += delta.at(1,0);
+			a += delta[0];
+			b += delta[1];
 			
 			if(iter>0 && std::abs(ll-ll_old)<convergence)
 				break;

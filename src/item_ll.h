@@ -86,40 +86,53 @@ struct ll_nrm
 {
 	arma::mat r; //rows for categories, columns for theta
 	arma::mat exp_theta_a;
+	arma::vec b,g;
 	
 	int nt;
 	int ncat;
 	
-	// a should include 0 cat
-	ll_nrm(const arma::ivec& a, const arma::vec& theta, double* rp) 
+	// a includes 0 cat
+	ll_nrm(const arma::ivec& a, const arma::vec& theta, const arma::mat& r_) 
 	{
-		ncat = a.n_elem;
+		ncat = r_.n_cols;
 		nt = theta.n_elem;
-		r = arma::mat(rp,ncat,nt);
+		r = r_.t(); // transpose is ugly, better way?
 		exp_theta_a = arma::mat(ncat,nt);
+		b = arma::vec(ncat);
+		g = arma::vec(ncat);
+		b[0]=1;
 
 		for(int t=0;t<nt;t++)
 			for(int k=0;k<ncat;k++)
 				exp_theta_a.at(k,t) = std::exp(a[k] * theta[t]);		
 	}
 	
-	double operator()(const arma::vec& b)
+	// b should not include 0 score
+	double operator()(const arma::vec& estb)
 	{
 		double ll=0;
+		for(int k=1;k<ncat;k++)
+			b[k] = estb[k-1];
+		
 		for(int t=0;t<nt;t++)
 			ll -= accu(r.col(t) % arma::log(exp_theta_a.col(t) % b/accu(exp_theta_a.col(t) % b)));
 
 		return ll;
 	}
 
-	void df(const arma::vec& b, arma::vec& g)
+	void df(const arma::vec& estb, arma::vec& outg)
 	{
+		for(int k=1;k<ncat;k++)
+			b[k] = estb[k-1];
+		
 		g.zeros();
 		for(int t=0; t<nt; t++)
 		{
 			double s = accu(exp_theta_a.col(t) % b);
 			g += r.col(t) % exp_theta_a.col(t)/s + 1/b;
 		}
+		for(int k=1;k<ncat;k++)
+			outg[k-1] = g[k];
 	}
 	
 	void hess(const arma::vec& b, arma::mat& h)
@@ -128,15 +141,16 @@ struct ll_nrm
 		for(int t=0; t<nt; t++)
 		{
 			double s = SQR(accu(exp_theta_a.col(t) % b));
-			for(int i=0; i<ncat;i++)
+			for(int i=1; i<ncat;i++)
 			{
-				h.at(i,i) += SQR(exp_theta_a.at(i,t))/s;
+				h.at(i-1,i-1) += SQR(exp_theta_a.at(i,t))/s;
 				for(int j=i+1;j<ncat; j++)
-					h.at(i,j) += exp_theta_a.at(i,t) * exp_theta_a.at(j,t)/s;
+					h.at(i-1,j-1) += exp_theta_a.at(i,t) * exp_theta_a.at(j,t)/s;
 			}
 		}
-		for(int i=0;i<ncat;i++)
-			for(int j=i+1; j<ncat; j++)
+		
+		for(int i=0;i<ncat-1;i++)
+			for(int j=i+1; j<ncat-1; j++)
 				h.at(j,i) = h.at(i,j);	
 	}
 
