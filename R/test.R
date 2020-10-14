@@ -4,22 +4,44 @@
 
 #' 2pl dichotomous items, 1 population
 #'
-est = function(dat, group = NULL,se=FALSE)
+est = function(dat, group = NULL, model= c('1PL','2PL'), se=FALSE)
 {
+  model = match.arg(model)
+  
   mode(dat) = 'integer'
   max_score = max(dat,na.rm=TRUE)
+  
   pre = lapply(mat_pre(dat, max_score), drop)
 
   if(any(pre$imax < 1))
      stop('found items with maximum score 0')
   if(any(pre$icat[1,]==0))
     stop('found items without a zero score')
+  
+  if(is.null(group))
+  {
+    has_groups=FALSE
+    group = integer(nrow(dat))
+    ref_group = 0L
+    group_n = nrow(dat)
+    group_id = 'population'
+  } else
+  {
+    has_groups = TRUE
+    group = as.factor(group)
+    group_id = levels(group)
+    group = as.integer(group) -1L
+    group_n = as.integer(table(group))
+    ref_group = which.max(group_n) -1L
+  }
 
+  theta_grid = seq(-6,6,.6)
 
-  if(all(pre$ncat==2))
+  # estimation
+  
+  if(model == '2PL' && all(pre$ncat==2))
   {
     # dichotomous case
-    # to do: this only when discr desired
     # if item score other than 0/1 to do: recode
 
     #starting values
@@ -32,25 +54,6 @@ est = function(dat, group = NULL,se=FALSE)
 
     theta = drop(prox$theta)
     beta = drop(prox$beta)
-
-
-    if(is.null(group))
-    {
-      has_groups=FALSE
-      group = integer(nrow(dat))
-      ref_group = 0L
-      group_n = nrow(dat)
-      group_id = 'population'
-    } else
-    {
-      has_groups = TRUE
-      group = as.factor(group)
-      group_id = levels(group)
-      group = as.integer(group) -1L
-      group_n = as.integer(table(group))
-      ref_group = which.max(group_n) -1L
-
-    }
 
     #normalize
     m_ = weighted.mean(theta[group==ref_group], pre$pni[group==ref_group])
@@ -69,8 +72,6 @@ est = function(dat, group = NULL,se=FALSE)
                    beta)
     a = drop(j$alpha)
     beta = drop(j$beta)
-
-    theta_grid = seq(-6,6,.6)
 
     em = estimate_2pl_dich_multigroup(a, beta, pre$pni, pre$pcni, pre$pi, pre$px,
                                          theta_grid, start_mu, start_var, group_n, group, ref_group)
@@ -103,16 +104,29 @@ est = function(dat, group = NULL,se=FALSE)
     return(list(start = list(a=a,beta=beta,theta=theta),pre = pre,
                 items=items, pop=pop,theta=em$thetabar,ll=em$LL,niter=em$niter))
   }
-  else
+  else if(model=='1PL')
   {
-    # this changes the respons vectors in pre
+    # nominal response model
+    
+    # this changes the respons vectors px and ix in pre
     a = categorize(pre$inp, pre$pni, pre$icnp, pre$pcni,pre$ip, pre$pi,
                        pre$icat, pre$ncat, pre$ix, pre$px)
 
-
-    # nominal response model
+    # prox is een lelijk gedoetje voor poly, even gelaten
     # see https://web.archive.org/web/20190719030511/https://www.rasch.org/rmt/rmt84k.htm
-    stop('not started poly yet')
-  }
+    
+    b = matrix(1,nrow(a),ncol(a))
+    
+    mu = rep(0, length(group_n))
+    sigma = rep(1, length(group_n))
+    
+    em = estimate_nrm(a, b, pre$ncat,
+                   pre$pni, pre$pcni, pre$pi, pre$px, 
+                   theta_grid, mu, sigma, group_n, group, ref_group)
 
+    return(em);
+    
+    
+  }
+  stop('2pl poly nog niet gedaan')
 }

@@ -9,14 +9,6 @@ categorize <- function(inp, pni, icnp, pcni, ip, pi, icat, ncat, ix, px) {
     .Call(`_dexterMML_categorize`, inp, pni, icnp, pcni, ip, pi, icat, ncat, ix, px)
 }
 
-prox_dich <- function(isum, psum, inp, pni, icnp, pcni, ip, pi, max_iter = 20L, min_change = 0.01) {
-    .Call(`_dexterMML_prox_dich`, isum, psum, inp, pni, icnp, pcni, ip, pi, max_iter, min_change)
-}
-
-start_lr <- function(theta, ip, ix, inp, icnp, ibeta) {
-    .Call(`_dexterMML_start_lr`, theta, ip, ix, inp, icnp, ibeta)
-}
-
 estimate_2pl_dich_multigroup <- function(a_start, b_start, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group = 0L) {
     .Call(`_dexterMML_estimate_2pl_dich_multigroup`, a_start, b_start, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group)
 }
@@ -27,5 +19,13 @@ estimate_nrm <- function(a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, s
 
 Oakes_2pl_dich <- function(a, b, r0, r1, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, ref_group = 0L) {
     .Call(`_dexterMML_Oakes_2pl_dich`, a, b, r0, r1, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, ref_group)
+}
+
+prox_dich <- function(isum, psum, inp, pni, icnp, pcni, ip, pi, max_iter = 20L, min_change = 0.01) {
+    .Call(`_dexterMML_prox_dich`, isum, psum, inp, pni, icnp, pcni, ip, pi, max_iter, min_change)
+}
+
+start_lr <- function(theta, ip, ix, inp, icnp, ibeta) {
+    .Call(`_dexterMML_start_lr`, theta, ip, ix, inp, icnp, ibeta)
 }
 

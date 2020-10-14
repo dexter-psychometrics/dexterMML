@@ -12,7 +12,7 @@ void field_plus(field<mat>& a, const field<mat>& b)
     const int n = b.n_slices;
 
 	for(int i=0; i<n; i++)
-		a(i) += + b(i);
+		a(i) += b(i);
 }
 
 #pragma omp declare reduction( + : arma::field<mat> : field_plus(omp_out, omp_in)) \
@@ -39,12 +39,19 @@ mat nrm_trace(const arma::vec& theta, int* ap, double* bp, const int ncat)
 	vec b(bp, ncat, false, true);
 	
 	for(int j=0; j< nt; j++)
-		out.row(j) = b % exp(theta[j] * a) / accu(b % exp(theta[j] * a));
+	{
+		double sm=0;
+		for(int k=0;k<ncat;k++)
+			sm += b[k]*std::exp(theta[j]*a[k]);
+		for(int k=0;k<ncat;k++)
+			out.at(j,k) = std::exp(theta[j]*a[k])/sm;
+	}
+		//out.row(j) = (b % exp(theta[j] * a) / accu(b % exp(theta[j] * a))).t();
 
 	return out;
 }
 
-
+// kan nog sneller gemaakt omdar er sufstats zijn voor deze 
 // x moet gehercodeerd zijn naar categorie nummers, zonder gaten
 void estep_nrm(imat& a, mat& b, const ivec& ncat, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
 				const vec& theta, field<mat>& r, vec& thetabar, vec& sumtheta, vec& sumsig2, const vec& mu, const vec& sigma, const ivec& pgroup, double& ll)
@@ -69,10 +76,10 @@ void estep_nrm(imat& a, mat& b, const ivec& ncat, const ivec& pni, const ivec& p
 	
 	ll=0;
 	
-#pragma omp parallel
+/* pragma omp parallel */
 	{
 		vec posterior(nt);
-# pragma omp for reduction(+:r,sigma2, sumtheta,ll)
+/*  pragma omp for reduction(+:r,sigma2, sumtheta,ll) */
 		for(int p=0; p<np;p++)
 		{
 			int g = pgroup[p];
@@ -126,21 +133,22 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 	
 	for(; iter<max_iter; iter++)
 	{
+
 		estep_nrm(a, b, ncat, pni, pcni, pi, px, 
 					theta, r, thetabar, sum_theta, sum_sigma2, mu, sigma, pgroup, ll);
 		
 		
 		double maxdif_b=0;
-#pragma omp parallel for reduction(max: maxdif_b)
+/*  omp parallel for reduction(max: maxdif_b) */
 		for(int i=0; i<nit; i++)
-		{				
+		{	
 			ll_nrm f(a.col(i), theta, r(i));
 			vec pars(b.colptr(i)+1,ncat[i]-1);
 			int itr=0;
 			double ll_itm=0;
 			
 			dfpmin(pars, tol, itr, ll_itm, f);
-			
+
 			for(int k=1;k<ncat[i];k++)
 			{
 				maxdif_b = std::max(maxdif_b, std::abs(b.at(k,i) - pars[k-1]));
@@ -153,7 +161,7 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 			if(g==ref_group)
 			{
 				mu[g] = 0;
-				sigma[g] = 1;
+				sigma[g] = std::sqrt(sum_sigma2[g]/gn[g]);
 			}
 			else
 			{

@@ -85,56 +85,73 @@ struct ll_2pl_dich
 struct ll_nrm
 {
 	arma::mat r; //rows for categories, columns for theta
-	arma::mat exp_theta_a;
-	arma::vec b,g;
+	arma::mat eat;
+	arma::vec p;
 	
 	int nt;
 	int ncat;
 	
 	// a includes 0 cat
-	ll_nrm(const arma::ivec& a, const arma::vec& theta, const arma::mat& r_) 
+	ll_nrm(const arma::ivec& a, const arma::vec& theta, arma::mat& r_) 
 	{
 		ncat = r_.n_cols;
 		nt = theta.n_elem;
-		r = r_.t(); // transpose is ugly, better way?
-		exp_theta_a = arma::mat(ncat,nt);
-		b = arma::vec(ncat);
-		g = arma::vec(ncat);
-		b[0]=1;
-
-		for(int t=0;t<nt;t++)
-			for(int k=0;k<ncat;k++)
-				exp_theta_a.at(k,t) = std::exp(a[k] * theta[t]);		
+		p = arma::vec(ncat);
+		r = arma::mat(r_.memptr(),nt,ncat,false,true);
+		eat = arma::mat(ncat-1,nt);
+		for(int t=0; t<nt;t++)
+			for(int k=1;k<ncat;k++)
+				eat.at(k-1,t) = std::exp(a[k] * theta[t]); 
+			
 	}
 	
 	// b should not include 0 score
-	double operator()(const arma::vec& estb)
+	double operator()(const arma::vec& b)
 	{
 		double ll=0;
-		for(int k=1;k<ncat;k++)
-			b[k] = estb[k-1];
 		
-		for(int t=0;t<nt;t++)
-			ll -= accu(r.col(t) % arma::log(exp_theta_a.col(t) % b/accu(exp_theta_a.col(t) % b)));
+		for(int t=0; t<nt; t++)
+		{
+			double s=1;
+			p[0] = 1;
+			for(int k=1; k<ncat; k++)
+			{
+				p[k] = b[k-1] * eat.at(k-1,t);
+				s += p[k];
+			}
+
+			for(int k=0; k<ncat; k++)
+				ll -= r.at(t,k) * std::log(p[k]/s);
+		}		
+		
+		
+		if(std::isinf(ll))
+		{
+			b.print("b:");
+			fflush(stdout);
+			Rcpp::stop("inf ll");
+		}
 
 		return ll;
 	}
 
-	void df(const arma::vec& estb, arma::vec& outg)
+	void df(const arma::vec& b, arma::vec& g)
 	{
-		for(int k=1;k<ncat;k++)
-			b[k] = estb[k-1];
 		
 		g.zeros();
-		for(int t=0; t<nt; t++)
+		
+		for(int k=1; k<ncat;k++)
+			g[k-1] -= accu(r.col(k) / b[k-1]);
+		
+		
+		if(!g.is_finite())
 		{
-			double s = accu(exp_theta_a.col(t) % b);
-			g += r.col(t) % exp_theta_a.col(t)/s + 1/b;
+			b.print("b:");
+			fflush(stdout);
+			Rcpp::stop("inf gradient");
 		}
-		for(int k=1;k<ncat;k++)
-			outg[k-1] = g[k];
 	}
-	
+	/*
 	void hess(const arma::vec& b, arma::mat& h)
 	{
 		h.zeros();
@@ -153,7 +170,7 @@ struct ll_nrm
 			for(int j=i+1; j<ncat-1; j++)
 				h.at(j,i) = h.at(i,j);	
 	}
-
+*/
 };
 
 #endif

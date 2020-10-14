@@ -38,42 +38,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// prox_dich
-Rcpp::List prox_dich(const arma::ivec& isum, const arma::ivec& psum, const arma::ivec& inp, const arma::ivec& pni, const arma::ivec& icnp, const arma::ivec& pcni, const arma::ivec& ip, const arma::ivec& pi, const int max_iter, const double min_change);
-RcppExport SEXP _dexterMML_prox_dich(SEXP isumSEXP, SEXP psumSEXP, SEXP inpSEXP, SEXP pniSEXP, SEXP icnpSEXP, SEXP pcniSEXP, SEXP ipSEXP, SEXP piSEXP, SEXP max_iterSEXP, SEXP min_changeSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::ivec& >::type isum(isumSEXP);
-    Rcpp::traits::input_parameter< const arma::ivec& >::type psum(psumSEXP);
-    Rcpp::traits::input_parameter< const arma::ivec& >::type inp(inpSEXP);
-    Rcpp::traits::input_parameter< const arma::ivec& >::type pni(pniSEXP);
-    Rcpp::traits::input_parameter< const arma::ivec& >::type icnp(icnpSEXP);
-    Rcpp::traits::input_parameter< const arma::ivec& >::type pcni(pcniSEXP);
-    Rcpp::traits::input_parameter< const arma::ivec& >::type ip(ipSEXP);
-    Rcpp::traits::input_parameter< const arma::ivec& >::type pi(piSEXP);
-    Rcpp::traits::input_parameter< const int >::type max_iter(max_iterSEXP);
-    Rcpp::traits::input_parameter< const double >::type min_change(min_changeSEXP);
-    rcpp_result_gen = Rcpp::wrap(prox_dich(isum, psum, inp, pni, icnp, pcni, ip, pi, max_iter, min_change));
-    return rcpp_result_gen;
-END_RCPP
-}
-// start_lr
-Rcpp::List start_lr(const arma::vec& theta, const arma::ivec& ip, const arma::ivec& ix, const arma::ivec& inp, const arma::ivec& icnp, const arma::vec& ibeta);
-RcppExport SEXP _dexterMML_start_lr(SEXP thetaSEXP, SEXP ipSEXP, SEXP ixSEXP, SEXP inpSEXP, SEXP icnpSEXP, SEXP ibetaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
-    Rcpp::traits::input_parameter< const arma::ivec& >::type ip(ipSEXP);
-    Rcpp::traits::input_parameter< const arma::ivec& >::type ix(ixSEXP);
-    Rcpp::traits::input_parameter< const arma::ivec& >::type inp(inpSEXP);
-    Rcpp::traits::input_parameter< const arma::ivec& >::type icnp(icnpSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type ibeta(ibetaSEXP);
-    rcpp_result_gen = Rcpp::wrap(start_lr(theta, ip, ix, inp, icnp, ibeta));
-    return rcpp_result_gen;
-END_RCPP
-}
 // estimate_2pl_dich_multigroup
 Rcpp::List estimate_2pl_dich_multigroup(const arma::vec& a_start, const arma::vec& b_start, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, arma::vec& theta, const arma::vec& mu_start, const arma::vec& sigma_start, const arma::ivec& gn, const arma::ivec& pgroup, const int ref_group);
 RcppExport SEXP _dexterMML_estimate_2pl_dich_multigroup(SEXP a_startSEXP, SEXP b_startSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP thetaSEXP, SEXP mu_startSEXP, SEXP sigma_startSEXP, SEXP gnSEXP, SEXP pgroupSEXP, SEXP ref_groupSEXP) {
@@ -143,15 +107,51 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// prox_dich
+Rcpp::List prox_dich(const arma::ivec& isum, const arma::ivec& psum, const arma::ivec& inp, const arma::ivec& pni, const arma::ivec& icnp, const arma::ivec& pcni, const arma::ivec& ip, const arma::ivec& pi, const int max_iter, const double min_change);
+RcppExport SEXP _dexterMML_prox_dich(SEXP isumSEXP, SEXP psumSEXP, SEXP inpSEXP, SEXP pniSEXP, SEXP icnpSEXP, SEXP pcniSEXP, SEXP ipSEXP, SEXP piSEXP, SEXP max_iterSEXP, SEXP min_changeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::ivec& >::type isum(isumSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type psum(psumSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type inp(inpSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pni(pniSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type icnp(icnpSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pcni(pcniSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type ip(ipSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pi(piSEXP);
+    Rcpp::traits::input_parameter< const int >::type max_iter(max_iterSEXP);
+    Rcpp::traits::input_parameter< const double >::type min_change(min_changeSEXP);
+    rcpp_result_gen = Rcpp::wrap(prox_dich(isum, psum, inp, pni, icnp, pcni, ip, pi, max_iter, min_change));
+    return rcpp_result_gen;
+END_RCPP
+}
+// start_lr
+Rcpp::List start_lr(const arma::vec& theta, const arma::ivec& ip, const arma::ivec& ix, const arma::ivec& inp, const arma::ivec& icnp, const arma::vec& ibeta);
+RcppExport SEXP _dexterMML_start_lr(SEXP thetaSEXP, SEXP ipSEXP, SEXP ixSEXP, SEXP inpSEXP, SEXP icnpSEXP, SEXP ibetaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type ip(ipSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type ix(ixSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type inp(inpSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type icnp(icnpSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type ibeta(ibetaSEXP);
+    rcpp_result_gen = Rcpp::wrap(start_lr(theta, ip, ix, inp, icnp, ibeta));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_mat_pre", (DL_FUNC) &_dexterMML_mat_pre, 2},
     {"_dexterMML_categorize", (DL_FUNC) &_dexterMML_categorize, 10},
-    {"_dexterMML_prox_dich", (DL_FUNC) &_dexterMML_prox_dich, 10},
-    {"_dexterMML_start_lr", (DL_FUNC) &_dexterMML_start_lr, 6},
     {"_dexterMML_estimate_2pl_dich_multigroup", (DL_FUNC) &_dexterMML_estimate_2pl_dich_multigroup, 12},
     {"_dexterMML_estimate_nrm", (DL_FUNC) &_dexterMML_estimate_nrm, 13},
     {"_dexterMML_Oakes_2pl_dich", (DL_FUNC) &_dexterMML_Oakes_2pl_dich, 14},
+    {"_dexterMML_prox_dich", (DL_FUNC) &_dexterMML_prox_dich, 10},
+    {"_dexterMML_start_lr", (DL_FUNC) &_dexterMML_start_lr, 6},
     {NULL, NULL, 0}
 };
 
