@@ -7,17 +7,17 @@
 est = function(dat, group = NULL, model= c('1PL','2PL'), se=FALSE)
 {
   model = match.arg(model)
-  
+
   mode(dat) = 'integer'
   max_score = max(dat,na.rm=TRUE)
-  
+
   pre = lapply(mat_pre(dat, max_score), drop)
 
   if(any(pre$imax < 1))
      stop('found items with maximum score 0')
   if(any(pre$icat[1,]==0))
     stop('found items without a zero score')
-  
+
   if(is.null(group))
   {
     has_groups=FALSE
@@ -38,7 +38,7 @@ est = function(dat, group = NULL, model= c('1PL','2PL'), se=FALSE)
   theta_grid = seq(-6,6,.6)
 
   # estimation
-  
+
   if(model == '2PL' && all(pre$ncat==2))
   {
     # dichotomous case
@@ -107,26 +107,26 @@ est = function(dat, group = NULL, model= c('1PL','2PL'), se=FALSE)
   else if(model=='1PL')
   {
     # nominal response model
-    
+
     # this changes the respons vectors px and ix in pre
     a = categorize(pre$inp, pre$pni, pre$icnp, pre$pcni,pre$ip, pre$pi,
                        pre$icat, pre$ncat, pre$ix, pre$px)
 
     # prox is een lelijk gedoetje voor poly, even gelaten
     # see https://web.archive.org/web/20190719030511/https://www.rasch.org/rmt/rmt84k.htm
-    
-    b = matrix(1,nrow(a),ncol(a))
-    
+
+    b = matrix(1:nrow(a),nrow(a),ncol(a))
+
     mu = rep(0, length(group_n))
     sigma = rep(1, length(group_n))
-    
+
     em = estimate_nrm(a, b, pre$ncat,
-                   pre$pni, pre$pcni, pre$pi, pre$px, 
+                   pre$pni, pre$pcni, pre$pi, pre$px,
                    theta_grid, mu, sigma, group_n, group, ref_group)
 
     return(em);
-    
-    
+
+
   }
   stop('2pl poly nog niet gedaan')
 }

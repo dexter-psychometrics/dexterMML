@@ -140,9 +140,21 @@ struct ll_nrm
 		
 		g.zeros();
 		
-		for(int k=1; k<ncat;k++)
-			g[k-1] -= accu(r.col(k) / b[k-1]);
-		
+		for(int t=0; t<nt; t++)
+		{
+			double s=1,ss=0;
+			p[0] = 1;
+			for(int k=1; k<ncat; k++)
+			{
+				p[k] = b[k-1] * eat.at(k-1,t);
+				s += p[k];
+				ss += r.at(t,k);
+			}
+			for(int k=1; k<ncat; k++)
+			{
+				g[k-1] += (b[k-1]*(ss-r.at(t,k))*eat.at(k-1,t) - r.at(t,k)*(s-p[k])) / (b[k-1]*s);
+			}
+		}	
 		
 		if(!g.is_finite())
 		{
@@ -151,26 +163,8 @@ struct ll_nrm
 			Rcpp::stop("inf gradient");
 		}
 	}
-	/*
-	void hess(const arma::vec& b, arma::mat& h)
-	{
-		h.zeros();
-		for(int t=0; t<nt; t++)
-		{
-			double s = SQR(accu(exp_theta_a.col(t) % b));
-			for(int i=1; i<ncat;i++)
-			{
-				h.at(i-1,i-1) += SQR(exp_theta_a.at(i,t))/s;
-				for(int j=i+1;j<ncat; j++)
-					h.at(i-1,j-1) += exp_theta_a.at(i,t) * exp_theta_a.at(j,t)/s;
-			}
-		}
-		
-		for(int i=0;i<ncat-1;i++)
-			for(int j=i+1; j<ncat-1; j++)
-				h.at(j,i) = h.at(i,j);	
-	}
-*/
+
+
 };
 
 #endif

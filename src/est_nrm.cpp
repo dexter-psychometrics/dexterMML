@@ -44,10 +44,9 @@ mat nrm_trace(const arma::vec& theta, int* ap, double* bp, const int ncat)
 		for(int k=0;k<ncat;k++)
 			sm += b[k]*std::exp(theta[j]*a[k]);
 		for(int k=0;k<ncat;k++)
-			out.at(j,k) = std::exp(theta[j]*a[k])/sm;
+			out.at(j,k) = b[k]*std::exp(theta[j]*a[k])/sm;
 	}
-		//out.row(j) = (b % exp(theta[j] * a) / accu(b % exp(theta[j] * a))).t();
-
+		
 	return out;
 }
 
