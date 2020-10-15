@@ -142,7 +142,7 @@ struct ll_nrm
 		
 		for(int t=0; t<nt; t++)
 		{
-			double s=1,ss=0;
+			double s=1,ss=r.at(t,0);
 			p[0] = 1;
 			for(int k=1; k<ncat; k++)
 			{
@@ -150,6 +150,7 @@ struct ll_nrm
 				s += p[k];
 				ss += r.at(t,k);
 			}
+			
 			for(int k=1; k<ncat; k++)
 			{
 				g[k-1] += (b[k-1]*(ss-r.at(t,k))*eat.at(k-1,t) - r.at(t,k)*(s-p[k])) / (b[k-1]*s);

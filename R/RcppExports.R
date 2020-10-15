@@ -29,3 +29,15 @@ start_lr <- function(theta, ip, ix, inp, icnp, ibeta) {
     .Call(`_dexterMML_start_lr`, theta, ip, ix, inp, icnp, ibeta)
 }
 
+test_ll <- function(a, b, theta, r) {
+    .Call(`_dexterMML_test_ll`, a, b, theta, r)
+}
+
+test_df <- function(a, b, theta, r) {
+    .Call(`_dexterMML_test_df`, a, b, theta, r)
+}
+
+test_minimize <- function(a, b, theta, r) {
+    .Call(`_dexterMML_test_minimize`, a, b, theta, r)
+}
+
