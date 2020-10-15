@@ -143,11 +143,13 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 		{	
 			ll_nrm f(a.col(i), theta, r(i));
 			vec pars(b.colptr(i)+1,ncat[i]-1);
+			pars=log(pars);
 			int itr=0;
 			double ll_itm=0;
-			
+
 			dfpmin(pars, tol, itr, ll_itm, f);
 
+			pars = exp(pars);
 			for(int k=1;k<ncat[i];k++)
 			{
 				maxdif_b = std::max(maxdif_b, std::abs(b.at(k,i) - pars[k-1]));
@@ -174,7 +176,7 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 		fflush(stdout);
 		
 		
-		if(maxdif_b < .00005)
+		if(maxdif_b < .0001)
 			break;
 		
 	}

@@ -84,7 +84,7 @@ struct ll_2pl_dich
 // this uses Timo's b parametrisation
 struct ll_nrm
 {
-	arma::mat r; //rows for categories, columns for theta
+	arma::mat r;
 	arma::mat eat;
 	arma::vec p;
 	
@@ -106,9 +106,10 @@ struct ll_nrm
 	}
 	
 	// b should not include 0 score
-	double operator()(const arma::vec& b)
+	double operator()(const arma::vec& beta)
 	{
 		double ll=0;
+		const arma::vec b = arma::exp(beta);
 		
 		for(int t=0; t<nt; t++)
 		{
@@ -124,7 +125,6 @@ struct ll_nrm
 				ll -= r.at(t,k) * std::log(p[k]/s);
 		}		
 		
-		
 		if(std::isinf(ll))
 		{
 			b.print("b:");
@@ -135,27 +135,25 @@ struct ll_nrm
 		return ll;
 	}
 
-	void df(const arma::vec& b, arma::vec& g)
+	void df(const arma::vec& beta, arma::vec& g)
 	{
 		
 		g.zeros();
+		const arma::vec b = arma::exp(beta);
 		
 		for(int t=0; t<nt; t++)
 		{
-			double s=1,ss=r.at(t,0);
-			p[0] = 1;
-			for(int k=1; k<ncat; k++)
+			double s=1,ss = r.at(t,0);
+			for(int k=1; k<ncat;k++)
 			{
-				p[k] = b[k-1] * eat.at(k-1,t);
-				s += p[k];
+				s += b[k-1] * eat.at(k-1,t);
 				ss += r.at(t,k);
 			}
-			
-			for(int k=1; k<ncat; k++)
+			for(int k=1; k<ncat;k++)
 			{
-				g[k-1] += (b[k-1]*(ss-r.at(t,k))*eat.at(k-1,t) - r.at(t,k)*(s-p[k])) / (b[k-1]*s);
+				g[k-1] += (-r.at(t,k) * (s-eat.at(k-1,t)*b[k-1]) + b[k-1] * eat.at(k-1,t) * (ss-r.at(t,k)))/s;
 			}
-		}	
+		}
 		
 		if(!g.is_finite())
 		{

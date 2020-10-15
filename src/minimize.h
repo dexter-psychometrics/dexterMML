@@ -5,7 +5,9 @@
 
 // borrowed from numerical recipes
 // if published, we'll have to bake our own our borrow it from somewhere with a better license
+// we can also go for full NR since the hessian is not that hard to derive in most cases but num recp argues against that
 
+// stopgap measure with std::min, should find constrained optim line search
 template <class T>
 void lnsrch(const arma::vec& xold, const double fold, const arma::vec& g, arma::vec& p,
 			arma::vec& x, double &f, const double stpmax, bool &check, T &func) 
@@ -22,7 +24,7 @@ void lnsrch(const arma::vec& xold, const double fold, const arma::vec& g, arma::
 			p[i] *= stpmax/sum;
 	for (i=0;i<n;i++)
 		slope += g[i]*p[i];
-	if (slope >= 0.0) throw("Roundoff problem in lnsrch.");
+	if (slope >= 0.0) Rcpp::stop("Roundoff problem in lnsrch.");
 	test=0.0;
 	for (i=0;i<n;i++) {
 		temp=std::abs(p[i])/std::max(std::abs(xold[i]),1.0);
@@ -31,7 +33,9 @@ void lnsrch(const arma::vec& xold, const double fold, const arma::vec& g, arma::
 	alamin=TOLX/test;
 	alam=1.0;
 	for (int iter=0; iter<200; iter++) {
+		
 		for (i=0;i<n;i++) x[i]=xold[i]+alam*p[i];
+
 		f=func(x);
 		if (alam < alamin) {
 			for (i=0;i<n;i++) x[i]=xold[i];
@@ -142,5 +146,9 @@ void dfpmin(arma::vec& p, const double gtol, int &iter, double &fret, T &funcd)
 	}
 	Rcpp::stop("too many iterations in dfpmin");
 }
+
+
+
+
 
 #endif

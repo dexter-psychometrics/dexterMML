@@ -115,7 +115,7 @@ est = function(dat, group = NULL, model= c('1PL','2PL'), se=FALSE)
     # prox is een lelijk gedoetje voor poly, even gelaten
     # see https://web.archive.org/web/20190719030511/https://www.rasch.org/rmt/rmt84k.htm
 
-    b = matrix(1:nrow(a),nrow(a),ncol(a))
+    b = matrix(as.double(1:nrow(a)),nrow(a),ncol(a))
 
     mu = rep(0, length(group_n))
     sigma = rep(1, length(group_n))
