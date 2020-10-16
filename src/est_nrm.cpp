@@ -7,23 +7,37 @@ using namespace arma;
 using Rcpp::Named;
 
 // += for fields with all equal dimensons for use in omp reduction
-void field_plus(field<mat>& a, const field<mat>& b) 
+field<mat>& field_plus(field<mat>& a, const field<mat>& b) 
 {
-    const int n = b.n_slices;
+    const int n = b.n_rows;
 
 	for(int i=0; i<n; i++)
 		a(i) += b(i);
+	
+	return a;
+}
+
+
+
+field<mat> field_init(const field<mat>& orig)
+{
+	const int n = orig.n_rows;
+	field<mat> out(n);
+
+	for(int i=0; i<n; i++)
+		out(i) = mat(orig(i).n_rows, orig(i).n_cols, fill::zeros);
+	
+	return out;
 }
 
 #pragma omp declare reduction( + : arma::field<mat> : field_plus(omp_out, omp_in)) \
-initializer( omp_priv = omp_orig )
+initializer( omp_priv = field_init(omp_orig) )
 
 #pragma omp declare reduction( + : arma::mat : omp_out += omp_in ) \
 initializer( omp_priv = omp_orig )
 
 #pragma omp declare reduction( + : arma::vec : omp_out += omp_in ) \
 initializer( omp_priv = omp_orig )
-
 
 
 
@@ -75,10 +89,10 @@ void estep_nrm(imat& a, mat& b, const ivec& ncat, const ivec& pni, const ivec& p
 	
 	ll=0;
 	
-/* pragma omp parallel */
+#pragma omp parallel
 	{
 		vec posterior(nt);
-/*  pragma omp for reduction(+:r,sigma2, sumtheta,ll) */
+#pragma omp for reduction(+:r,sigma2, sumtheta,ll)
 		for(int p=0; p<np;p++)
 		{
 			int g = pgroup[p];
@@ -125,7 +139,7 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 	
 	vec sum_theta(ng), sum_sigma2(ng);
 	
-	const int max_iter = 100;
+	const int max_iter = 200;
 	const double tol = 1e-8;
 	int iter = 0;
 	double ll;
@@ -138,7 +152,7 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 		
 		
 		double maxdif_b=0;
-/*  omp parallel for reduction(max: maxdif_b) */
+#pragma omp parallel for reduction(max: maxdif_b)
 		for(int i=0; i<nit; i++)
 		{	
 			ll_nrm f(a.col(i), theta, r(i));
@@ -149,11 +163,10 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 
 			dfpmin(pars, tol, itr, ll_itm, f);
 
-			pars = exp(pars);
 			for(int k=1;k<ncat[i];k++)
 			{
-				maxdif_b = std::max(maxdif_b, std::abs(b.at(k,i) - pars[k-1]));
-				b.at(k,i) = pars[k-1];
+				maxdif_b = std::max(maxdif_b, std::abs(std::log(b.at(k,i)) - pars[k-1]));
+				b.at(k,i) = std::exp(pars[k-1]);
 			}
 		}
 		
