@@ -110,7 +110,7 @@ est = function(dat, group = NULL, model= c('1PL','2PL'), se=FALSE)
 
     # this changes the respons vectors px and ix in pre
     a = categorize(pre$inp, pre$pni, pre$icnp, pre$pcni,pre$ip, pre$pi,
-                       pre$icat, pre$ncat, pre$ix, pre$px)
+                       pre$icat, pre$imax,max(pre$ncat), pre$ix, pre$px)
 
     # prox is een lelijk gedoetje voor poly, even gelaten
     # see https://web.archive.org/web/20190719030511/https://www.rasch.org/rmt/rmt84k.htm
@@ -124,7 +124,7 @@ est = function(dat, group = NULL, model= c('1PL','2PL'), se=FALSE)
                    pre$pni, pre$pcni, pre$pi, pre$px,
                    theta_grid, mu, sigma, group_n, group, ref_group)
 
-    return(em);
+    return(list(items=to_dexter(em$a,em$b,pre$ncat,colnames(dat)),em=em,pre=pre));
 
 
   }

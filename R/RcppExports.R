@@ -5,8 +5,8 @@ mat_pre <- function(dat, max_score) {
     .Call(`_dexterMML_mat_pre`, dat, max_score)
 }
 
-categorize <- function(inp, pni, icnp, pcni, ip, pi, icat, ncat, ix, px) {
-    .Call(`_dexterMML_categorize`, inp, pni, icnp, pcni, ip, pi, icat, ncat, ix, px)
+categorize <- function(inp, pni, icnp, pcni, ip, pi, icat, imax, max_cat, ix, px) {
+    .Call(`_dexterMML_categorize`, inp, pni, icnp, pcni, ip, pi, icat, imax, max_cat, ix, px)
 }
 
 estimate_2pl_dich_multigroup <- function(a_start, b_start, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group = 0L) {

@@ -19,8 +19,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // categorize
-arma::imat categorize(const arma::ivec& inp, const arma::ivec& pni, const arma::ivec& icnp, const arma::ivec& pcni, const arma::ivec& ip, const arma::ivec& pi, const arma::imat& icat, const arma::vec& ncat, arma::ivec& ix, arma::ivec& px);
-RcppExport SEXP _dexterMML_categorize(SEXP inpSEXP, SEXP pniSEXP, SEXP icnpSEXP, SEXP pcniSEXP, SEXP ipSEXP, SEXP piSEXP, SEXP icatSEXP, SEXP ncatSEXP, SEXP ixSEXP, SEXP pxSEXP) {
+arma::imat categorize(const arma::ivec& inp, const arma::ivec& pni, const arma::ivec& icnp, const arma::ivec& pcni, const arma::ivec& ip, const arma::ivec& pi, const arma::imat& icat, const arma::ivec& imax, const int max_cat, arma::ivec& ix, arma::ivec& px);
+RcppExport SEXP _dexterMML_categorize(SEXP inpSEXP, SEXP pniSEXP, SEXP icnpSEXP, SEXP pcniSEXP, SEXP ipSEXP, SEXP piSEXP, SEXP icatSEXP, SEXP imaxSEXP, SEXP max_catSEXP, SEXP ixSEXP, SEXP pxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -31,10 +31,11 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::ivec& >::type ip(ipSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type pi(piSEXP);
     Rcpp::traits::input_parameter< const arma::imat& >::type icat(icatSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type ncat(ncatSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type imax(imaxSEXP);
+    Rcpp::traits::input_parameter< const int >::type max_cat(max_catSEXP);
     Rcpp::traits::input_parameter< arma::ivec& >::type ix(ixSEXP);
     Rcpp::traits::input_parameter< arma::ivec& >::type px(pxSEXP);
-    rcpp_result_gen = Rcpp::wrap(categorize(inp, pni, icnp, pcni, ip, pi, icat, ncat, ix, px));
+    rcpp_result_gen = Rcpp::wrap(categorize(inp, pni, icnp, pcni, ip, pi, icat, imax, max_cat, ix, px));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -188,7 +189,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_mat_pre", (DL_FUNC) &_dexterMML_mat_pre, 2},
-    {"_dexterMML_categorize", (DL_FUNC) &_dexterMML_categorize, 10},
+    {"_dexterMML_categorize", (DL_FUNC) &_dexterMML_categorize, 11},
     {"_dexterMML_estimate_2pl_dich_multigroup", (DL_FUNC) &_dexterMML_estimate_2pl_dich_multigroup, 12},
     {"_dexterMML_estimate_nrm", (DL_FUNC) &_dexterMML_estimate_nrm, 13},
     {"_dexterMML_Oakes_2pl_dich", (DL_FUNC) &_dexterMML_Oakes_2pl_dich, 14},

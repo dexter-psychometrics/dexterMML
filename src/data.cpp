@@ -70,7 +70,7 @@ Rcpp::List mat_pre(arma::imat& dat, const int max_score)
 	ivec imax(nit), isum(nit,fill::zeros), ncat(nit, fill::zeros);
 	for(int i=0;i<nit;i++)
 	{
-		for(int k = max_score; k>=0; k++)
+		for(int k = max_score; k>=0; k--)
 			if(icat.at(k,i)>0)
 			{
 				imax[i] = k;
@@ -97,11 +97,12 @@ Rcpp::List mat_pre(arma::imat& dat, const int max_score)
 arma::imat categorize(const arma::ivec& inp, const arma::ivec& pni,
 						const arma::ivec& icnp, const arma::ivec& pcni,
 						const arma::ivec& ip, const arma::ivec& pi,				
-						const arma::imat& icat, const arma::vec& ncat,
+						const arma::imat& icat, const arma::ivec& imax,
+						const int max_cat,
 						arma::ivec& ix, arma::ivec& px)
 {
 	
-	const int max_cat = max(ncat), nit = icat.n_cols, np = pni.n_elem;
+	const int nit = icat.n_cols, np = pni.n_elem;
 	imat a(max_cat, nit, fill::zeros);
 	imat ai(icat.n_rows, icat.n_cols,fill::zeros);
 		
@@ -109,7 +110,7 @@ arma::imat categorize(const arma::ivec& inp, const arma::ivec& pni,
 	for(int i=0; i<nit; i++)
 	{
 		int k=0;
-		for(int j=0; j<ncat[i]; j++)
+		for(int j=0; j<=imax[i]; j++)
 		{
 			if(icat.at(j,i) == 0) 
 				recode = true;
