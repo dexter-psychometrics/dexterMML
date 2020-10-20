@@ -18,7 +18,7 @@ void lnsrch(const arma::vec& xold, const double fold, const arma::vec& g, arma::
 	int i,n=xold.n_elem;
 	check=false;
 	for (i=0;i<n;i++) sum += p[i]*p[i];
-	sum=sqrt(sum);
+	sum=std::sqrt(sum);
 	if (sum > stpmax)
 		for (i=0;i<n;i++)
 			p[i] *= stpmax/sum;
@@ -54,8 +54,8 @@ void lnsrch(const arma::vec& xold, const double fold, const arma::vec& g, arma::
 				else {
 					disc=b*b-3.0*a*slope;
 					if (disc < 0.0) tmplam=0.5*alam;
-					else if (b <= 0.0) tmplam=(-b+sqrt(disc))/(3.0*a);
-					else tmplam=-slope/(b+sqrt(disc));
+					else if (b <= 0.0) tmplam=(-b+std::sqrt(disc))/(3.0*a);
+					else tmplam=-slope/(b+std::sqrt(disc));
 				}
 				if (tmplam>0.5*alam)
 					tmplam=0.5*alam;
@@ -88,7 +88,7 @@ void dfpmin(arma::vec& p, const double gtol, int &iter, double &fret, T &funcd)
 		xi[i] = -g[i];
 		sum += p[i]*p[i];
 	}
-	stpmax=STPMX*std::max(sqrt(sum),(double)n);
+	stpmax=STPMX*std::max(std::sqrt(sum),(double)n);
 	for (int its=0;its<ITMAX;its++) {
 		iter=its;
 		lnsrch(p,fp,g,xi,pnew,fret,stpmax,check,funcd);
@@ -127,7 +127,7 @@ void dfpmin(arma::vec& p, const double gtol, int &iter, double &fret, T &funcd)
 			sumdg += dg[i] * dg[i];
 			sumxi += xi[i] * xi[i];
 		}
-		if (fac > sqrt(EPS*sumdg*sumxi)) {
+		if (fac > std::sqrt(EPS*sumdg*sumxi)) {
 			fac=1.0/fac;
 			fad=1.0/fae;
 			for (int i=0;i<n;i++) dg[i]=fac*xi[i]-fad*hdg[i];

@@ -2,13 +2,7 @@
 #include <RcppArmadillo.h>
 #include "minimize.h"
 #include "item_ll.h"
-
-
-#pragma omp declare reduction( + : arma::mat : omp_out += omp_in ) \
-initializer( omp_priv = omp_orig )
-
-#pragma omp declare reduction( + : arma::vec : omp_out += omp_in ) \
-initializer( omp_priv = omp_orig )
+#include "shared.h"
 
 using namespace arma;
 using Rcpp::Named;

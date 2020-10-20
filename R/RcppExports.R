@@ -9,6 +9,10 @@ categorize <- function(inp, pni, icnp, pcni, ip, pi, icat, imax, max_cat, ix, px
     .Call(`_dexterMML_categorize`, inp, pni, icnp, pcni, ip, pi, icat, imax, max_cat, ix, px)
 }
 
+design_matrices <- function(pni, pcni, pi, pg, nit, ng) {
+    .Call(`_dexterMML_design_matrices`, pni, pcni, pi, pg, nit, ng)
+}
+
 estimate_2pl_dich_multigroup <- function(a_start, b_start, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group = 0L) {
     .Call(`_dexterMML_estimate_2pl_dich_multigroup`, a_start, b_start, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group)
 }
@@ -19,6 +23,10 @@ estimate_nrm <- function(a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, s
 
 Oakes_2pl_dich <- function(a, b, r0, r1, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, ref_group = 0L) {
     .Call(`_dexterMML_Oakes_2pl_dich`, a, b, r0, r1, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, ref_group)
+}
+
+Oakes_nrm <- function(a, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, ref_group = 0L) {
+    .Call(`_dexterMML_Oakes_nrm`, a, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, ref_group)
 }
 
 prox_dich <- function(isum, psum, inp, pni, icnp, pcni, ip, pi, max_iter = 20L, min_change = 0.01) {
@@ -37,7 +45,7 @@ test_df <- function(a, b, theta, r) {
     .Call(`_dexterMML_test_df`, a, b, theta, r)
 }
 
-test_minimize <- function(a, b, theta, r) {
-    .Call(`_dexterMML_test_minimize`, a, b, theta, r)
+test_hess <- function(a, b, theta, r) {
+    .Call(`_dexterMML_test_hess`, a, b, theta, r)
 }
 

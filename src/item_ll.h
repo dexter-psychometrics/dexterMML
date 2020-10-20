@@ -49,6 +49,7 @@ struct ll_2pl_dich
 			g[0] -= (b-theta[i]) * (r0[i] - r1[i]*e)/(e+1);
 			g[1] -= a * (r0[i]-r1[i]*e)/(e+1);
 		}
+		
 		if(!g.is_finite())
 		{
 			printf("infinity in gradient, a: %f, b: %f", a, b);
@@ -87,22 +88,21 @@ struct ll_nrm
 	arma::mat r;
 	arma::mat eat;
 	arma::vec p;
+	arma::mat exp_at;
+	arma::ivec a;
 	
 	int nt;
 	int ncat;
 	
 	// a includes 0 cat
-	ll_nrm(const arma::ivec& a, const arma::vec& theta, arma::mat& r_) 
+	ll_nrm(int* a_ptr, arma::mat& exp_at_, arma::mat& r_) 
 	{
 		ncat = r_.n_cols;
-		nt = theta.n_elem;
+		nt = exp_at_.n_cols;
 		p = arma::vec(ncat);
+		a = arma::ivec(a_ptr, ncat,false,true);
 		r = arma::mat(r_.memptr(),nt,ncat,false,true);
-		eat = arma::mat(ncat-1,nt);
-		for(int t=0; t<nt;t++)
-			for(int k=1;k<ncat;k++)
-				eat.at(k-1,t) = std::exp(a[k] * theta[t]); 
-			
+		exp_at = arma::mat(exp_at_.memptr(),exp_at_.n_rows, exp_at_.n_cols,false,true);
 	}
 	
 	// b should not include 0 score
@@ -117,7 +117,7 @@ struct ll_nrm
 			p[0] = 1;
 			for(int k=1; k<ncat; k++)
 			{
-				p[k] = b[k-1] * eat.at(k-1,t);
+				p[k] = b[k-1] * exp_at.at(a[k],t);
 				s += p[k];
 			}
 
@@ -146,12 +146,12 @@ struct ll_nrm
 			double s=1,ss = r.at(t,0);
 			for(int k=1; k<ncat;k++)
 			{
-				s += b[k-1] * eat.at(k-1,t);
+				s += b[k-1] * exp_at.at(a[k],t);
 				ss += r.at(t,k);
 			}
 			for(int k=1; k<ncat;k++)
 			{
-				g[k-1] += (-r.at(t,k) * (s-eat.at(k-1,t)*b[k-1]) + b[k-1] * eat.at(k-1,t) * (ss-r.at(t,k)))/s;
+				g[k-1] += (-r.at(t,k) * (s-exp_at.at(a[k],t)*b[k-1]) + b[k-1] * exp_at.at(a[k],t) * (ss-r.at(t,k)))/(b[k-1]*s);
 			}
 		}
 		
@@ -163,6 +163,40 @@ struct ll_nrm
 		}
 	}
 
+	void hess(const arma::vec& beta, arma::mat& h)
+	{
+		h.zeros();
+		const arma::vec b = arma::exp(beta);
+		
+		
+		for(int t=0; t<nt; t++)
+		{
+			// sums for theta[t]
+			double s=1,ss = r.at(t,0);
+			for(int k=1; k<ncat;k++)
+			{
+				s += b[k-1] * exp_at.at(a[k],t);
+				ss += r.at(t,k);
+			}
+			for(int i=1;i<ncat;i++)
+			{
+				//diagonal
+				double s_min = s-b[i-1]*exp_at.at(a[i],t);
+				double num = r.at(t,i) * s_min * s;
+				num += b[i-1] * r.at(t,i) * s_min * exp_at.at(a[i],t);
+				num -= SQR(b[i-1]) * (ss - r.at(t,i)) * SQR(exp_at.at(a[i],t));
+				
+				h.at(i-1,i-1) += num/( SQR(b[i-1])*SQR(s));
+				//upper tri
+				for(int j=i+1;j<ncat;j++)
+					h.at(i-1,j-1) -= exp_at.at(a[i])*exp_at.at(a[j])*ss/SQR(s);
+			}
+		}	
+		for(int i=0;i<ncat-1;i++)
+			for(int j=i+1;j<ncat-1;j++)
+				h.at(j,i) = h.at(i,j);
+		
+	}
 
 };
 

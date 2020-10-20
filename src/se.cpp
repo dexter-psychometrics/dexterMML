@@ -5,8 +5,6 @@
 #include "item_ll.h"
 #include "shared.h"
 
-#pragma omp declare reduction( + : arma::mat : omp_out += omp_in ) \
-initializer( omp_priv = omp_orig )
 
 using namespace arma;
 using Rcpp::Named;

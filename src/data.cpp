@@ -142,3 +142,38 @@ arma::imat categorize(const arma::ivec& inp, const arma::ivec& pni,
 }
 
 
+// [[Rcpp::export]]
+Rcpp::List design_matrices(const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& pg, const int nit, const int ng)
+{
+	const int np = pni.n_elem;
+	imat item(nit,nit,fill::zeros), group(ng,nit,fill::zeros);
+	
+	std::vector<bool> bk(nit);
+	std::unordered_map<std::vector<bool>, int> booklets;
+	
+	for(int p=0; p<np; p++)
+	{
+		std::fill(bk.begin(), bk.end(), false);
+		int g = pg[p];
+		for(int indx = pcni[p]; indx<pcni[p+1]; indx++)
+		{
+			bk[pi[indx]] = true;
+			group.at(g,pi[indx]) = 1;
+		}
+		booklets.insert(std::make_pair(bk,p));
+		
+	}
+	
+	for(auto& iter: booklets )
+	{
+		int p = iter.second;
+		for(int i= pcni[p]; i<pcni[p+1]; i++)
+			for(int j=i+1; j<pcni[p+1]; j++)
+				item.at(pi[i],pi[j]) = 1;	
+	}
+	item += item.t();
+	item.diag().ones(); 
+	return Rcpp::List::create(Named("items")=item, Named("groups")=group);
+}
+
+

@@ -2,42 +2,10 @@
 #include <RcppArmadillo.h>
 #include "minimize.h"
 #include "item_ll.h"
+#include "shared.h"
 
 using namespace arma;
 using Rcpp::Named;
-
-// += for fields with all equal dimensons for use in omp reduction
-field<mat>& field_plus(field<mat>& a, const field<mat>& b) 
-{
-    const int n = b.n_rows;
-
-	for(int i=0; i<n; i++)
-		a(i) += b(i);
-	
-	return a;
-}
-
-
-
-field<mat> field_init(const field<mat>& orig)
-{
-	const int n = orig.n_rows;
-	field<mat> out(n);
-
-	for(int i=0; i<n; i++)
-		out(i) = mat(orig(i).n_rows, orig(i).n_cols, fill::zeros);
-	
-	return out;
-}
-
-#pragma omp declare reduction( + : arma::field<mat> : field_plus(omp_out, omp_in)) \
-initializer( omp_priv = field_init(omp_orig) )
-
-#pragma omp declare reduction( + : arma::mat : omp_out += omp_in ) \
-initializer( omp_priv = omp_orig )
-
-#pragma omp declare reduction( + : arma::vec : omp_out += omp_in ) \
-initializer( omp_priv = omp_orig )
 
 
 
@@ -45,20 +13,18 @@ initializer( omp_priv = omp_orig )
 //a, b matrix, maxcat rows, nit columns
 
 
-mat nrm_trace(const arma::vec& theta, int* ap, double* bp, const int ncat)
+mat nrm_trace(const arma::vec& theta, const ivec& a, const vec& b, const int ncat, const mat& exp_at)
 {
 	const int nt = theta.n_elem;
 	mat out(nt,ncat);		
-	ivec a(ap, ncat, false, true);
-	vec b(bp, ncat, false, true);
 	
 	for(int j=0; j< nt; j++)
 	{
 		double sm=0;
 		for(int k=0;k<ncat;k++)
-			sm += b[k]*std::exp(theta[j]*a[k]);
+			sm += b[k]*exp_at.at(a[k],j);
 		for(int k=0;k<ncat;k++)
-			out.at(j,k) = b[k]*std::exp(theta[j]*a[k])/sm;
+			out.at(j,k) = b[k]*exp_at.at(a[k],j)/sm;
 	}
 		
 	return out;
@@ -66,7 +32,7 @@ mat nrm_trace(const arma::vec& theta, int* ap, double* bp, const int ncat)
 
 // kan nog sneller gemaakt omdar er sufstats zijn voor deze 
 // x moet gehercodeerd zijn naar categorie nummers, zonder gaten
-void estep_nrm(imat& a, mat& b, const ivec& ncat, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
+void estep_nrm(imat& a, mat& b, const mat& exp_at, const ivec& ncat, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
 				const vec& theta, field<mat>& r, vec& thetabar, vec& sumtheta, vec& sumsig2, const vec& mu, const vec& sigma, const ivec& pgroup, double& ll)
 {
 	const int nit = ncat.n_elem, nt = theta.n_elem, np = pni.n_elem, ng = mu.n_elem;
@@ -80,7 +46,7 @@ void estep_nrm(imat& a, mat& b, const ivec& ncat, const ivec& pni, const ivec& p
 	
 	for(int i=0; i<nit; i++)
 	{
-		itrace(i) = nrm_trace(theta, a.colptr(i), b.colptr(i), ncat[i]);
+		itrace(i) = nrm_trace(theta, a.col(i), b.col(i), ncat[i], exp_at);
 		r(i).zeros();
 	}
 	
@@ -92,7 +58,7 @@ void estep_nrm(imat& a, mat& b, const ivec& ncat, const ivec& pni, const ivec& p
 #pragma omp parallel
 	{
 		vec posterior(nt);
-#pragma omp for reduction(+:r,sigma2, sumtheta,ll)
+#pragma omp for reduction(+: r, sigma2, sumtheta, ll)
 		for(int p=0; p<np;p++)
 		{
 			int g = pgroup[p];
@@ -127,6 +93,14 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 {
 	const int nit = a.n_cols, nt = theta.n_elem, np = pni.n_elem, ng=gn.n_elem;
 	
+	const int max_a = a.max();
+	
+	//lookup table
+	mat exp_at(max_a+1, nt, fill::ones);
+	for(int t=0; t< nt; t++)
+		for(int k=1; k<=max_a;k++)
+			exp_at.at(k,t) = std::exp(k*theta[t]);
+	
 	mat b = b_start;
 
 	field<mat> r(nit);
@@ -147,15 +121,15 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 	for(; iter<max_iter; iter++)
 	{
 
-		estep_nrm(a, b, ncat, pni, pcni, pi, px, 
+		estep_nrm(a, b, exp_at, ncat, pni, pcni, pi, px, 
 					theta, r, thetabar, sum_theta, sum_sigma2, mu, sigma, pgroup, ll);
 		
 		
 		double maxdif_b=0;
-#pragma omp parallel for reduction(max: maxdif_b)
+/* #pragma omp parallel for reduction(max: maxdif_b) */
 		for(int i=0; i<nit; i++)
 		{	
-			ll_nrm f(a.col(i), theta, r(i));
+			ll_nrm f(a.colptr(i), exp_at, r(i));
 			vec pars(b.colptr(i)+1,ncat[i]-1);
 			pars=log(pars);
 			int itr=0;

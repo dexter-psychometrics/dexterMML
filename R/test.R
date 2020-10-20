@@ -124,6 +124,16 @@ est = function(dat, group = NULL, model= c('1PL','2PL'), se=FALSE)
                    pre$pni, pre$pcni, pre$pi, pre$px,
                    theta_grid, mu, sigma, group_n, group, ref_group)
 
+    if(se)
+    {
+      design = design_matrices(pre$pni, pre$pcni, pre$pi, group, ncol(dat), length(group_n))
+      res = Oakes_nrm(a, em$b, pre$ncat, em$r,
+                      pre$pni, pre$pcni, pre$pi, pre$px,
+                      theta_grid, em$mu, em$sd, group_n, group,
+                      design$items, design$groups, ref_group)
+
+    }
+
     return(list(items=to_dexter(em$a,em$b,pre$ncat,colnames(dat)),em=em,pre=pre));
 
 
