@@ -8,8 +8,6 @@ using namespace arma;
 using Rcpp::Named;
 
 
-
-
 // this is a reduced version of the estep, can be use to compute the final ll
 long double LL_2pl_dich(const vec& a, const vec& b, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
 				const vec& theta, const vec& mu, const vec& sigma, const ivec& pgroup)

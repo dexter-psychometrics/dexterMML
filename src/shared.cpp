@@ -3,6 +3,8 @@
 
 using namespace arma;
 
+
+
 arma::vec gaussian_pts(const double mu, const double s, const arma::vec& theta)
 {
 	const int nt = theta.n_elem;
@@ -15,7 +17,7 @@ arma::vec gaussian_pts(const double mu, const double s, const arma::vec& theta)
 	out = out / arma::accu(out);
 	
 	return out;
-};
+}
 
 
 // += for fields with all equal dimensons for use in omp reduction

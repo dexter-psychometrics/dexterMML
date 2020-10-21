@@ -9,7 +9,6 @@ using namespace arma;
 using Rcpp::Named;
 
 
-
 // loglikelihood for groups based on matrix of perturbed mu and sigma values
 // in order to compute empirical gradients or hessian
 mat ll_group_nrm(const imat& a, const mat& b, const mat& exp_at, const ivec& ncat, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 

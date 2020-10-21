@@ -8,8 +8,6 @@ using namespace arma;
 using Rcpp::Named;
 
 
-
-
 //a, b matrix, maxcat rows, nit columns
 
 
@@ -54,7 +52,7 @@ void estep_nrm(imat& a, mat& b, const mat& exp_at, const ivec& ncat, const ivec&
 	sumtheta.zeros();
 	
 	ll=0;
-	
+
 #pragma omp parallel
 	{
 		vec posterior(nt);
@@ -126,7 +124,7 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 		
 		
 		double maxdif_b=0;
-/* #pragma omp parallel for reduction(max: maxdif_b) */
+#pragma omp parallel for reduction(max: maxdif_b)
 		for(int i=0; i<nit; i++)
 		{	
 			ll_nrm f(a.colptr(i), exp_at, r(i));

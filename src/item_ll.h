@@ -151,7 +151,11 @@ struct ll_nrm
 			}
 			for(int k=1; k<ncat;k++)
 			{
-				g[k-1] += (-r.at(t,k) * (s-exp_at.at(a[k],t)*b[k-1]) + b[k-1] * exp_at.at(a[k],t) * (ss-r.at(t,k)))/(b[k-1]*s);
+				/* 
+					df towards beta, denom is: 	s
+					df towards b, denom is:		b[k-1]*s
+				*/
+				g[k-1] += (-r.at(t,k) * (s-exp_at.at(a[k],t)*b[k-1]) + b[k-1] * exp_at.at(a[k],t) * (ss-r.at(t,k)))/s;
 			}
 		}
 		

@@ -9,6 +9,7 @@
 using namespace arma;
 using Rcpp::Named;
 
+
 // helper function to efficiently compute empirical hessian, currently only for 2pl dichotomous
 mat group_LL_2pl_dich(const vec& a, const vec& b, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
 				const vec& theta, const mat& mu, const mat& sigma, const ivec& pgroup, const int ref_group)
