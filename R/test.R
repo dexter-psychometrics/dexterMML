@@ -115,7 +115,9 @@ est = function(dat, group = NULL, model= c('1PL','2PL'), se=FALSE)
     # prox is een lelijk gedoetje voor poly, even gelaten
     # see https://web.archive.org/web/20190719030511/https://www.rasch.org/rmt/rmt84k.htm
 
-    b = matrix(as.double(1:nrow(a)),nrow(a),ncol(a))
+
+    b = apply(pre$icat,2, function(x) log(2*x/x[1]))
+    b[1,] = 0
 
     mu = rep(0, length(group_n))
     sigma = rep(1, length(group_n))
@@ -134,7 +136,7 @@ est = function(dat, group = NULL, model= c('1PL','2PL'), se=FALSE)
 
     }
 
-    return(list(items=to_dexter(em$a,em$b,pre$ncat,colnames(dat)),em=em,pre=pre));
+    return(list(items=to_dexter(em$a,exp(em$b),pre$ncat,colnames(dat)),em=em,pre=pre));
 
 
   }

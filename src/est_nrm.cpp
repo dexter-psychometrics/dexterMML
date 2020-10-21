@@ -16,13 +16,15 @@ mat nrm_trace(const arma::vec& theta, const ivec& a, const vec& b, const int nca
 	const int nt = theta.n_elem;
 	mat out(nt,ncat);		
 	
+	vec exp_b = exp(b);
+	
 	for(int j=0; j< nt; j++)
 	{
 		double sm=0;
 		for(int k=0;k<ncat;k++)
-			sm += b[k]*exp_at.at(a[k],j);
+			sm += exp_b[k]*exp_at.at(a[k],j);
 		for(int k=0;k<ncat;k++)
-			out.at(j,k) = b[k]*exp_at.at(a[k],j)/sm;
+			out.at(j,k) = exp_b[k]*exp_at.at(a[k],j)/sm;
 	}
 		
 	return out;
@@ -129,7 +131,6 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 		{	
 			ll_nrm f(a.colptr(i), exp_at, r(i));
 			vec pars(b.colptr(i)+1,ncat[i]-1);
-			pars=log(pars);
 			int itr=0;
 			double ll_itm=0;
 
@@ -137,8 +138,8 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 
 			for(int k=1;k<ncat[i];k++)
 			{
-				maxdif_b = std::max(maxdif_b, std::abs(std::log(b.at(k,i)) - pars[k-1]));
-				b.at(k,i) = std::exp(pars[k-1]);
+				maxdif_b = std::max(maxdif_b, std::abs(b.at(k,i) - pars[k-1]));
+				b.at(k,i) = pars[k-1];
 			}
 		}
 		

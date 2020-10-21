@@ -164,14 +164,14 @@ mat J_nrm(arma::imat& a, const arma::mat& b_fixed, mat& exp_at, const arma::ivec
 				{				
 					ll_nrm f(a.colptr(j), exp_at, r(j));
 					vec pars(b.slice(d).colptr(j)+1,ncat[j]-1);
-					pars=log(pars);
+
 					int itr=0;
 					double ll_itm=0;
 
 					dfpmin(pars, tol, itr, ll_itm, f);
 
 					for(int kj=1;kj<ncat[j];kj++)
-						b.at(kj,j,d) = std::exp(pars[kj-1]);
+						b.at(kj,j,d) = pars[kj-1];
 				}
 				for(int g=0;g<ng;g++) if(dsg_gi.at(g,i) == 1)
 				{
@@ -235,14 +235,13 @@ mat J_nrm(arma::imat& a, const arma::mat& b_fixed, mat& exp_at, const arma::ivec
 				{				
 					ll_nrm f(a.colptr(j), exp_at, r(j));
 					vec pars(b.slice(d).colptr(j)+1,ncat[j]-1);
-					pars=log(pars);
 					int itr=0;
 					double ll_itm=0;
 
 					dfpmin(pars, tol, itr, ll_itm, f);
 
 					for(int kj=1;kj<ncat[j];kj++)
-						b.at(kj,j,d) = std::exp(pars[kj-1]);
+						b.at(kj,j,d) = pars[kj-1];
 				}
 			}
 			int q=0;
@@ -298,9 +297,8 @@ Rcpp::List Oakes_nrm(arma::imat& a, const arma::mat& b, const arma::ivec& ncat, 
 	{				
 		ll_nrm f(a.colptr(i), exp_at, r(i));
 		vec pars(b.colptr(i)+1,ncat[i]-1);
-		pars=log(pars);
 		
-		f.hess(pars,h);
+		f.hess(pars,h,theta);
 		
 		for(int j=0; j<ncat[i]-1; j++)
 			for(int k=0; k<ncat[i]-1; k++)

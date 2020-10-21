@@ -82,7 +82,7 @@ struct ll_2pl_dich
 };
 
 // polytomous nrm (can also be used for dichotmous nrm or rasch)
-// this uses Timo's b parametrisation
+
 struct ll_nrm
 {
 	arma::mat r;
@@ -106,10 +106,10 @@ struct ll_nrm
 	}
 	
 	// b should not include 0 score
-	double operator()(const arma::vec& beta)
+	double operator()(const arma::vec& b)
 	{
 		double ll=0;
-		const arma::vec b = arma::exp(beta);
+		const arma::vec eb = arma::exp(b);
 		
 		for(int t=0; t<nt; t++)
 		{
@@ -117,7 +117,7 @@ struct ll_nrm
 			p[0] = 1;
 			for(int k=1; k<ncat; k++)
 			{
-				p[k] = b[k-1] * exp_at.at(a[k],t);
+				p[k] = eb[k-1] * exp_at.at(a[k],t);
 				s += p[k];
 			}
 
@@ -135,27 +135,27 @@ struct ll_nrm
 		return ll;
 	}
 
-	void df(const arma::vec& beta, arma::vec& g)
+	void df(const arma::vec& b, arma::vec& g)
 	{
 		
 		g.zeros();
-		const arma::vec b = arma::exp(beta);
+		const arma::vec eb = arma::exp(b);
 		
 		for(int t=0; t<nt; t++)
 		{
 			double s=1,ss = r.at(t,0);
 			for(int k=1; k<ncat;k++)
 			{
-				s += b[k-1] * exp_at.at(a[k],t);
+				s += eb[k-1] * exp_at.at(a[k],t);
 				ss += r.at(t,k);
 			}
 			for(int k=1; k<ncat;k++)
 			{
 				/* 
-					df towards beta, denom is: 	s
-					df towards b, denom is:		b[k-1]*s
+					df towards b, denom is: 	s
+					df towards eb, denom is:	eb[k-1]*s
 				*/
-				g[k-1] += (-r.at(t,k) * (s-exp_at.at(a[k],t)*b[k-1]) + b[k-1] * exp_at.at(a[k],t) * (ss-r.at(t,k)))/s;
+				g[k-1] += (-r.at(t,k) * (s-exp_at.at(a[k],t)*eb[k-1]) + eb[k-1] * exp_at.at(a[k],t) * (ss-r.at(t,k)))/s;
 			}
 		}
 		
@@ -167,11 +167,12 @@ struct ll_nrm
 		}
 	}
 
-	void hess(const arma::vec& beta, arma::mat& h)
+	void hess(const arma::vec& b, arma::mat& h, const arma::mat& theta)
 	{
 		h.zeros();
-		const arma::vec b = arma::exp(beta);
+		const arma::vec eb = arma::exp(b);
 		
+		arma::vec d(ncat);
 		
 		for(int t=0; t<nt; t++)
 		{
@@ -179,21 +180,19 @@ struct ll_nrm
 			double s=1,ss = r.at(t,0);
 			for(int k=1; k<ncat;k++)
 			{
-				s += b[k-1] * exp_at.at(a[k],t);
-				ss += r.at(t,k);
+				s += eb[k-1] * exp_at.at(a[k],t);
+				ss += r.at(t,k);		
 			}
 			for(int i=1;i<ncat;i++)
 			{
 				//diagonal
-				double s_min = s-b[i-1]*exp_at.at(a[i],t);
-				double num = r.at(t,i) * s_min * s;
-				num += b[i-1] * r.at(t,i) * s_min * exp_at.at(a[i],t);
-				num -= SQR(b[i-1]) * (ss - r.at(t,i)) * SQR(exp_at.at(a[i],t));
-				
-				h.at(i-1,i-1) += num/( SQR(b[i-1])*SQR(s));
+				double s_min = s-eb[i-1]*exp_at.at(a[i],t);				
+				double num = ss*s_min*eb[i-1]*exp_at.at(a[i],t);
+				h.at(i-1,i-1) += num/SQR(s);
+
 				//upper tri
 				for(int j=i+1;j<ncat;j++)
-					h.at(i-1,j-1) -= exp_at.at(a[i])*exp_at.at(a[j])*ss/SQR(s);
+					h.at(i-1,j-1) -= (ss*eb[i-1]*eb[j-1]*exp_at.at(a[i],t)*exp_at.at(a[j],t))/SQR(s);
 			}
 		}	
 		for(int i=0;i<ncat-1;i++)
