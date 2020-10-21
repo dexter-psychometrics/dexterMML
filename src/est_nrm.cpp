@@ -114,7 +114,7 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 	vec sum_theta(ng), sum_sigma2(ng);
 	
 	const int max_iter = 200;
-	const double tol = 1e-8;
+	const double tol = 1e-10;
 	int iter = 0;
 	double ll;
 	

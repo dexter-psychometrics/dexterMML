@@ -130,7 +130,7 @@ mat J_nrm(arma::imat& a, const arma::mat& b_fixed, mat& exp_at, const arma::ivec
 		r(i) = mat(nt,ncat[i]);
 	
 
-	const double tol = 1e-8;
+	const double tol = 1e-10;
 	
 	const double delta = 1e-05;
 	vec signed_delta(2);

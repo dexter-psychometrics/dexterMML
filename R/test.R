@@ -133,10 +133,18 @@ est = function(dat, group = NULL, model= c('1PL','2PL'), se=FALSE)
                       pre$pni, pre$pcni, pre$pi, pre$px,
                       theta_grid, em$mu, em$sd, group_n, group,
                       design$items, design$groups, ref_group)
+      # the Jacobian does not seem wholly senang but I cannot find a mistake in the code
+      ipar = sum(pre$ncat-1)
+      dx = to_dexter(em$a,exp(em$b),pre$ncat,colnames(dat),res$H[1:ipar,1:ipar])
+
+      items = dx$items
+      items$SE = sqrt(diag(dx$acov))
+      return(list(items=items,en=em,pre=pre))
+
 
     }
 
-    return(list(items=to_dexter(em$a,exp(em$b),pre$ncat,colnames(dat)),em=em,pre=pre));
+    return(list(items=to_dexter(em$a,exp(em$b),pre$ncat,colnames(dat))$items,em=em,pre=pre));
 
 
   }

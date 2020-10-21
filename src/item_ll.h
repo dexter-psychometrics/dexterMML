@@ -57,7 +57,7 @@ struct ll_2pl_dich
 			Rcpp::stop("inf gradient");
 		}
 	}
-	
+	// hessian of LL
 	void hess(const arma::vec& ab, arma::mat& h)
 	{
 		h.zeros();
@@ -106,6 +106,7 @@ struct ll_nrm
 	}
 	
 	// b should not include 0 score
+	// minus LL
 	double operator()(const arma::vec& b)
 	{
 		double ll=0;
@@ -134,7 +135,7 @@ struct ll_nrm
 
 		return ll;
 	}
-
+	//gradient of minus LL
 	void df(const arma::vec& b, arma::vec& g)
 	{
 		
@@ -166,7 +167,7 @@ struct ll_nrm
 			Rcpp::stop("inf gradient");
 		}
 	}
-
+	//hessian of LL
 	void hess(const arma::vec& b, arma::mat& h, const arma::mat& theta)
 	{
 		h.zeros();
