@@ -186,48 +186,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// test_ll
-double test_ll(arma::ivec& a, arma::vec& b, arma::vec& theta, arma::mat& r);
-RcppExport SEXP _dexterMML_test_ll(SEXP aSEXP, SEXP bSEXP, SEXP thetaSEXP, SEXP rSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::ivec& >::type a(aSEXP);
-    Rcpp::traits::input_parameter< arma::vec& >::type b(bSEXP);
-    Rcpp::traits::input_parameter< arma::vec& >::type theta(thetaSEXP);
-    Rcpp::traits::input_parameter< arma::mat& >::type r(rSEXP);
-    rcpp_result_gen = Rcpp::wrap(test_ll(a, b, theta, r));
-    return rcpp_result_gen;
-END_RCPP
-}
-// test_df
-arma::vec test_df(arma::ivec& a, arma::vec& b, arma::vec& theta, arma::mat& r);
-RcppExport SEXP _dexterMML_test_df(SEXP aSEXP, SEXP bSEXP, SEXP thetaSEXP, SEXP rSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::ivec& >::type a(aSEXP);
-    Rcpp::traits::input_parameter< arma::vec& >::type b(bSEXP);
-    Rcpp::traits::input_parameter< arma::vec& >::type theta(thetaSEXP);
-    Rcpp::traits::input_parameter< arma::mat& >::type r(rSEXP);
-    rcpp_result_gen = Rcpp::wrap(test_df(a, b, theta, r));
-    return rcpp_result_gen;
-END_RCPP
-}
-// test_hess
-arma::mat test_hess(arma::ivec& a, arma::vec& b, arma::vec& theta, arma::mat& r);
-RcppExport SEXP _dexterMML_test_hess(SEXP aSEXP, SEXP bSEXP, SEXP thetaSEXP, SEXP rSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::ivec& >::type a(aSEXP);
-    Rcpp::traits::input_parameter< arma::vec& >::type b(bSEXP);
-    Rcpp::traits::input_parameter< arma::vec& >::type theta(thetaSEXP);
-    Rcpp::traits::input_parameter< arma::mat& >::type r(rSEXP);
-    rcpp_result_gen = Rcpp::wrap(test_hess(a, b, theta, r));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_mat_pre", (DL_FUNC) &_dexterMML_mat_pre, 2},
@@ -239,9 +197,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_Oakes_nrm", (DL_FUNC) &_dexterMML_Oakes_nrm, 16},
     {"_dexterMML_prox_dich", (DL_FUNC) &_dexterMML_prox_dich, 10},
     {"_dexterMML_start_lr", (DL_FUNC) &_dexterMML_start_lr, 6},
-    {"_dexterMML_test_ll", (DL_FUNC) &_dexterMML_test_ll, 4},
-    {"_dexterMML_test_df", (DL_FUNC) &_dexterMML_test_df, 4},
-    {"_dexterMML_test_hess", (DL_FUNC) &_dexterMML_test_hess, 4},
     {NULL, NULL, 0}
 };
 

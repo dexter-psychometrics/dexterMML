@@ -141,7 +141,7 @@ mat J_nrm(arma::imat& a, const arma::mat& b_fixed, mat& exp_at, const arma::ivec
 	
 	
 	const int npar = accu(ncat) - nit + 2*ng-1;
-	mat jacob(npar, npar);
+	mat jacob(npar, npar, fill::zeros);
 	
 	int p=0;
 	for(int i=0; i<nit; i++)
