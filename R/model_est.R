@@ -214,13 +214,24 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=
                       design$items, design$groups, ref_group)
 
       # the Jacobian does not seem wholly senang but I cannot find a mistake in the code
+      # maybe it should be done on a rerun of the estep with final parameters?
 
       ipar = sum(pre$ncat-1)
-      dx = to_dexter(em$a,exp(em$b),pre$ncat,colnames(dat),res$H[1:ipar,1:ipar])
-
+      dx = to_dexter(em$a,em$b,pre$ncat,colnames(dat),res$H)
       items = dx$items
-      items$SE = sqrt(diag(dx$acov))
-      return(list(items=items,en=em,pre=pre))
+      items$SE_beta = sqrt(diag(dx$cov.beta))
+
+      pop = tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd))
+      s = sqrt(-diag(dx$cov.all)[-(1:ipar)])
+      r=ref_group
+      if(r==0)
+        s=c(NA,s)
+      else
+        s = c(s[1:(2*r)],NA,s[(2*r+1):length(s)])
+
+      pop$SE_mu = s[seq(1,length(s),2)]
+      pop$SE_sd = s[seq(2,length(s),2)]
+      return(list(items=items,pop=pop,em=em,pre=pre))
 
 
     }
