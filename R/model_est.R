@@ -2,13 +2,92 @@
 
 
 
-#' 2pl dichotomous items, 1 population
+#' Estimate a model using MML
 #'
-est = function(dat, group = NULL, model= c('1PL','2PL'), se=FALSE)
+#' Estimate a one or two parameter model using Marginal Maximum Likelihood
+#'
+#' @param dataSrc a matrix, long format data.frame or a dexter database
+#' @param predicate logical predicate to filter dataSrc, has no effect when dataSrc is a matrix
+#' @param group if dataSrc is a matrix then a vector of length nrows, otherwise one or more person
+#' properties together grouping people. See details.
+#' @param model 1PL or 2PL, see details.
+#' @param se should standard errors be determined. For large datasets with many items this can take some time. Set
+#' to false to save time.
+#'
+#' @return a list of things, to do: organize return value
+#'
+#' @details
+#' In a 1PL item difficulties on a logistic scale are estimated in a marginal Nominal Response Model.
+#' In a 2PL model items also get a discrimination. This
+#' can be interpreted as a noise factor in the item measurement analogous to item test
+#' correlations in classical test theory. Both the 1PL and 2PL model can handle polytomous data (to do: 2PL poly not finished yet) and respect the item
+#' scores. Missing categories (e.g. an item scored 0,1,4) are allowed.
+#'
+#' Specifying grouping variables for test takers is very important in MML estimation. Failure to include
+#' relevant grouping can seriously bias parameter and subsequent ability estimation.
+#'
+#' Note that MML estimation requires extra assumptions about the population distribution compared to CML.
+#' Consequently there is rarely a good reason to use MML estimation for an 1PL since it is an exponential family
+#' model and can be better estimated with CML. Only in case of adaptive data (where CML is not allowed) should you
+#' use MML to estimate a 1PL.
+#'
+#' A 2PL cannnot be estimated using CML, except in case of complete data (see the interaction model in dexter).
+#' So for 2PL models MML is usually the method of choice.
+#'
+#'
+est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=TRUE)
 {
   model = match.arg(model)
 
-  mode(dat) = 'integer'
+  # prepare data from possibly different sources
+  # to do: also accept mst db
+  if(inherits(dataSrc, 'matrix'))
+  {
+    dat = dataSrc
+    mode(dat) = 'integer'
+    if(!is.null(group) && length(group) != nrow(dat))
+      stop(sprintf("Length of group (%i) is not equal to number of rows in data (%i)",
+                   length(group),nrow(dat)))
+  } else
+  {
+    qtpredicate = eval(substitute(quote(predicate)))
+    env = caller_env()
+    dat = get_resp_matrix(dataSrc,qtpredicate,env)
+    # to do: possibility to handle groups in resp_matrix should become part of dexter
+    if(!is.null(group))
+    {
+      if(!is.character(group))
+        stop("Group should be a character variable")
+
+      if(inherits(db, "DBIConnection"))
+      {
+        # to do: allow booklet_id??
+        g = dbGetQuery(db,sprintf("SELECT person_id, %s FROM dxPersons;",
+                                  paste0(group, collapse=',')))
+      } else if(inherits(dataSrc, 'data.frame'))
+      {
+        g = distinct(dataSrc, .data$person_id, .keep_all=TRUE)
+      }
+      g = g %>%
+        mutate(person_id = factor(.data$person_id, levels=rownames(dat))) %>%
+        filter(!is.na(.data$person_id)) %>%
+        arrange(as.integer(.data$person_id))
+
+      if(length(group)== 1) group = g[[group]]
+      else
+      {
+        nc = c(sapply(group[length(group)-1], function(x) max(nchar(g[[x]]))),0L)
+        fmt = paste0("%-",nc,"s",collapse='_')
+        g = as.list(g[,group])
+        g$fmt = fmt
+        group = do.call(sprintf, g)
+      }
+    }
+  }
+
+ ## datasrc preparation done
+
+
   max_score = max(dat,na.rm=TRUE)
 
   pre = lapply(mat_pre(dat, max_score), drop)
@@ -42,7 +121,7 @@ est = function(dat, group = NULL, model= c('1PL','2PL'), se=FALSE)
   if(model == '2PL' && all(pre$ncat==2))
   {
     # dichotomous case
-    # if item score other than 0/1 to do: recode
+    # if item score other than 0/1 to do: recode?
 
     #starting values
     # prox algorithm for dichotomous
@@ -133,7 +212,9 @@ est = function(dat, group = NULL, model= c('1PL','2PL'), se=FALSE)
                       pre$pni, pre$pcni, pre$pi, pre$px,
                       theta_grid, em$mu, em$sd, group_n, group,
                       design$items, design$groups, ref_group)
+
       # the Jacobian does not seem wholly senang but I cannot find a mistake in the code
+
       ipar = sum(pre$ncat-1)
       dx = to_dexter(em$a,exp(em$b),pre$ncat,colnames(dat),res$H[1:ipar,1:ipar])
 

@@ -1,3 +1,10 @@
 useDynLib(dexterMML, .registration=TRUE)
+
 importFrom(Rcpp, evalCpp)
+import(dplyr)
+importFrom(dexter, get_resp_matrix)
+importFrom(DBI, "dbGetQuery")
+importFrom(rlang,"caller_env",".data")
+importFrom(stats, "var", "weighted.mean")
+
 export(est)

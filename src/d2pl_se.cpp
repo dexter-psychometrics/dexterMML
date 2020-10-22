@@ -1,8 +1,8 @@
 
 #include <RcppArmadillo.h>
-#include "est_2PL_dich.h"
+#include "d2pl_est.h"
 #include "minimize.h"
-#include "item_ll.h"
+#include "d2pl_item.h"
 #include "shared.h"
 
 

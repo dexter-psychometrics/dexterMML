@@ -1,13 +1,19 @@
 Package: dexterMML
 Type: Package
-Title: What the package does (short line)
-Version: 1.0
+Title: MML estimation supplement to dexter
+Version: 0.1
 Date: 2020-09-28
-Author: Who wrote it
-Maintainer: Brewed by a ninja <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one line)
-License: What license is it under?
+Author: Gunter Maris, Timo Bechger, Jesse Koops, Ivailo Partchev
+Maintainer: Jesse Koops <jesse.koops@cito.nl>
+Description: Fast 1Pl and 2PL estimation routines for situations where CML is impossible.
+License: Private
 Imports: 
   Rcpp (>= 1.0.4.6),
-  dplyr
+  dplyr,
+  rlang,
+  DBI,
+  dexter,
+  stats
 LinkingTo: Rcpp, RcppArmadillo
+Encoding: UTF-8
+RoxygenNote: 7.1.1

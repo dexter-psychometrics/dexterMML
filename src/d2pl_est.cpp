@@ -1,7 +1,7 @@
 
 #include <RcppArmadillo.h>
 #include "minimize.h"
-#include "item_ll.h"
+#include "d2pl_item.h"
 #include "shared.h"
 
 using namespace arma;

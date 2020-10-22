@@ -1,6 +1,6 @@
 
-#ifndef DXM_2PL_DICH_
-#define DXM_2PL_DICH_
+#ifndef DXM_D2PL_EST_
+#define DXM_D2PL_EST_
 
 #include <RcppArmadillo.h>
 

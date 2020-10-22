@@ -1,9 +1,8 @@
 
 #include <RcppArmadillo.h>
 #include "minimize.h"
-#include "item_ll.h"
+#include "nrm_item.h"
 #include "shared.h"
-#include "est_nrm.h"
 
 using namespace arma;
 using Rcpp::Named;
