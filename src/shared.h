@@ -3,11 +3,10 @@
 
 #include <RcppArmadillo.h>
 
-inline double SQR(double v){ return v*v; };
-
+inline double SQR(const double v){ return v*v; };
+inline int kron(const int a, const int b){return a==b ? 1 : 0; };
 
 arma::vec gaussian_pts(const double mu, const double s, const arma::vec& theta);
-
 
 arma::field<arma::mat>& field_plus(arma::field<arma::mat>& a, const arma::field<arma::mat>& b); 
 

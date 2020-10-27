@@ -35,7 +35,7 @@
 #' So for 2PL models MML is usually the method of choice.
 #'
 #'
-est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=TRUE)
+est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=TRUE,old_2pl=FALSE)
 {
   model = match.arg(model)
 
@@ -118,7 +118,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=
 
   # estimation
 
-  if(model == '2PL' && all(pre$ncat==2))
+  if(model == '2PL' && all(pre$ncat==2) && old_2pl)
   {
     # dichotomous case
     # if item score other than 0/1 to do: recode?
@@ -143,7 +143,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=
 
     split_theta = split(theta,group)
     start_mu = sapply(split_theta, mean)
-    start_var = sapply(split(theta,group), var)
+    start_sigma = sapply(split(theta,group), sd)
 
     # starting values for a
     j = start_lr(theta, pre$ip, pre$ix,
@@ -153,7 +153,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=
     beta = drop(j$beta)
 
     em = estimate_2pl_dich_multigroup(a, beta, pre$pni, pre$pcni, pre$pi, pre$px,
-                                         theta_grid, start_mu, start_var, group_n, group, ref_group)
+                                         theta_grid, start_mu, start_sigma, group_n, group, ref_group)
 
     items = tibble(item_id=colnames(dat),a=drop(em$a),b=drop(em$b))
     pop = tibble(group=group_id,mu=drop(em$mu),sigma=drop(em$sd))
@@ -239,6 +239,24 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=
     return(list(items=to_dexter(em$a,exp(em$b),pre$ncat,colnames(dat))$items,em=em,pre=pre));
 
 
+  } else
+  {
+    # this changes the respons vectors px and ix in pre
+    a = categorize(pre$inp, pre$pni, pre$icnp, pre$pcni,pre$ip, pre$pi,
+                   pre$icat, pre$imax,max(pre$ncat), pre$ix, pre$px)
+
+    b = apply(pre$icat,2, function(x) 1-log(2*x/x[1]))
+    b[1,] = 0
+    A = rep(1,ncol(dat))
+
+    mu = rep(0, length(group_n))
+    sigma = rep(1, length(group_n))
+
+    em = estimate_poly2(a, A, b, pre$ncat,
+                        pre$pni, pre$pcni, pre$pi, pre$px,
+                        theta_grid, mu, sigma, group_n, group, ref_group)
+
+    return(em)
   }
-  stop('2pl poly nog niet gedaan')
+
 }

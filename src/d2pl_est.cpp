@@ -8,6 +8,35 @@ using namespace arma;
 using Rcpp::Named;
 
 
+
+// [[Rcpp::export]]
+double test_ll_d2(arma::mat& r, arma::vec& theta, const arma::vec& par)
+{
+	ll_2pl_dich f(r.colptr(1), r.colptr(0), theta.memptr(), theta.n_elem);
+	
+	return f(par);
+} 
+
+// [[Rcpp::export]]
+arma::vec test_gradient_d2(arma::mat& r, arma::vec& theta, const arma::vec& par)
+{
+	ll_2pl_dich f(r.colptr(1), r.colptr(0), theta.memptr(), theta.n_elem);
+	vec g(par.n_elem);
+	f.df(par,g);
+	return g;
+}
+
+// [[Rcpp::export]]
+arma::mat test_hess_d2(arma::mat& r, arma::vec& theta, const arma::vec& par)
+{
+	ll_2pl_dich f(r.colptr(1), r.colptr(0), theta.memptr(), theta.n_elem);
+	mat h(par.n_elem,par.n_elem);
+	f.hess(par,h);
+	return h;
+}
+
+
+
 // this is a reduced version of the estep, can be use to compute the final ll
 long double LL_2pl_dich(const vec& a, const vec& b, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
 				const vec& theta, const vec& mu, const vec& sigma, const ivec& pgroup)
@@ -113,7 +142,8 @@ void estep_2pl_dich(const vec& a, const vec& b, const ivec& pni, const ivec& pcn
 // [[Rcpp::export]]
 Rcpp::List estimate_2pl_dich_multigroup(const arma::vec& a_start, const arma::vec& b_start, 
 						const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
-						arma::vec& theta, const arma::vec& mu_start, const arma::vec& sigma_start, const arma::ivec& gn, const arma::ivec& pgroup, const int ref_group=0)
+						arma::vec& theta, const arma::vec& mu_start, const arma::vec& sigma_start, const arma::ivec& gn, const arma::ivec& pgroup, 
+						const int ref_group=0, const int max_iter=200)
 {
 	const int nit = a_start.n_elem, nt = theta.n_elem, np = pni.n_elem, ng=gn.n_elem;;
 	
@@ -127,8 +157,7 @@ Rcpp::List estimate_2pl_dich_multigroup(const arma::vec& a_start, const arma::ve
 	
 	vec sum_theta(ng), sum_sigma2(ng);
 	
-	const int max_iter = 100;
-	const double tol = 1e-8;
+	const double tol = 1e-10;
 	int iter = 0;
 	double ll;
 	
