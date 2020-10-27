@@ -7,7 +7,7 @@
 arma::mat poly2_trace(const arma::vec& theta, const arma::ivec& a, const double A,  const arma::vec& b, const int ncat);
 
 // 2pl polytomous with fixed category weights
-
+// only tested with dich yet
 struct ll_poly2
 {
 	arma::mat r;
@@ -107,7 +107,7 @@ struct ll_poly2
 		b2[0] = 0;
 		for(int t=0; t<nt; t++)
 		{
-			//A
+			//AA
 			const double t2 = SQR(theta[t]);
 			double s=1,s2=0,s3=0,s4=0,s5=0,s6=0,sr=r.at(t,0);
 			for(int k=1;k<ncat;k++)
@@ -121,8 +121,8 @@ struct ll_poly2
 				s6 -= a[k]*par[k]*p[k];
 				sr += r.at(t,k);
 			}
-			h.at(0,0) += sr * (s*s2+s*s3+s*s4-SQR(s5)-2*s5*s6-SQR(s6))/SQR(s);
-
+			h.at(0,0) -= sr * (s*s2+s*s3+s*s4-SQR(s5)-2*s5*s6-SQR(s6))/SQR(s);
+			//Ab
 			for(int k=1;k<ncat;k++)
 			{
 				double ss=0;
@@ -136,14 +136,14 @@ struct ll_poly2
 					}					
 					ss += r.at(t,i) * (kron(i,k)*a[i] + ss1/s);
 				}
-				h.at(0,k) += ss;	
+				h.at(0,k) -= ss;	
 			}
-			//b
+			//bb
 			for(int k=1;k<ncat;k++)
 			{
-				h.at(k,k) -= (SQR(p[k]*a[k])/s - SQR(a[k])*p[k])*A2*sr/s;
+				h.at(k,k) += (SQR(p[k]*a[k])/s - SQR(a[k])*p[k])*A2*sr/s;
 				for(int j=k+1;j<ncat;j++)
-					h.at(k,j) -= A2*a[k]*a[j]*(p[k]*p[j]*sr)/SQR(s);
+					h.at(k,j) += A2*a[k]*a[j]*(p[k]*p[j]*sr)/SQR(s);
 			}		
 		}	
 		

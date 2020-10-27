@@ -118,10 +118,10 @@ mat J_2pl_dich(const arma::vec& a_fixed, const arma::vec& b_fixed,
 			{				
 				ll_2pl_dich f(r1.colptr(i), r0.colptr(i), theta.memptr(), nt);
 				vec pars = {a.at(i,d), b.at(i,d)};
-				int itr=0;
+				int itr=0,err;
 				double ll_itm=0;
 				
-				dfpmin(pars, tol, itr, ll_itm, f);
+				dfpmin(pars, tol, itr, ll_itm, f,err);
 				
 				a.at(i,d) = pars[0];
 				b.at(i,d) = pars[1];

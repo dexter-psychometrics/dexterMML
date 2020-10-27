@@ -57,6 +57,10 @@ test_hess_p2 <- function(a, theta, r, par) {
     .Call(`_dexterMML_test_hess_p2`, a, theta, r, par)
 }
 
+Oakes_poly2 <- function(a, A, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, ref_group = 0L) {
+    .Call(`_dexterMML_Oakes_poly2`, a, A, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, ref_group)
+}
+
 prox_dich <- function(isum, psum, inp, pni, icnp, pcni, ip, pi, max_iter = 20L, min_change = 0.01) {
     .Call(`_dexterMML_prox_dich`, isum, psum, inp, pni, icnp, pcni, ip, pi, max_iter, min_change)
 }

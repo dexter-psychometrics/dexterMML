@@ -5,12 +5,20 @@
 
 // borrowed from numerical recipes
 // if published, we'll have to bake our own our borrow it from somewhere with a better license
-// we can also go for full NR since the hessian is not that hard to derive in most cases but num recp argues against that
+// we can also try for full NR since the hessian is not that hard to derive in most cases but num recip argues against that
 
-// stopgap measure with std::min, should find constrained optim line search
+
+/*
+possible error codes:
+0: no problem
+1: Roundoff problem in lnsrch.
+2: max iter in lnsrch reached
+3: too many iterations in dfpmin
+*/
+
 template <class T>
 void lnsrch(const arma::vec& xold, const double fold, const arma::vec& g, arma::vec& p,
-			arma::vec& x, double &f, const double stpmax, bool &check, T &func) 
+			arma::vec& x, double &f, const double stpmax, bool &check, T &func, int& err) 
 {
 	const double ALF=1.0e-4, TOLX=std::numeric_limits<double>::epsilon();
 	double a,alam,alam2=0.0,alamin,b,disc,f2=0.0;
@@ -24,7 +32,11 @@ void lnsrch(const arma::vec& xold, const double fold, const arma::vec& g, arma::
 			p[i] *= stpmax/sum;
 	for (i=0;i<n;i++)
 		slope += g[i]*p[i];
-	if (slope >= 0.0) Rcpp::stop("Roundoff problem in lnsrch.");
+	if (slope >= 0.0)
+	{
+		err = 1;
+		return;
+	}
 	test=0.0;
 	for (i=0;i<n;i++) {
 		temp=std::abs(p[i])/std::max(std::abs(xold[i]),1.0);
@@ -65,12 +77,12 @@ void lnsrch(const arma::vec& xold, const double fold, const arma::vec& g, arma::
 		f2 = f;
 		alam=std::max(tmplam,0.1*alam);
 	}
-	Rcpp::stop("max iter in lnsrch reached");
+	err = 2;
 }
 
 
 template <class T>
-void dfpmin(arma::vec& p, const double gtol, int &iter, double &fret, T &funcd)
+void dfpmin(arma::vec& p, const double gtol, int &iter, double &fret, T &funcd, int& err)
 {
 	const int ITMAX=200;
 	const double EPS=std::numeric_limits<double>::epsilon();
@@ -80,6 +92,7 @@ void dfpmin(arma::vec& p, const double gtol, int &iter, double &fret, T &funcd)
 	int n=p.n_elem;
 	arma::vec dg(n,arma::fill::zeros),g(n,arma::fill::zeros),hdg(n,arma::fill::zeros),pnew(n,arma::fill::zeros),xi(n,arma::fill::zeros);
 	arma::mat hessin(n,n,arma::fill::zeros);
+	err = 0;
 	fp=funcd(p);
 	funcd.df(p,g);
 	for (int i=0;i<n;i++) {
@@ -91,7 +104,8 @@ void dfpmin(arma::vec& p, const double gtol, int &iter, double &fret, T &funcd)
 	stpmax=STPMX*std::max(std::sqrt(sum),(double)n);
 	for (int its=0;its<ITMAX;its++) {
 		iter=its;
-		lnsrch(p,fp,g,xi,pnew,fret,stpmax,check,funcd);
+		lnsrch(p,fp,g,xi,pnew,fret,stpmax,check,funcd, err);
+		if(err>0) return;
 		fp=fret;
 		for (int i=0;i<n;i++) {
 			xi[i]=pnew[i]-p[i];
@@ -144,7 +158,7 @@ void dfpmin(arma::vec& p, const double gtol, int &iter, double &fret, T &funcd)
 			for (int j=0;j<n;j++) xi[i] -= hessin.at(i,j)*g[j];
 		}
 	}
-	Rcpp::stop("too many iterations in dfpmin");
+	err=3;
 }
 
 

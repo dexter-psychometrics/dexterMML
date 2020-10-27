@@ -35,7 +35,7 @@
 #' So for 2PL models MML is usually the method of choice.
 #'
 #'
-est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=TRUE,old_2pl=FALSE)
+est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL','old_2PLd'), se=TRUE)
 {
   model = match.arg(model)
 
@@ -59,10 +59,10 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=
       if(!is.character(group))
         stop("Group should be a character variable")
 
-      if(inherits(db, "DBIConnection"))
+      if(inherits(dataSrc, "DBIConnection"))
       {
         # to do: allow booklet_id??
-        g = dbGetQuery(db,sprintf("SELECT person_id, %s FROM dxPersons;",
+        g = dbGetQuery(dataSrc,sprintf("SELECT person_id, %s FROM dxPersons;",
                                   paste0(group, collapse=',')))
       } else if(inherits(dataSrc, 'data.frame'))
       {
@@ -85,9 +85,9 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=
     }
   }
 
- ## datasrc preparation done
+  ## datasrc preparation done
 
-
+  ## Pre and groups
   max_score = max(dat,na.rm=TRUE)
 
   pre = lapply(mat_pre(dat, max_score), drop)
@@ -118,8 +118,10 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=
 
   # estimation
 
-  if(model == '2PL' && all(pre$ncat==2) && old_2pl)
+  if(model == 'old_2PLd' ) # keep for a while for testing and example starting values
   {
+    if(!all(pre$ncat==2))
+      stop("old 2pl routine is only for dichotomous")
     # dichotomous case
     # if item score other than 0/1 to do: recode?
 
@@ -195,7 +197,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=
     # see https://web.archive.org/web/20190719030511/https://www.rasch.org/rmt/rmt84k.htm
 
 
-    b = apply(pre$icat,2, function(x) log(2*x/x[1]))
+    b = apply(pre$icat,2, function(x) 1-log(2*x/lag(x)))
     b[1,] = 0
 
     mu = rep(0, length(group_n))
@@ -232,8 +234,6 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=
       pop$SE_mu = s[seq(1,length(s),2)]
       pop$SE_sd = s[seq(2,length(s),2)]
       return(list(items=items,pop=pop,em=em,pre=pre))
-
-
     }
 
     return(list(items=to_dexter(em$a,exp(em$b),pre$ncat,colnames(dat))$items,em=em,pre=pre));
@@ -245,7 +245,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=
     a = categorize(pre$inp, pre$pni, pre$icnp, pre$pcni,pre$ip, pre$pi,
                    pre$icat, pre$imax,max(pre$ncat), pre$ix, pre$px)
 
-    b = apply(pre$icat,2, function(x) 1-log(2*x/x[1]))
+    b = apply(pre$icat,2, function(x) 1-log(2*x/lag(x)))
     b[1,] = 0
     A = rep(1,ncol(dat))
 
@@ -256,7 +256,39 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=
                         pre$pni, pre$pcni, pre$pi, pre$px,
                         theta_grid, mu, sigma, group_n, group, ref_group)
 
-    return(em)
+    items = tibble(item_id = rep(colnames(dat),pre$ncat-1),
+                   alpha = rep(em$A,pre$ncat-1L),
+                   item_score = as.integer(a[-1,]),
+                   beta = as.double(em$b[-1,]))
+
+    pop = tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd))
+    if(se)
+    {
+      design = design_matrices(pre$pni, pre$pcni, pre$pi, group, ncol(dat), length(group_n))
+      res = Oakes_poly2(a, em$A, em$b, pre$ncat, em$r,
+                      pre$pni, pre$pcni, pre$pi, pre$px,
+                      theta_grid, em$mu, em$sd, group_n, group,
+                      design$items, design$groups, ref_group)
+
+
+      SE = sqrt(-diag(solve(res$H)))
+      ipar = sum(pre$ncat)
+      first = cumsum(lag(pre$ncat,default=1L))
+      items$SE_alpha = rep(SE[first],pre$ncat-1L)
+      items$SE_beta = (SE[1:ipar])[-first]
+      if(has_groups)
+      {
+        s = SE[-(1:ipar)]
+        r=ref_group
+        if(r==0)
+          s=c(NA,s)
+        else
+          s = c(s[1:(2*r)],NA,s[(2*r+1):length(s)])
+        pop$SE_mu = s[seq(1,length(s),2)]
+        pop$SE_sd = s[seq(2,length(s),2)]
+      }
+    }
+    return(list(items=items,pop=pop,em=em,pre=pre))
   }
 
 }

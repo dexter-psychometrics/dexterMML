@@ -85,7 +85,7 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 	vec sum_theta(ng), sum_sigma2(ng);
 	
 	const double tol = 1e-10;
-	int iter = 0;
+	int iter = 0, min_error=0;
 	double ll;
 	
 	for(; iter<max_iter; iter++)
@@ -94,17 +94,17 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 					theta, r, thetabar, sum_theta, sum_sigma2, mu, sigma, pgroup, ll);
 					
 		double maxdif_A=0, maxdif_b=0;
-/*#pragma omp parallel for reduction(max: maxdif_A, maxdif_b)*/
+#pragma omp parallel for reduction(max: maxdif_A, maxdif_b) reduction(+:min_error)
 		for(int i=0; i<nit; i++)
 		{	
 			ll_poly2 f(a.colptr(i), theta.memptr(), r(i));
 			vec pars = b.col(i).head(ncat[i]);
 			pars[0] = A[i];
-			int itr=0;
+			int itr=0,err=0;
 			double ll_itm=0;
 
-			dfpmin(pars, tol, itr, ll_itm, f);
-
+			dfpmin(pars, tol, itr, ll_itm, f, err);
+			min_error += err;
 			maxdif_A = std::max(maxdif_A, std::abs(A[i] - pars[0]));
 			A[i] = pars[0];
 			for(int k=1;k<ncat[i];k++)
@@ -113,7 +113,8 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 				b.at(k,i) = pars[k];
 			}
 		}
-		
+		if(min_error>0)
+			Rcpp::stop("minimization error");
 		for(int g=0;g<ng;g++)
 		{			
 			if(g==ref_group)

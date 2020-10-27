@@ -8,7 +8,7 @@ est(
   dataSrc,
   predicate = NULL,
   group = NULL,
-  model = c("1PL", "2PL"),
+  model = c("1PL", "2PL", "old_2PLd"),
   se = TRUE
 )
 }

@@ -158,7 +158,7 @@ Rcpp::List estimate_2pl_dich_multigroup(const arma::vec& a_start, const arma::ve
 	vec sum_theta(ng), sum_sigma2(ng);
 	
 	const double tol = 1e-10;
-	int iter = 0;
+	int iter = 0,min_error=0;
 	double ll;
 	
 	for(; iter<max_iter; iter++)
@@ -168,26 +168,27 @@ Rcpp::List estimate_2pl_dich_multigroup(const arma::vec& a_start, const arma::ve
 		
 		
 		double maxdif_a=0, maxdif_b=0;
-#pragma omp parallel for reduction(max: maxdif_a, maxdif_b)
+#pragma omp parallel for reduction(max: maxdif_a, maxdif_b) reduction(+:min_error)
 		for(int i=0; i<nit; i++)
 		{				
 			ll_2pl_dich f(r1.colptr(i), r0.colptr(i), theta.memptr(), nt);
 			vec pars(2);
 			pars[0] = a[i];
 			pars[1] = b[i];
-			int itr=0;
+			int itr=0,err=0;
 			double ll_itm=0;
 			
 			// minimize, still need to tweak lnsrch a bit of replace by better line search algo
-			dfpmin(pars, tol, itr, ll_itm, f);
-			
+			dfpmin(pars, tol, itr, ll_itm, f,err);
+			min_error+=err;
 			maxdif_a = std::max(maxdif_a, std::abs(a[i]-pars[0]));
 			maxdif_b = std::max(maxdif_b, std::abs(b[i]-pars[1]));
 			
 			a[i] = pars[0];
 			b[i] = pars[1];
 		}
-		
+		if(min_error>0)
+			Rcpp::stop("minimization error");
 		for(int g=0;g<ng;g++)
 		{			
 			if(g==ref_group)

@@ -35,8 +35,9 @@ Rcpp::List prox_dich(const arma::ivec& isum, const arma::ivec& psum,
 	}
 	
 	vec beta(ilogit.memptr(),nit,true,true), theta(np, fill::zeros);
-		
-	for(int iter=0; iter<max_iter; iter++)
+	
+		int iter=0;
+	for(; iter<max_iter; iter++)
 	{
 		if(iter>0)
 		{
@@ -82,10 +83,8 @@ Rcpp::List prox_dich(const arma::ivec& isum, const arma::ivec& psum,
 			break;
 	}
 	return Rcpp::List::create(
-		Named("theta") = theta, Named("beta") = beta);
+		Named("theta") = theta, Named("beta") = beta, Named("iter")=iter);
 }
-
-
 
 
 // dichotoom logistische regressie voor startwaardes 2PL
@@ -104,8 +103,8 @@ Rcpp::List start_lr(const arma::vec& theta,
 	
 	const int max_iter = 20;
 	const double convergence = 1e-6;
-
-#pragma omp parallel for
+	int total_iter=0;
+#pragma omp parallel for reduction(+:total_iter)
 	for(int i=0; i<nit; i++)
 	{
 		vec g(2);
@@ -113,7 +112,8 @@ Rcpp::List start_lr(const arma::vec& theta,
 		double a = 1;
 		double b = -beta[i];
 		double ll_old=0;
-		for(int iter =0; iter<max_iter; iter++)
+		int iter=0;
+		for(; iter<max_iter; iter++)
 		{
 			double ll =0;
 			g.zeros();
@@ -147,11 +147,11 @@ Rcpp::List start_lr(const arma::vec& theta,
 				
 			ll_old = ll;
 		}
-
+		total_iter += iter;
 		beta[i]=-b/a;
 		alpha[i]=a;
 	}
-	return Rcpp::List::create(Named("alpha") = alpha, Named("beta") = beta);
+	return Rcpp::List::create(Named("alpha") = alpha, Named("beta") = beta, Named("iter")=total_iter);
 }
 
 

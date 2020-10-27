@@ -1,7 +1,7 @@
 
 #include <RcppArmadillo.h>
 #include "minimize.h"
-#include "nrm_item.h"
+#include "poly2pl_item.h"
 #include "shared.h"
 
 using namespace arma;
@@ -10,7 +10,7 @@ using Rcpp::Named;
 
 // loglikelihood for groups based on matrix of perturbed mu and sigma values
 // in order to compute empirical gradients or hessian
-mat ll_group_nrm(const imat& a, const mat& b, const mat& exp_at, const ivec& ncat, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
+mat ll_group_poly2(const imat& a, const vec& A, const mat& b,  const ivec& ncat, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
 				const vec& theta, const mat& mu, const mat& sigma, const ivec& pgroup)
 {
 	const int nit = ncat.n_elem, nt = theta.n_elem, np = pni.n_elem, nptb = mu.n_rows, ng=mu.n_cols;
@@ -25,7 +25,7 @@ mat ll_group_nrm(const imat& a, const mat& b, const mat& exp_at, const ivec& nca
 	field<mat> itrace(nit);
 	
 	for(int i=0; i<nit; i++)
-		itrace(i) = nrm_trace(theta, a.col(i), b.col(i), ncat[i], exp_at);
+		itrace(i) = poly2_trace(theta, a.col(i), A[i], b.col(i), ncat[i]);
 
 	
 #pragma omp parallel
@@ -53,7 +53,7 @@ mat ll_group_nrm(const imat& a, const mat& b, const mat& exp_at, const ivec& nca
 // estep where not to be update items and groups are skipped according to the design matrix
 // this is both faster and prevents rounding errors in the jacobian for 'almost 0' chanhes
 
-void se_estep_nrm(imat& a, mat& b, const mat& exp_at, const ivec& ncat, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
+void se_estep_poly2(const imat& a, const vec& A, const mat& b, const ivec& ncat, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
 				const vec& theta, field<mat>& r, vec& sumtheta, vec& sumsig2, const vec& mu, const vec& sigma, const ivec& pgroup,
 				const ivec& update_i, const ivec& update_g)
 {
@@ -68,7 +68,7 @@ void se_estep_nrm(imat& a, mat& b, const mat& exp_at, const ivec& ncat, const iv
 	
 	for(int i=0; i<nit; i++)
 	{
-		itrace(i) = nrm_trace(theta, a.col(i), b.col(i), ncat[i], exp_at);
+		itrace(i) = poly2_trace(theta, a.col(i), A[i], b.col(i), ncat[i]);
 		r(i).zeros();
 	}
 	
@@ -109,7 +109,7 @@ void se_estep_nrm(imat& a, mat& b, const mat& exp_at, const ivec& ncat, const iv
 
 
 
-mat J_nrm(arma::imat& a, const arma::mat& b_fixed, mat& exp_at, const arma::ivec& ncat,
+mat J_poly2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, const arma::ivec& ncat,
 						const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 						arma::vec& theta, const arma::vec& mu_fixed, const arma::vec& sigma_fixed, const arma::ivec& gn, const arma::ivec& pgroup, 
 						const arma::imat dsg_ii,const arma::imat dsg_gi, const int ref_group=0)
@@ -119,7 +119,7 @@ mat J_nrm(arma::imat& a, const arma::mat& b_fixed, mat& exp_at, const arma::ivec
 	imat dsg_ig = dsg_gi.t();
 	
 	cube b(b_fixed.n_rows, b_fixed.n_cols, 2);
-	
+	mat A(A_fixed.n_elem, 2);
 	
 	mat mu(ng,2), sigma(ng,2);
 	vec sum_theta(ng), sum_sigma2(ng);
@@ -139,38 +139,44 @@ mat J_nrm(arma::imat& a, const arma::mat& b_fixed, mat& exp_at, const arma::ivec
 	const ivec gdummy(ng,fill::zeros);
 	
 	
-	const int npar = accu(ncat) - nit + 2*ng-1;
+	const int npar = accu(ncat) + 2*(ng-1);
 	mat jacob(npar, npar, fill::zeros);
 	
 	int p=0;
 	for(int i=0; i<nit; i++)
 	{
-		for(int k=1; k<ncat[i]; k++)
+		for(int k=0; k<ncat[i]; k++)
 		{
 			for(int d=0; d<=1; d++)
 			{
 				b.slice(d) = b_fixed;
+				A.col(d) = A_fixed;
 				mu.col(d) = mu_fixed;
 				sigma.col(d) = sigma_fixed;
+								
+				if(k==0)
+					A.at(i,d) += signed_delta[d];
+				else
+					b.at(k,i,d) += signed_delta[d];
 				
-				b.at(k,i,d) += signed_delta[d];
-				
-				se_estep_nrm(a, b.slice(d), exp_at, ncat, pni, pcni, pi, px, 
+				se_estep_poly2(a, A.col(d), b.slice(d), ncat, pni, pcni, pi, px, 
 					theta, r, sum_theta, sum_sigma2, mu.col(d), sigma.col(d), pgroup, dsg_ii.col(i), dsg_gi.col(i));
 
 #pragma omp parallel for
 				for(int j=0; j<nit; j++) if(dsg_ii.at(j,i) == 1)
 				{				
-					ll_nrm f(a.colptr(j), exp_at, r(j));
-					vec pars(b.slice(d).colptr(j)+1,ncat[j]-1);
+					ll_poly2 f(a.colptr(j), theta.memptr(), r(j));
+					vec pars = b.slice(d).col(j).head(ncat[i]);
+					pars[0] = A.at(j,d);
 
-					int itr=0,err;
+					int itr=0,err=0;
 					double ll_itm=0;
 
 					dfpmin(pars, tol, itr, ll_itm, f,err);
 
 					for(int kj=1;kj<ncat[j];kj++)
 						b.at(kj,j,d) = pars[kj-1];
+					A.at(j,d) = pars[0];
 				}
 				for(int g=0;g<ng;g++) if(dsg_gi.at(g,i) == 1)
 				{
@@ -184,56 +190,50 @@ mat J_nrm(arma::imat& a, const arma::mat& b_fixed, mat& exp_at, const arma::ivec
 			{
 				if(dsg_ii.at(j,i) == 1)
 				{
+					jacob.at(q,p) = (A.at(j,1) - A.at(j,0))/(2*delta); 
 					for(int kj=1; kj<ncat[j]; kj++)
-					{
-						jacob.at(q+kj-1,p) = (b.at(kj,j,1) - b.at(kj,j,0))/(2*delta); 
-					}
+						jacob.at(q+kj,p) = (b.at(kj,j,1) - b.at(kj,j,0))/(2*delta); 
 				}
-				q += ncat[j]-1;
+				q += ncat[j];
 			}
-			for(int g=0; g<ng; g++) 
+			for(int g=0; g<ng; g++) if(g!=ref_group)
 			{	
 				if(dsg_gi.at(g,i) == 1)
 				{
-					if(g!=ref_group)
-						jacob.at(q++,p) = (mu.at(g,1) - mu.at(g,0))/(2*delta);
-					jacob.at(q++,p) = (sigma.at(g,1) - sigma.at(g,0))/(2*delta);
+					jacob.at(q,p) = (mu.at(g,1) - mu.at(g,0))/(2*delta);
+					jacob.at(q+1,p) = (sigma.at(g,1) - sigma.at(g,0))/(2*delta);
 				}
-				else 
-				{
-					if(g!=ref_group) q++;
-					q++;
-				}
+				q+=2;
 			}
 			p++;
 		}
 	}
-	// groups, almost a verbatim copy of the above, have to find a neater way maybe
-	for(int g=0; g<ng; g++)
+	// groups
+	for(int g=0; g<ng; g++) if(g!=ref_group)
 	{
 		for(int gp = 0; gp<=1; gp++)
 		{
-			if(gp==0 && g==ref_group)
-				continue;
 			for(int d=0; d<=1; d++)
 			{
 				mu.col(d) = mu_fixed;
 				sigma.col(d) = sigma_fixed;
 				b.slice(d) = b_fixed;
+				A.col(d) = A_fixed;
 				
 				if(gp==0)
 					mu.at(g,d) += signed_delta[d];
 				else
 					sigma.at(g,d) += signed_delta[d];
 				
-				se_estep_nrm(a, b.slice(d), exp_at, ncat, pni, pcni, pi, px, 
+				se_estep_poly2(a, A.col(d), b.slice(d), ncat, pni, pcni, pi, px, 
 					theta, r, sum_theta, sum_sigma2, mu.col(d), sigma.col(d), pgroup, dsg_ig.col(g), gdummy);
 
 #pragma omp parallel for
 				for(int j=0; j<nit; j++) if(dsg_gi.at(g,j) == 1)
 				{				
-					ll_nrm f(a.colptr(j), exp_at, r(j));
-					vec pars(b.slice(d).colptr(j)+1,ncat[j]-1);
+					ll_poly2 f(a.colptr(j), theta.memptr(), r(j));
+					vec pars = b.slice(d).col(j).head(ncat[j]);
+					pars[0] = A.at(j,d);
 					int itr=0,err;
 					double ll_itm=0;
 
@@ -241,6 +241,7 @@ mat J_nrm(arma::imat& a, const arma::mat& b_fixed, mat& exp_at, const arma::ivec
 
 					for(int kj=1;kj<ncat[j];kj++)
 						b.at(kj,j,d) = pars[kj-1];
+					A.at(j,d) = pars[0];
 				}
 			}
 			int q=0;
@@ -248,12 +249,11 @@ mat J_nrm(arma::imat& a, const arma::mat& b_fixed, mat& exp_at, const arma::ivec
 			{
 				if(dsg_ig.at(j,g) == 1)
 				{
+					jacob.at(q,p) = (A.at(j,1) - A.at(j,0))/(2*delta); 
 					for(int kj=1; kj<ncat[j]; kj++)
-					{
-						jacob.at(q+kj-1,p) = (b.at(kj,j,1) - b.at(kj,j,0))/(2*delta); 
-					}
+						jacob.at(q+kj,p) = (b.at(kj,j,1) - b.at(kj,j,0))/(2*delta); 
 				}
-				q += ncat[j]-1;
+				q += ncat[j];
 			}
 			p++;
 		}	
@@ -265,25 +265,17 @@ mat J_nrm(arma::imat& a, const arma::mat& b_fixed, mat& exp_at, const arma::ivec
 
 
 // [[Rcpp::export]]
-Rcpp::List Oakes_nrm(arma::imat& a, const arma::mat& b, const arma::ivec& ncat, arma::field<arma::mat>& r, 
+Rcpp::List Oakes_poly2(arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, arma::field<arma::mat>& r, 
 				const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 				arma::vec& theta, const arma::vec& mu, const arma::vec& sigma, const arma::ivec& gn, const arma::ivec& pgroup,
 				const arma::imat& dsg_ii, const arma::imat& dsg_gi,	const int ref_group=0)
 {
-	const int ng = mu.n_elem, nit=a.n_cols, nt=theta.n_elem;
-	const int npar = accu(ncat) - nit + 2*ng-1;
-	
-	const int max_a = a.max();
-	
-	//lookup table
-	mat exp_at(max_a+1, nt, fill::ones);
-	for(int t=0; t< nt; t++)
-		for(int k=1; k<=max_a;k++)
-			exp_at.at(k,t) = std::exp(k*theta[t]);
+	const int ng = mu.n_elem, nit=a.n_cols;
+	const int npar = accu(ncat) + 2*(ng-1);
 	
 	
 	//Jacobian
-	mat J = J_nrm(a, b, exp_at, ncat, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, ref_group);
+	mat J = J_poly2(a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, ref_group);
 	
 	// observed hessian
 	const int max_cat = ncat.max();
@@ -294,15 +286,17 @@ Rcpp::List Oakes_nrm(arma::imat& a, const arma::mat& b, const arma::ivec& ncat, 
 
 	for(int i=0; i<nit; i++)
 	{				
-		ll_nrm f(a.colptr(i), exp_at, r(i));
-		vec pars(b.colptr(i)+1,ncat[i]-1);
+		ll_poly2 f(a.colptr(i), theta.memptr(), r(i));
+		vec pars = b.col(i).head(ncat[i]);
+		pars[0] = A[i];
+		mat h(ncat[i],ncat[i]);
 		
-		f.hess(pars,h,theta);
+		f.hess(pars,h);
 		
-		for(int j=0; j<ncat[i]-1; j++)
-			for(int k=0; k<ncat[i]-1; k++)
+		for(int j=0; j<ncat[i]; j++)
+			for(int k=0; k<ncat[i]; k++)
 				obs.at(p+j,p+k) = h.at(j,k);
-		p += ncat[i]-1;
+		p += ncat[i];
 	}
 
 	// empirical observed hessian for groups
@@ -319,27 +313,17 @@ Rcpp::List Oakes_nrm(arma::imat& a, const arma::mat& b, const arma::ivec& ncat, 
 	}
 
 	// dit gaat in 1 keer voor alle groepen
-	mat ll = ll_group_nrm(a, b, exp_at, ncat, pni, pcni, pi, px, theta, mu_ptb, sigma_ptb, pgroup);
+	mat ll = ll_group_poly2(a, A, b, ncat, pni, pcni, pi, px, theta, mu_ptb, sigma_ptb, pgroup);
 
-	for(int g=0; g<ng;g++)
+	for(int g=0; g<ng;g++) if(g!=ref_group)
 	{
-		if(g==ref_group)
-		{
-			obs.at(p,p) = (ll.at(7,g) - 2*ll.at(0,g) + ll.at(8,g)) / (4 * SQR(d));	
-			J.at(p,p)=0;
-			p++;
-		}
-		else
-		{
-			obs.at(p,p) = (ll.at(1,g) - 2* ll.at(0,g) + ll.at(2,g)) / (4*SQR(d));
-			obs.at(p,p+1) = (ll.at(3,g) - ll.at(4,g) - ll.at(6,g) + ll.at(5,g)) / (8 * SQR(d)); // 2*4=8
-			obs.at(p+1,p+1) = (ll.at(7,g) - 2*ll.at(0,g) + ll.at(8,g)) / (4 * SQR(d));		
-			obs.at(p+1,p) = obs.at(p,p+1);		
-			J.submat(p,p,p+1,p+1).zeros();
-			p+=2;
-		}	
+		obs.at(p,p) = (ll.at(1,g) - 2* ll.at(0,g) + ll.at(2,g)) / (4*SQR(d));
+		obs.at(p,p+1) = (ll.at(3,g) - ll.at(4,g) - ll.at(6,g) + ll.at(5,g)) / (8 * SQR(d)); // 2*4=8
+		obs.at(p+1,p+1) = (ll.at(7,g) - 2*ll.at(0,g) + ll.at(8,g)) / (4 * SQR(d));		
+		obs.at(p+1,p) = obs.at(p,p+1);		
+		J.submat(p,p,p+1,p+1).zeros();
+		p+=2;
 	}
-
 
 	mat hess = obs+(J+J.t())/2;	
 

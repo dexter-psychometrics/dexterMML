@@ -94,7 +94,7 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 	
 	const int max_iter = 200;
 	const double tol = 1e-10;
-	int iter = 0;
+	int iter = 0,min_error=0;
 	double ll;
 	
 	for(; iter<max_iter; iter++)
@@ -105,15 +105,16 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 		
 		
 		double maxdif_b=0;
-#pragma omp parallel for reduction(max: maxdif_b)
+#pragma omp parallel for reduction(max: maxdif_b) reduction(+:min_error)
 		for(int i=0; i<nit; i++)
 		{	
 			ll_nrm f(a.colptr(i), exp_at, r(i));
 			vec pars(b.colptr(i)+1,ncat[i]-1);
-			int itr=0;
+			int itr=0,err=0;
 			double ll_itm=0;
 
-			dfpmin(pars, tol, itr, ll_itm, f);
+			dfpmin(pars, tol, itr, ll_itm, f,err);
+			min_error+=err;
 
 			for(int k=1;k<ncat[i];k++)
 			{
@@ -121,7 +122,8 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 				b.at(k,i) = pars[k-1];
 			}
 		}
-		
+		if(min_error>0)
+			Rcpp::stop("minimization error");
 		for(int g=0;g<ng;g++)
 		{			
 			if(g==ref_group)

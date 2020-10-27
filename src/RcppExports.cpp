@@ -257,6 +257,33 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// Oakes_poly2
+Rcpp::List Oakes_poly2(arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, arma::field<arma::mat>& r, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, arma::vec& theta, const arma::vec& mu, const arma::vec& sigma, const arma::ivec& gn, const arma::ivec& pgroup, const arma::imat& dsg_ii, const arma::imat& dsg_gi, const int ref_group);
+RcppExport SEXP _dexterMML_Oakes_poly2(SEXP aSEXP, SEXP ASEXP, SEXP bSEXP, SEXP ncatSEXP, SEXP rSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP thetaSEXP, SEXP muSEXP, SEXP sigmaSEXP, SEXP gnSEXP, SEXP pgroupSEXP, SEXP dsg_iiSEXP, SEXP dsg_giSEXP, SEXP ref_groupSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::imat& >::type a(aSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type A(ASEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type b(bSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type ncat(ncatSEXP);
+    Rcpp::traits::input_parameter< arma::field<arma::mat>& >::type r(rSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pni(pniSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pcni(pcniSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pi(piSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type px(pxSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type sigma(sigmaSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type gn(gnSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pgroup(pgroupSEXP);
+    Rcpp::traits::input_parameter< const arma::imat& >::type dsg_ii(dsg_iiSEXP);
+    Rcpp::traits::input_parameter< const arma::imat& >::type dsg_gi(dsg_giSEXP);
+    Rcpp::traits::input_parameter< const int >::type ref_group(ref_groupSEXP);
+    rcpp_result_gen = Rcpp::wrap(Oakes_poly2(a, A, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, ref_group));
+    return rcpp_result_gen;
+END_RCPP
+}
 // prox_dich
 Rcpp::List prox_dich(const arma::ivec& isum, const arma::ivec& psum, const arma::ivec& inp, const arma::ivec& pni, const arma::ivec& icnp, const arma::ivec& pcni, const arma::ivec& ip, const arma::ivec& pi, const int max_iter, const double min_change);
 RcppExport SEXP _dexterMML_prox_dich(SEXP isumSEXP, SEXP psumSEXP, SEXP inpSEXP, SEXP pniSEXP, SEXP icnpSEXP, SEXP pcniSEXP, SEXP ipSEXP, SEXP piSEXP, SEXP max_iterSEXP, SEXP min_changeSEXP) {
@@ -309,6 +336,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_test_ll_p2", (DL_FUNC) &_dexterMML_test_ll_p2, 4},
     {"_dexterMML_test_gradient_p2", (DL_FUNC) &_dexterMML_test_gradient_p2, 4},
     {"_dexterMML_test_hess_p2", (DL_FUNC) &_dexterMML_test_hess_p2, 4},
+    {"_dexterMML_Oakes_poly2", (DL_FUNC) &_dexterMML_Oakes_poly2, 17},
     {"_dexterMML_prox_dich", (DL_FUNC) &_dexterMML_prox_dich, 10},
     {"_dexterMML_start_lr", (DL_FUNC) &_dexterMML_start_lr, 6},
     {NULL, NULL, 0}
