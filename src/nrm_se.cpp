@@ -297,7 +297,7 @@ Rcpp::List Oakes_nrm(arma::imat& a, const arma::mat& b, const arma::ivec& ncat, 
 		ll_nrm f(a.colptr(i), exp_at, r(i));
 		vec pars(b.colptr(i)+1,ncat[i]-1);
 		
-		f.hess(pars,h,theta);
+		f.hess(pars,h);
 		
 		for(int j=0; j<ncat[i]-1; j++)
 			for(int k=0; k<ncat[i]-1; k++)

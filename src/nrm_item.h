@@ -93,7 +93,7 @@ struct ll_nrm
 		}
 	}
 	//hessian of LL
-	void hess(const arma::vec& b, arma::mat& h, const arma::mat& theta)
+	void hess(const arma::vec& b, arma::mat& h)
 	{
 		h.zeros();
 		const arma::vec eb = arma::exp(b);

@@ -38,14 +38,10 @@ to_dexter = function(a,logb,ncat,item_id, H=NULL)
   beta = DD %*% logb
 
   k = length(logb)
-  CC = matrix(-1/k, k, k)
-  diag(CC) = (k - 1)/k
-  beta = CC %*% beta
   if (!is.null(H))
   {
-    A = CC %*% DD
     cov.all = solve(H)
-    cov.beta = A %*% cov.all[1:k,1:k] %*% t(A)
+    cov.beta = DD %*% cov.all[1:k,1:k] %*% t(DD)
   }
 
 
