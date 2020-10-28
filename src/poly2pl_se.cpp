@@ -291,7 +291,7 @@ Rcpp::List Oakes_poly2(arma::imat& a, const arma::vec& A, const arma::mat& b, co
 		pars[0] = A[i];
 		mat h(ncat[i],ncat[i]);
 		
-		f.hess(pars,h);
+		f.hess(pars,h,false);
 		
 		for(int j=0; j<ncat[i]; j++)
 			for(int k=0; k<ncat[i]; k++)

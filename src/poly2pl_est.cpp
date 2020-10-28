@@ -92,8 +92,10 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 	{
 		estep_poly2(a, A, b, ncat, pni, pcni, pi, px, 
 					theta, r, thetabar, sum_theta, sum_sigma2, mu, sigma, pgroup, ll);
+		
 					
 		double maxdif_A=0, maxdif_b=0;
+		
 #pragma omp parallel for reduction(max: maxdif_A, maxdif_b) reduction(+:min_error)
 		for(int i=0; i<nit; i++)
 		{	
@@ -103,7 +105,9 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 			int itr=0,err=0;
 			double ll_itm=0;
 
+			// newton raphson give problems
 			dfpmin(pars, tol, itr, ll_itm, f, err);
+			
 			min_error += err;
 			maxdif_A = std::max(maxdif_A, std::abs(A[i] - pars[0]));
 			A[i] = pars[0];
@@ -114,7 +118,11 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 			}
 		}
 		if(min_error>0)
+		{
+			printf("code: %i",min_error);
+			fflush(stdout);
 			Rcpp::stop("minimization error");
+		}
 		for(int g=0;g<ng;g++)
 		{			
 			if(g==ref_group)

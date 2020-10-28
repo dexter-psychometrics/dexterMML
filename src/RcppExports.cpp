@@ -142,8 +142,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // estimate_nrm
-Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ivec& ncat, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, arma::vec& theta, const arma::vec& mu_start, const arma::vec& sigma_start, const arma::ivec& gn, const arma::ivec& pgroup, const int ref_group);
-RcppExport SEXP _dexterMML_estimate_nrm(SEXP aSEXP, SEXP b_startSEXP, SEXP ncatSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP thetaSEXP, SEXP mu_startSEXP, SEXP sigma_startSEXP, SEXP gnSEXP, SEXP pgroupSEXP, SEXP ref_groupSEXP) {
+Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ivec& ncat, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, arma::vec& theta, const arma::vec& mu_start, const arma::vec& sigma_start, const arma::ivec& gn, const arma::ivec& pgroup, const int ref_group, const int max_iter);
+RcppExport SEXP _dexterMML_estimate_nrm(SEXP aSEXP, SEXP b_startSEXP, SEXP ncatSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP thetaSEXP, SEXP mu_startSEXP, SEXP sigma_startSEXP, SEXP gnSEXP, SEXP pgroupSEXP, SEXP ref_groupSEXP, SEXP max_iterSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -160,7 +160,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::ivec& >::type gn(gnSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type pgroup(pgroupSEXP);
     Rcpp::traits::input_parameter< const int >::type ref_group(ref_groupSEXP);
-    rcpp_result_gen = Rcpp::wrap(estimate_nrm(a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group));
+    Rcpp::traits::input_parameter< const int >::type max_iter(max_iterSEXP);
+    rcpp_result_gen = Rcpp::wrap(estimate_nrm(a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group, max_iter));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -330,7 +331,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_mat_pre", (DL_FUNC) &_dexterMML_mat_pre, 2},
     {"_dexterMML_categorize", (DL_FUNC) &_dexterMML_categorize, 11},
     {"_dexterMML_design_matrices", (DL_FUNC) &_dexterMML_design_matrices, 6},
-    {"_dexterMML_estimate_nrm", (DL_FUNC) &_dexterMML_estimate_nrm, 13},
+    {"_dexterMML_estimate_nrm", (DL_FUNC) &_dexterMML_estimate_nrm, 14},
     {"_dexterMML_Oakes_nrm", (DL_FUNC) &_dexterMML_Oakes_nrm, 16},
     {"_dexterMML_estimate_poly2", (DL_FUNC) &_dexterMML_estimate_poly2, 15},
     {"_dexterMML_test_ll_p2", (DL_FUNC) &_dexterMML_test_ll_p2, 4},

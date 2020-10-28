@@ -33,8 +33,8 @@ design_matrices <- function(pni, pcni, pi, pg, nit, ng) {
     .Call(`_dexterMML_design_matrices`, pni, pcni, pi, pg, nit, ng)
 }
 
-estimate_nrm <- function(a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group = 0L) {
-    .Call(`_dexterMML_estimate_nrm`, a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group)
+estimate_nrm <- function(a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group = 0L, max_iter = 200L) {
+    .Call(`_dexterMML_estimate_nrm`, a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group, max_iter)
 }
 
 Oakes_nrm <- function(a, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, ref_group = 0L) {

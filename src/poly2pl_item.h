@@ -95,8 +95,7 @@ struct ll_poly2
 		}
 	}
 	
-	//hessian of positive LL
-	void hess(const arma::vec& par, arma::mat& h)
+	void hess(const arma::vec& par, arma::mat& h, const bool negative=true)
 	{
 		h.zeros();
 		const double A = par[0];
@@ -121,7 +120,7 @@ struct ll_poly2
 				s6 -= a[k]*par[k]*p[k];
 				sr += r.at(t,k);
 			}
-			h.at(0,0) -= sr * (s*s2+s*s3+s*s4-SQR(s5)-2*s5*s6-SQR(s6))/SQR(s);
+			h.at(0,0) += sr * (s*s2+s*s3+s*s4-SQR(s5)-2*s5*s6-SQR(s6))/SQR(s);
 			//Ab
 			for(int k=1;k<ncat;k++)
 			{
@@ -136,16 +135,18 @@ struct ll_poly2
 					}					
 					ss += r.at(t,i) * (kron(i,k)*a[i] + ss1/s);
 				}
-				h.at(0,k) -= ss;	
+				h.at(0,k) += ss;	
 			}
 			//bb
 			for(int k=1;k<ncat;k++)
 			{
-				h.at(k,k) += (SQR(p[k]*a[k])/s - SQR(a[k])*p[k])*A2*sr/s;
+				h.at(k,k) -= (SQR(p[k]*a[k])/s - SQR(a[k])*p[k])*A2*sr/s;
 				for(int j=k+1;j<ncat;j++)
-					h.at(k,j) += A2*a[k]*a[j]*(p[k]*p[j]*sr)/SQR(s);
+					h.at(k,j) -= A2*a[k]*a[j]*(p[k]*p[j]*sr)/SQR(s);
 			}		
 		}	
+		if(!negative)
+			h *= -1;
 		
 		for(int i=0; i<ncat; i++)
 			for(int j=i+1; j<ncat; j++)

@@ -68,7 +68,8 @@ void estep_nrm(imat& a, mat& b, const mat& exp_at, const ivec& ncat, const ivec&
 // [[Rcpp::export]]
 Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ivec& ncat,
 						const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
-						arma::vec& theta, const arma::vec& mu_start, const arma::vec& sigma_start, const arma::ivec& gn, const arma::ivec& pgroup, const int ref_group=0)
+						arma::vec& theta, const arma::vec& mu_start, const arma::vec& sigma_start, const arma::ivec& gn, const arma::ivec& pgroup, 
+						const int ref_group=0, const int max_iter = 200)
 {
 	const int nit = a.n_cols, nt = theta.n_elem, np = pni.n_elem, ng=gn.n_elem;
 	
@@ -92,7 +93,6 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 	
 	vec sum_theta(ng), sum_sigma2(ng);
 	
-	const int max_iter = 200;
 	const double tol = 1e-10;
 	int iter = 0,min_error=0;
 	double ll;
@@ -103,9 +103,9 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 		estep_nrm(a, b, exp_at, ncat, pni, pcni, pi, px, 
 					theta, r, thetabar, sum_theta, sum_sigma2, mu, sigma, pgroup, ll);
 		
-		
+		int NR=0;
 		double maxdif_b=0;
-#pragma omp parallel for reduction(max: maxdif_b) reduction(+:min_error)
+#pragma omp parallel for reduction(max: maxdif_b) reduction(+:min_error,NR)
 		for(int i=0; i<nit; i++)
 		{	
 			ll_nrm f(a.colptr(i), exp_at, r(i));
@@ -113,9 +113,10 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 			int itr=0,err=0;
 			double ll_itm=0;
 
-			dfpmin(pars, tol, itr, ll_itm, f,err);
+			//dfpmin(pars, tol, itr, ll_itm, f,err);
+			NRmin(pars, tol, itr, ll_itm, f,err);
 			min_error+=err;
-
+			NR+=itr;
 			for(int k=1;k<ncat[i];k++)
 			{
 				maxdif_b = std::max(maxdif_b, std::abs(b.at(k,i) - pars[k-1]));
@@ -139,7 +140,7 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 		}
 		
 		//printf("\r% 3i", iter);
-		printf("iter: % 4i, logl: %.6f,  max b: %.8f\n", iter, ll, maxdif_b);
+		printf("iter: % 4i, logl: %.6f,  max b: %.8f, NR: %i\n", iter, ll, maxdif_b,NR);
 		fflush(stdout);
 		
 		

@@ -58,26 +58,28 @@ struct ll_2pl_dich
 		}
 	}
 	// hessian of LL
-	void hess(const arma::vec& ab, arma::mat& h)
+	void hess(const arma::vec& ab, arma::mat& h, const bool negative=true)
 	{
 		h.zeros();
 		const double a = ab[0], b = ab[1];
 		for(int i=0;i<n;i++)
 		{
 			double e = std::exp(a*(b-theta[i])), t=theta[i];
-			h.at(0,0) += (r0[i]*(e+1) - r0[i] - r1[i]*(e+1)*e - (2*r0[i]-r1[i]*e)*e) \
+			h.at(0,0) -= (r0[i]*(e+1) - r0[i] - r1[i]*(e+1)*e - (2*r0[i]-r1[i]*e)*e) \
 					* SQR(b-t)/SQR(e+1);
 			
-			h.at(0,1) += (a*r0[i]*(t-b) - a*(b-t)*(2*r0[i]-r1[i]*e)*e \
+			h.at(0,1) -= (a*r0[i]*(t-b) - a*(b-t)*(2*r0[i]-r1[i]*e)*e \
 							+ r0[i]*(a*(b-t)+1)*(e+1) \
 							- r1[i]*(a*(b-t) + 1)*(e+1)*e) \
 							/ SQR(e+1);			
 			
 			e = std::exp(a*(b+t));
 			
-			h.at(1,1) -= SQR(a)*(r0[i]+r1[i])*e/(std::exp(2*a*b) + std::exp(2*a*t) + 2*e);
+			h.at(1,1) += SQR(a)*(r0[i]+r1[i])*e/(std::exp(2*a*b) + std::exp(2*a*t) + 2*e);
 		}
 		h.at(1,0) = h.at(0,1);
+		if(!negative)
+			h *= -1;
 	}
 };
 

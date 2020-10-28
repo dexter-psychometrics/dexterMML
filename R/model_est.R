@@ -247,7 +247,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL','old_
 
     b = apply(pre$icat,2, function(x) 1-log(2*x/lag(x)))
     b[1,] = 0
-    A = rep(1,ncol(dat))
+    A=rep(1,ncol(dat))
 
     mu = rep(0, length(group_n))
     sigma = rep(1, length(group_n))

@@ -3,9 +3,8 @@
 
 #include <RcppArmadillo.h>
 
-// borrowed from numerical recipes
-// if published, we'll have to bake our own our borrow it from somewhere with a better license
-// we can also try for full NR since the hessian is not that hard to derive in most cases but num recip argues against that
+// dfpmin is borrowed from numerical recipes, does not have a publishable license
+// using full NR now, if satisfactory dfpmin can be removed
 
 
 /*
@@ -14,6 +13,8 @@ possible error codes:
 1: Roundoff problem in lnsrch.
 2: max iter in lnsrch reached
 3: too many iterations in dfpmin
+4: too many iterations in NR
+5: solve(hessian, gradient) not succesfull, hessian may not be invertible
 */
 
 template <class T>
@@ -163,6 +164,37 @@ void dfpmin(arma::vec& p, const double gtol, int &iter, double &fret, T &funcd, 
 
 
 
+template <class T>
+void NRmin(arma::vec& p, const double gtol, int &iter, double &fret, T &funcd, int& err)
+{
+	const int max_iter=50, npar=p.n_elem;
+
+	err=0;	
+	arma::vec g(npar), delta(npar,arma::fill::zeros);
+	arma::mat h(npar,npar);
+	
+	
+	for(iter=0; iter<max_iter; iter++)
+	{
+		funcd.df(p, g);
+		funcd.hess(p, h);
+		
+		bool slvd = arma::solve(delta, h, g);
+		if(!slvd || arma::any(arma::abs(delta)>10))
+		{
+			err=5;
+			return;
+		}		
+		
+		p += delta;
+		if(arma::max(arma::abs(g)) < gtol)
+		{
+			fret = funcd(p);
+			return;
+		}
+	}
+	err=4;
+}
 
 
 #endif

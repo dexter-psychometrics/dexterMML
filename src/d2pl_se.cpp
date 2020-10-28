@@ -168,7 +168,7 @@ Rcpp::List Oakes_2pl_dich(const arma::vec& a, const arma::vec& b, arma::mat& r0,
 		vec pars(2);
 		pars[0] = a[i];
 		pars[1] = b[i];
-		f.hess(pars,h);
+		f.hess(pars,h,false);
 		obs.at(i*2,i*2) = h.at(0,0);
 		obs.at(i*2+1,i*2+1) = h.at(1,1);
 		obs.at(i*2,i*2+1) = h.at(1,0);

@@ -92,8 +92,8 @@ struct ll_nrm
 			Rcpp::stop("inf gradient");
 		}
 	}
-	//hessian of LL
-	void hess(const arma::vec& b, arma::mat& h)
+
+	void hess(const arma::vec& b, arma::mat& h, const bool negative=true)
 	{
 		h.zeros();
 		const arma::vec eb = arma::exp(b);
@@ -114,13 +114,16 @@ struct ll_nrm
 				//diagonal
 				double s_min = s-eb[i-1]*exp_at.at(a[i],t);				
 				double num = ss*s_min*eb[i-1]*exp_at.at(a[i],t);
-				h.at(i-1,i-1) += num/SQR(s);
+				h.at(i-1,i-1) -= num/SQR(s);
 
 				//upper tri
 				for(int j=i+1;j<ncat;j++)
-					h.at(i-1,j-1) -= (ss*eb[i-1]*eb[j-1]*exp_at.at(a[i],t)*exp_at.at(a[j],t))/SQR(s);
+					h.at(i-1,j-1) += (ss*eb[i-1]*eb[j-1]*exp_at.at(a[i],t)*exp_at.at(a[j],t))/SQR(s);
 			}
-		}	
+		}
+		if(!negative)
+			h *= -1;
+	
 		for(int i=0;i<ncat-1;i++)
 			for(int j=i+1;j<ncat-1;j++)
 				h.at(j,i) = h.at(i,j);
