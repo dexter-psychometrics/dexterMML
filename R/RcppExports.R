@@ -13,6 +13,10 @@ theta_2pl <- function(a, A, b, ncat, pni, pcni, pi, px, WLE = FALSE) {
     .Call(`_dexterMML_theta_2pl`, a, A, b, ncat, pni, pcni, pi, px, WLE)
 }
 
+theta_2plu <- function(a, A, b, ncat, pni, pcni, pi, px, WLE = FALSE) {
+    .Call(`_dexterMML_theta_2plu`, a, A, b, ncat, pni, pcni, pi, px, WLE)
+}
+
 test_ll_d2 <- function(r, theta, par) {
     .Call(`_dexterMML_test_ll_d2`, r, theta, par)
 }

@@ -1,6 +1,6 @@
 
 
-ability.mml = function(dataSrc, parms, predicate=NULL, method=c('MLE','WLE'))
+ability.mml = function(dataSrc, parms, predicate=NULL, method=c('MLE','WLE'), unweight=FALSE)
 {
   qtpredicate = eval(substitute(quote(predicate)))
   env = caller_env()
@@ -27,9 +27,15 @@ ability.mml = function(dataSrc, parms, predicate=NULL, method=c('MLE','WLE'))
     if(is.null(pid))
       pid = 1:nrow(dataSrc)
 
-    theta = theta_2pl(data_a, parms$em$A, parms$em$b, parms$pre$ncat,
+    if(unweight)
+    {
+      theta = theta_2plu(data_a, parms$em$A, parms$em$b, parms$pre$ncat,
                       pre$pni, pre$pcni, pre$pi, pre$px, (method=='WLE'))
-
+    } else
+    {
+      theta = theta_2pl(data_a, parms$em$A, parms$em$b, parms$pre$ncat,
+                        pre$pni, pre$pcni, pre$pi, pre$px, (method=='WLE'))
+    }
     return(tibble(person_id=pid,theta=theta))
   }
 

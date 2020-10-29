@@ -3,10 +3,7 @@
 using namespace arma;
 
 
-//to do: check categories match
-
-// [[Rcpp::export]]
-double E_2pl(const double theta, const arma::mat& aA, const arma::mat& b, const arma::ivec& items, const arma::ivec& ncat)
+double E_2plu(const double theta, const arma::vec& A, const arma::imat& a, const arma::mat& b, const arma::ivec& items, const arma::ivec& ncat)
 {
 	const int nit = items.n_elem;
 	double ws=0;
@@ -16,8 +13,8 @@ double E_2pl(const double theta, const arma::mat& aA, const arma::mat& b, const 
 		double num=0,den=1;
 		for(int k=1; k<ncat[i]; k++)
 		{
-			double p = std::exp(aA.at(k,i)*(theta-b.at(k,i)));
-			num += aA.at(k,i)*p;
+			double p = std::exp(A[i]*a.at(k,i)*(theta-b.at(k,i)));
+			num += a.at(k,i)*p;
 			den += p;
 		}
 		ws += num/den;
@@ -26,44 +23,42 @@ double E_2pl(const double theta, const arma::mat& aA, const arma::mat& b, const 
 }
 
 
-
-
-// [[Rcpp::export]]
-double Ew_2pl(const double theta, const arma::mat& aA, const arma::mat& b, const arma::ivec& items, const arma::ivec& ncat)
+double Ew_2plu(const double theta, const vec& A, const imat& a, const arma::mat& b, const arma::ivec& items, const arma::ivec& ncat)
 {
 	const int nit = items.n_elem;
 	double E=0,I=0,J=0;
 	for(int ix=0; ix<nit; ix++)
 	{
 		int i = items[ix];
-		double S=1,Sa=0, Sa2=0, Sa3=0;
+		double SpA=1,SpA_a=0,SpA_a2=0,SpA_a3=0;
 		for(int k=1; k<ncat[i]; k++)
 		{
-			double p = std::exp(aA.at(k,i)*(theta-b.at(k,i)));
-			S += p;
-			Sa += p*aA.at(k,i);
-			Sa2 += p*SQR(aA.at(k,i));
-			Sa3 += p*CUB(aA.at(k,i));
+			double pA = std::exp(A[i]*a.at(k,i)*(theta-b.at(k,i)));
+			SpA += pA;
+			SpA_a += a.at(k,i)*pA;
+			SpA_a2 += SQR(a.at(k,i))*pA;
+			SpA_a3 += CUB(a.at(k,i))*pA;
+
 		}
-		I += (S*Sa2-SQR(Sa))/SQR(S);
-		J -= (-SQR(S)*Sa3+3*S*Sa*Sa2-2*CUB(Sa))/CUB(S);
-		E += Sa/S;
-	}
+		E += SpA_a/SpA;
+		I += (SpA*A[i]*SpA_a2 - SQR(SpA_a)*A[i])/SQR(SpA);
+		J -= SQR(A[i])*(-SQR(SpA)*SpA_a3 + 3*SpA*SpA_a*SpA_a2 - 2*CUB(SpA_a))/CUB(SpA);
+	} 
 	return E-(J/(2*I));	
 }
 
 
 template<bool WTH>
-double get_theta(const double s, const mat& aA, const mat& b, const ivec& items, const ivec& ncat, int &err)
+double get_thetau(const double s, const vec& A, const imat& a, const mat& b, const ivec& items, const ivec& ncat, int &err)
 {
-	std::function<double(const double theta, const mat& aA, const mat& b, const ivec& items, const ivec& ncat)> func;
+	std::function<double(const double theta, const vec& A, const imat& a, const arma::mat& b, const arma::ivec& items, const arma::ivec& ncat)> func;
 	
-	if(WTH) func = Ew_2pl;
-	else func = E_2pl;
+	if(WTH) func = Ew_2plu;
+	else func = E_2plu;
 	
 	double xl = .5, rts = -.5;	
-	double fl = func(xl, aA, b, items, ncat),
-		   f = func(rts, aA, b, items, ncat);
+	double fl = func(xl, A,a, b, items, ncat),
+		   f = func(rts, A,a, b, items, ncat);
 	
 	double dx;
 	
@@ -82,7 +77,7 @@ double get_theta(const double s, const mat& aA, const mat& b, const ivec& items,
 		xl = rts;
 		fl = f;
 		rts += std::copysign(std::min(std::abs(dx),.99), dx); 
-		f = func(rts, aA, b, items, ncat);
+		f = func(rts, A, a, b, items, ncat);
 			
 		if(std::abs(dx) < acc)
 			break;
@@ -90,27 +85,25 @@ double get_theta(const double s, const mat& aA, const mat& b, const ivec& items,
 	return rts;
 };
 
+
 template< bool WTH>
-vec templ_theta_2pl(const imat& a, const vec& A, const mat& b, const ivec& ncat,
+vec templ_theta_2plu(const imat& a, const vec& A, const mat& b, const ivec& ncat,
 			const ivec& pni, const ivec& pcni, ivec& pi, const ivec& px)
 {
-	const int np = pni.n_elem, nit = A.n_elem;
+	const int np = pni.n_elem;
 	vec theta(np);
 	int errors=0;
-	mat aA(a.n_rows,nit,fill::zeros);
-	for(int i=0; i<nit; i++)
-		for(int k=1;k<ncat[i];k++)
-			aA.at(k,i) = a.at(k,i)* A[i];
+
 #pragma omp parallel for reduction(+:errors)
 	for(int p=0; p<np;p++)
 	{
 		const ivec items(pi.memptr()+pcni[p], pni[p], false, true);
-		double ws=0;
+		int ws=0;
 		int err=0;
 		bool ms=true;
 		for(int indx = pcni[p]; indx<pcni[p+1]; indx++)
 		{
-			ws += aA.at(px[indx],pi[indx]);
+			ws += a.at(px[indx],pi[indx]);
 			if(!WTH)
 				ms = ms && (px[indx] == ncat[pi[indx]]-1);
 		}
@@ -119,7 +112,7 @@ vec templ_theta_2pl(const imat& a, const vec& A, const mat& b, const ivec& ncat,
 		else if(!WTH && ms)
 			theta[p] = datum::inf;
 		else
-			theta[p] = get_theta<WTH>(ws, aA, b, items, ncat,err);
+			theta[p] = get_thetau<WTH>((double)ws, A, a, b, items, ncat,err);
 		errors += err;
 	}
 	if(errors>0)
@@ -129,12 +122,12 @@ vec templ_theta_2pl(const imat& a, const vec& A, const mat& b, const ivec& ncat,
 
 
 // [[Rcpp::export]]
-arma::vec theta_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat,
+arma::vec theta_2plu(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat,
 					const arma::ivec& pni, const arma::ivec& pcni, arma::ivec& pi, const arma::ivec& px,
 					const bool WLE=false)
 {
 	if(WLE)
-		return templ_theta_2pl<true>(a, A, b, ncat, pni, pcni, pi, px);
+		return templ_theta_2plu<true>(a, A, b, ncat, pni, pcni, pi, px);
 	else
-		return templ_theta_2pl<false>(a, A, b, ncat, pni, pcni, pi, px);
+		return templ_theta_2plu<false>(a, A, b, ncat, pni, pcni, pi, px);
 }

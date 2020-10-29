@@ -55,6 +55,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// theta_2plu
+arma::vec theta_2plu(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, const arma::ivec& pni, const arma::ivec& pcni, arma::ivec& pi, const arma::ivec& px, const bool WLE);
+RcppExport SEXP _dexterMML_theta_2plu(SEXP aSEXP, SEXP ASEXP, SEXP bSEXP, SEXP ncatSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP WLESEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::imat& >::type a(aSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type A(ASEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type b(bSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type ncat(ncatSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pni(pniSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pcni(pcniSEXP);
+    Rcpp::traits::input_parameter< arma::ivec& >::type pi(piSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type px(pxSEXP);
+    Rcpp::traits::input_parameter< const bool >::type WLE(WLESEXP);
+    rcpp_result_gen = Rcpp::wrap(theta_2plu(a, A, b, ncat, pni, pcni, pi, px, WLE));
+    return rcpp_result_gen;
+END_RCPP
+}
 // test_ll_d2
 double test_ll_d2(arma::mat& r, arma::vec& theta, const arma::vec& par);
 RcppExport SEXP _dexterMML_test_ll_d2(SEXP rSEXP, SEXP thetaSEXP, SEXP parSEXP) {
@@ -375,6 +394,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_E_2pl", (DL_FUNC) &_dexterMML_E_2pl, 5},
     {"_dexterMML_Ew_2pl", (DL_FUNC) &_dexterMML_Ew_2pl, 5},
     {"_dexterMML_theta_2pl", (DL_FUNC) &_dexterMML_theta_2pl, 9},
+    {"_dexterMML_theta_2plu", (DL_FUNC) &_dexterMML_theta_2plu, 9},
     {"_dexterMML_test_ll_d2", (DL_FUNC) &_dexterMML_test_ll_d2, 3},
     {"_dexterMML_test_gradient_d2", (DL_FUNC) &_dexterMML_test_gradient_d2, 3},
     {"_dexterMML_test_hess_d2", (DL_FUNC) &_dexterMML_test_hess_d2, 3},
