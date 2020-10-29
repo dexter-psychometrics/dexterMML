@@ -1,7 +1,7 @@
 #include <RcppArmadillo.h>
 #include "shared.h"
 using namespace arma;
-using Rcpp::Named;
+
 
 //to do: check categories match
 
@@ -24,12 +24,13 @@ double E_2pl(const double theta, const arma::mat& aA, const arma::mat& b, const 
 	}
 	return ws;	
 }
-// this one seems a bit too extreme, test
+
+
 // [[Rcpp::export]]
 double Ew_2pl(const double theta, const arma::mat& aA, const arma::mat& b, const arma::ivec& items, const arma::ivec& ncat)
 {
 	const int nit = items.n_elem;
-	double ws=0;
+	double E=0,I=0,J=0;
 	for(int ix=0; ix<nit; ix++)
 	{
 		int i = items[ix];
@@ -42,10 +43,13 @@ double Ew_2pl(const double theta, const arma::mat& aA, const arma::mat& b, const
 			Sa2 += p*SQR(aA.at(k,i));
 			Sa3 += p*CUB(aA.at(k,i));
 		}
-		ws += (-SQR(S)*Sa3 + 5*S*Sa*Sa2 - 4*CUB(Sa))/(2*(S*Sa2 - SQR(Sa))*S);
+		I += (S*Sa2-SQR(Sa))/SQR(S);
+		J -= (-SQR(S)*Sa3+3*S*Sa*Sa2-2*CUB(Sa))/CUB(S);
+		E += Sa/S;
 	}
-	return ws;	
+	return E-(J/(2*I));	
 }
+
 
 template<bool WTH>
 double get_theta(const double s, const mat& aA, const mat& b, const ivec& items, const ivec& ncat, int &err)
