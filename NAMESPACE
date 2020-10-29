@@ -8,3 +8,4 @@ importFrom(rlang,"caller_env",".data")
 importFrom(stats, "var", "sd", "weighted.mean")
 
 export(est)
+export(ability.mml)

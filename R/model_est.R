@@ -236,7 +236,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL','old_
       return(list(items=items,pop=pop,em=em,pre=pre))
     }
 
-    return(list(items=to_dexter(em$a,exp(em$b),pre$ncat,colnames(dat))$items,em=em,pre=pre));
+    return(list(items=to_dexter(em$a,exp(em$b),pre$ncat,colnames(dat))$items,em=em,pre=pre,model=model));
 
 
   } else
@@ -288,7 +288,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL','old_
         pop$SE_sd = s[seq(2,length(s),2)]
       }
     }
-    return(list(items=items,pop=pop,em=em,pre=pre))
+    return(list(items=items,pop=pop,em=em,pre=pre,model=model))
   }
 
 }
