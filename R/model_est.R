@@ -1,5 +1,20 @@
 
-
+#' DexterMML: MML addition to dexter
+#'
+#' For use in cases where CML is not possible, such as an adaptive test
+#' or a multi stage test with unknown routing rules (it happens).
+#'
+#' In all other cases using CML (i.e. dexter or dexterMST) is strongly preferrable.
+#'
+#' DexterMML distinguishes itself from other MML R-packages by:
+#'
+#' \itemize{
+#' \item including far fewer models and options
+#' \item being considerably faster
+#' \item support for the dexter data(base) structure
+#' }
+#'
+"_PACKAGE"
 
 
 #' Estimate a model using MML
