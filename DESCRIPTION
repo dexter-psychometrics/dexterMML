@@ -14,6 +14,6 @@ Imports:
   DBI,
   dexter,
   stats
-LinkingTo: Rcpp, RcppArmadillo
+LinkingTo: Rcpp, RcppArmadillo, dqrng, BH, sitmo
 Encoding: UTF-8
 RoxygenNote: 7.1.1

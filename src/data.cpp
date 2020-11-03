@@ -177,3 +177,65 @@ Rcpp::List design_matrices(const arma::ivec& pni, const arma::ivec& pcni, const 
 }
 
 
+// fill scoretab with 0 for not observed and some counts for indexing
+// [[Rcpp::export]]
+Rcpp::List pre_scoretab(const arma::ivec& booklet_id, const arma::ivec& pop, const arma::ivec& booklet_score, const arma::ivec& scoretab,
+						const arma::ivec& dsg_booklet_id, const arma::ivec& dsg_item_id, const arma::imat& a, const arma::ivec& ncat,
+						const int nbk, const int npop)
+{
+	ivec bk_max(nbk, fill::zeros);
+	const int D = dsg_booklet_id.n_elem, n=booklet_id.n_elem;
+	
+	for(int i=0; i<D; i++)
+		bk_max[dsg_booklet_id[i]] += a.at(ncat[dsg_item_id[i]]-1,dsg_item_id[i]) ;
+		
+	int n_out=0, n_out2=0;	
+	int b=-1,p=-1;
+	for(int i=0; i<n; i++)
+	{
+		if(booklet_id[i] != b || pop[i] != p)
+		{
+			b = booklet_id[i];
+			p = pop[i];
+			n_out += bk_max[booklet_id[i]]+1;
+			n_out2++;
+		}
+	}
+	std::vector<int> out_stb(n_out, 0), popn(npop,0);
+	std::vector<int> pbn, pbnp, out_bk, out_pop;
+	pbn.reserve(n_out2);
+	pbnp.reserve(n_out2);
+	out_bk.reserve(n_out2);
+	out_pop.reserve(n_out2);
+
+	
+	int pos=0, ns=0, np=0;
+	b=-1;
+	p=-1;
+	for(int i=0; i<n; i++)
+	{
+		if(booklet_id[i] != b || pop[i] != p)
+		{
+			popn[p] += np;
+			pos += ns;
+			b = booklet_id[i];
+			p = pop[i];
+			ns = bk_max[b] + 1;
+			pbn.push_back(ns);
+			out_bk.push_back(b);
+			out_pop.push_back(p);
+			if(np>0)
+				pbnp.push_back(np);
+
+			np=0;
+		}
+		out_stb[pos + booklet_score[i]] = scoretab[i];
+		np += scoretab[i];
+	}
+	// finally
+	pbnp.push_back(np);
+	popn[p] += np;
+	
+	return Rcpp::List::create(Named("booklet_id")=out_bk, Named("pop")=out_pop,  
+								Named("scoretab")=out_stb, Named("pbn")=pbn, Named("pbnp")=pbnp, Named("popn")=popn);
+}

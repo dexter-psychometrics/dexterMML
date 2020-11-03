@@ -9,3 +9,4 @@ importFrom(stats, "var", "sd", "weighted.mean")
 
 export(est)
 export(ability.mml)
+export(plausible_values.mml)
