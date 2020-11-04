@@ -1,5 +1,16 @@
 
 
+#' palusible values
+#'
+#' @param dataSrc	a connection to a dexter database, a matrix, or a data.frame with columns: person_id, item_id, item_score
+#' @param parms	object produced by function est
+#' @param predicate An optional expression to subset data, if NULL all data is used
+#' @param covariates character vector indicating discrete person properties or, in case dataSrc is a matrix,
+#' a vector of groups
+#' @param npv number of plausible values to draw per person
+#'
+#' @returns data.frame
+#'
 plausible_values.mml = function(dataSrc, parms, predicate=NULL, covariates=NULL, npv=1)
 {
   qtpredicate = eval(substitute(quote(predicate)))
