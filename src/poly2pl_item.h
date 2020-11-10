@@ -11,7 +11,7 @@ arma::mat poly2_trace(const arma::vec& theta, const arma::ivec& a, const double 
 struct ll_poly2
 {
 	arma::mat r;
-	arma::vec p, theta,epb;
+	arma::vec p, theta, epb, typical_size;
 	arma::ivec a;	
 	
 	int nt;
@@ -29,6 +29,7 @@ struct ll_poly2
 		epb[0]=1;
 		a = arma::ivec(a_ptr, ncat,false,true);
 		r = arma::mat(r_.memptr(),nt,ncat,false,true);
+		typical_size = arma::vec(ncat, arma::fill::ones);
 	}
 	
 	// par = A,b2,b3, etc.
@@ -94,7 +95,7 @@ struct ll_poly2
 		
 		}
 	}
-	
+	//negative=true -> hessian of negative ll
 	void hess(const arma::vec& par, arma::mat& h, const bool negative=true)
 	{
 		h.zeros();
@@ -153,6 +154,9 @@ struct ll_poly2
 				h.at(j,i) = h.at(i,j);
 	}
 };
+
+
+
 
 #endif
 

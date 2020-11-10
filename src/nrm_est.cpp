@@ -113,8 +113,8 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 			int itr=0,err=0;
 			double ll_itm=0;
 
-			//dfpmin(pars, tol, itr, ll_itm, f,err);
-			NRmin(pars, tol, itr, ll_itm, f,err);
+			dfpmin(pars, tol, itr, ll_itm, f,err);
+			//NRmin(pars, tol, itr, ll_itm, f,err);
 			min_error+=err;
 			NR+=itr;
 			for(int k=1;k<ncat[i];k++)

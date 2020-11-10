@@ -50,7 +50,7 @@
 #' So for 2PL models MML is usually the method of choice.
 #'
 #'
-est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL','old_2PLd'), se=TRUE)
+est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=TRUE)
 {
   model = match.arg(model)
 
@@ -133,74 +133,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL','old_
 
   # estimation
 
-  if(model == 'old_2PLd' ) # keep for a while for testing and example starting values
-  {
-    if(!all(pre$ncat==2))
-      stop("old 2pl routine is only for dichotomous")
-    # dichotomous case
-    # if item score other than 0/1 to do: recode?
-
-    #starting values
-    # prox algorithm for dichotomous
-    # for adaptive data the prox algo may be very wrong, just have to test
-    prox = prox_dich(
-      pre$isum, pre$psum,
-      pre$inp, pre$pni, pre$icnp, pre$pcni,
-      pre$ip, pre$pi)
-
-    theta = drop(prox$theta)
-    beta = drop(prox$beta)
-
-    #normalize
-    m_ = weighted.mean(theta[group==ref_group], pre$pni[group==ref_group])
-    theta = theta - m_
-    s_ = sqrt(weighted.mean(theta[group==ref_group]^2,pre$pni[group==ref_group]))
-    theta = theta/s_
-    beta = (beta-m_)/s_
-
-    split_theta = split(theta,group)
-    start_mu = sapply(split_theta, mean)
-    start_sigma = sapply(split(theta,group), sd)
-
-    # starting values for a
-    j = start_lr(theta, pre$ip, pre$ix,
-                   pre$inp, pre$icnp,
-                   beta)
-    a = drop(j$alpha)
-    beta = drop(j$beta)
-
-    em = estimate_2pl_dich_multigroup(a, beta, pre$pni, pre$pcni, pre$pi, pre$px,
-                                         theta_grid, start_mu, start_sigma, group_n, group, ref_group)
-
-    items = tibble(item_id=colnames(dat),a=drop(em$a),b=drop(em$b))
-    pop = tibble(group=group_id,mu=drop(em$mu),sigma=drop(em$sd))
-
-    if(se)
-    {
-      nit = nrow(items)
-      npop = nrow(pop)
-
-      res = Oakes_2pl_dich(items$a, items$b, em$r0, em$r1,
-                           pre$pni, pre$pcni, pre$pi, pre$px, theta_grid,
-                           pop$mu, pop$sigma, group_n, group,ref_group)
-
-      SE = sqrt(-diag(solve(res$H)))
-
-      items$se_a=SE[seq(1,2*nit,2)]
-      items$se_b=SE[seq(2,2*nit,2)]
-      if(has_groups)
-      {
-        pop$se_mu = NA_real_
-        pop$se_sigma = NA_real_
-        pop$se_mu[-(ref_group+1)] = SE[seq(2*nit+1,length(SE),2)]
-        pop$se_sigma[-(ref_group+1)] = SE[seq(2*nit+2,length(SE),2)]
-      }
-    }
-    # so far
-    return(list(start = list(a=a,beta=beta,theta=theta),pre = pre,
-                items=items, pop=pop,theta=em$thetabar,ll=em$LL,niter=em$niter))
-  }
-  else if(model=='1PL')
+  if(model=='1PL')
   {
     # nominal response model
 
@@ -269,7 +202,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL','old_
 
     em = estimate_poly2(a, A, b, pre$ncat,
                         pre$pni, pre$pcni, pre$pi, pre$px,
-                        theta_grid, mu, sigma, group_n, group, ref_group)
+                        theta_grid, mu, sigma, group_n, group, ref_group,max_iter=1000)
 
     items = tibble(item_id = rep(colnames(dat),pre$ncat-1),
                    alpha = rep(em$A,pre$ncat-1L),

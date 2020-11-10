@@ -1,5 +1,7 @@
 
 #include <RcppArmadillo.h>
+//#include <RcppEnsmallen.h>
+//#include <roptim.h>
 #include "minimize.h"
 #include "poly2pl_item.h"
 #include "shared.h"
@@ -84,7 +86,7 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 	
 	vec sum_theta(ng), sum_sigma2(ng);
 	
-	const double tol = 1e-10;
+	const double tol = 1e-8;
 	int iter = 0, min_error=0;
 	double ll;
 	
@@ -93,10 +95,10 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 		estep_poly2(a, A, b, ncat, pni, pcni, pi, px, 
 					theta, r, thetabar, sum_theta, sum_sigma2, mu, sigma, pgroup, ll);
 		
-					
+		
 		double maxdif_A=0, maxdif_b=0;
 		
-#pragma omp parallel for reduction(max: maxdif_A, maxdif_b) reduction(+:min_error)
+//pragma omp parallel for reduction(max: maxdif_A, maxdif_b) reduction(+:min_error)
 		for(int i=0; i<nit; i++)
 		{	
 			ll_poly2 f(a.colptr(i), theta.memptr(), r(i));
@@ -104,25 +106,37 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 			pars[0] = A[i];
 			int itr=0,err=0;
 			double ll_itm=0;
-
-			// newton raphson give problems
-			dfpmin(pars, tol, itr, ll_itm, f, err);
 			
+			nlm(pars, tol, itr, ll_itm, f, err);	
+			//if((pars[0] < .05 || any(abs(pars)>30)))
+			//	continue;
 			min_error += err;
+			if(err>0)
+			{
+				printf("iter: %i, item: %i, error: %i\n",iter+1,i+1,err);
+				fflush(stdout);
+			}
 			maxdif_A = std::max(maxdif_A, std::abs(A[i] - pars[0]));
 			A[i] = pars[0];
 			for(int k=1;k<ncat[i];k++)
 			{
 				maxdif_b = std::max(maxdif_b, std::abs(b.at(k,i) - pars[k]));
 				b.at(k,i) = pars[k];
-			}
+			}			
 		}
-		if(min_error>0)
+		fflush(stdout);
+		
+		if(min_error>0 && iter>2)
 		{
 			printf("code: %i",min_error);
 			fflush(stdout);
+			return Rcpp::List::create(Named("A")=A, Named("b")=b, Named("thetabar") = thetabar, 
+									Named("LL") = ll, Named("niter")=iter,Named("r")=r); 
 			Rcpp::stop("minimization error");
 		}
+
+
+		min_error=0;
 		for(int g=0;g<ng;g++)
 		{			
 			if(g==ref_group)

@@ -5,26 +5,6 @@ theta_2pl <- function(a, A, b, ncat, pni, pcni, pi, px, WLE = FALSE, USE_A = TRU
     .Call(`_dexterMML_theta_2pl`, a, A, b, ncat, pni, pcni, pi, px, WLE, USE_A)
 }
 
-test_ll_d2 <- function(r, theta, par) {
-    .Call(`_dexterMML_test_ll_d2`, r, theta, par)
-}
-
-test_gradient_d2 <- function(r, theta, par) {
-    .Call(`_dexterMML_test_gradient_d2`, r, theta, par)
-}
-
-test_hess_d2 <- function(r, theta, par) {
-    .Call(`_dexterMML_test_hess_d2`, r, theta, par)
-}
-
-estimate_2pl_dich_multigroup <- function(a_start, b_start, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group = 0L, max_iter = 200L) {
-    .Call(`_dexterMML_estimate_2pl_dich_multigroup`, a_start, b_start, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group, max_iter)
-}
-
-Oakes_2pl_dich <- function(a, b, r0, r1, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, ref_group = 0L) {
-    .Call(`_dexterMML_Oakes_2pl_dich`, a, b, r0, r1, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, ref_group)
-}
-
 mat_pre <- function(dat, max_score) {
     .Call(`_dexterMML_mat_pre`, dat, max_score)
 }
@@ -73,11 +53,7 @@ Oakes_poly2 <- function(a, A, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, g
     .Call(`_dexterMML_Oakes_poly2`, a, A, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, ref_group)
 }
 
-prox_dich <- function(isum, psum, inp, pni, icnp, pcni, ip, pi, max_iter = 20L, min_change = 0.01) {
-    .Call(`_dexterMML_prox_dich`, isum, psum, inp, pni, icnp, pcni, ip, pi, max_iter, min_change)
-}
-
-start_lr <- function(theta, ip, ix, inp, icnp, ibeta) {
-    .Call(`_dexterMML_start_lr`, theta, ip, ix, inp, icnp, ibeta)
+test_nlm <- function(a, theta, r, par_in) {
+    invisible(.Call(`_dexterMML_test_nlm`, a, theta, r, par_in))
 }
 

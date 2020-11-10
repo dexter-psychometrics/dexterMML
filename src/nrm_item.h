@@ -12,7 +12,7 @@ struct ll_nrm
 {
 	arma::mat r;
 	arma::mat eat;
-	arma::vec p;
+	arma::vec p, typical_size;
 	arma::mat exp_at;
 	arma::ivec a;
 	
@@ -28,6 +28,7 @@ struct ll_nrm
 		a = arma::ivec(a_ptr, ncat,false,true);
 		r = arma::mat(r_.memptr(),nt,ncat,false,true);
 		exp_at = arma::mat(exp_at_.memptr(),exp_at_.n_rows, exp_at_.n_cols,false,true);
+		typical_size = arma::vec(ncat-1, arma::fill::ones);
 	}
 	
 	// b should not include 0 score
@@ -92,7 +93,7 @@ struct ll_nrm
 			Rcpp::stop("inf gradient");
 		}
 	}
-
+	//negative=true -> hessian of negative ll
 	void hess(const arma::vec& b, arma::mat& h, const bool negative=true)
 	{
 		h.zeros();

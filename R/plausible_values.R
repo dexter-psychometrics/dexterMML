@@ -56,7 +56,7 @@ plausible_values.mml = function(dataSrc, parms, predicate=NULL, covariates=NULL,
   scoretab$booklet_id = as.integer(scoretab$booklet_id) - 1L
   design$booklet_id = as.integer(design$booklet_id) - 1L
   design$item_id = as.integer(design$item_id) - 1L
-  bnit = count(design, booklet_id)$n
+  bnit = count(design, .data$booklet_id)$n
 
 
   pre = pre_scoretab(scoretab$booklet_id, scoretab$pop__, scoretab$booklet_score, scoretab$n,
