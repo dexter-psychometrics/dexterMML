@@ -9,7 +9,10 @@ est(
   predicate = NULL,
   group = NULL,
   model = c("1PL", "2PL"),
-  se = TRUE
+  se = TRUE,
+  priorA = FALSE,
+  priorA_mu = 0,
+  priorA_sigma = 0.5
 )
 }
 \arguments{
@@ -24,6 +27,11 @@ properties together grouping people. See details.}
 
 \item{se}{should standard errors be determined. For large datasets with many items this can take some time. Set
 to false to save time.}
+
+\item{priorA}{set to TRUE to enable a lognormal prior distribution on the discrimination parameters. This is
+a good idea if you have data from an adaptive test and/or the algorithm fails to converge}
+
+\item{priorA_mu}{first moment of prior distribution on discrimination parameters. 0 is a sensible defa}
 }
 \value{
 a list of things, to do: organize return value

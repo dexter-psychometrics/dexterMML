@@ -27,26 +27,26 @@ mat poly2_trace(const vec& theta, const ivec& a, const double A, const vec& b, c
 
 
 // [[Rcpp::export]]
-double test_ll_p2(arma::ivec& a, arma::vec theta, arma::mat& r, const arma::vec& par)
+double test_ll_p2(arma::ivec& a, arma::vec theta, arma::mat& r, const arma::vec& par, const int prior=0)
 {
-	ll_poly2 f(a.memptr(), theta.memptr(), r); 
+	ll_poly2 f(a.memptr(), theta.memptr(), r,prior); 
 	
 	return f(par);
 } 
 
 // [[Rcpp::export]]
-arma::vec test_gradient_p2(arma::ivec& a, arma::vec theta, arma::mat& r, const arma::vec& par)
+arma::vec test_gradient_p2(arma::ivec& a, arma::vec theta, arma::mat& r, const arma::vec& par, const int prior=0)
 {
-	ll_poly2 f(a.memptr(), theta.memptr(), r); 
+	ll_poly2 f(a.memptr(), theta.memptr(), r,prior); 
 	vec g(par.n_elem);
 	f.df(par,g);
 	return g;
 }
 
 // [[Rcpp::export]]
-arma::mat test_hess_p2(arma::ivec& a, arma::vec theta, arma::mat& r, const arma::vec& par)
+arma::mat test_hess_p2(arma::ivec& a, arma::vec theta, arma::mat& r, const arma::vec& par, const int prior=0)
 {
-	ll_poly2 f(a.memptr(), theta.memptr(), r); 
+	ll_poly2 f(a.memptr(), theta.memptr(), r,prior); 
 	mat h(par.n_elem,par.n_elem);
 	f.hess(par,h);
 	return h;

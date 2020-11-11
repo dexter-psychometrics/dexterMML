@@ -231,14 +231,14 @@ mat J_poly2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, co
 #pragma omp parallel for
 				for(int j=0; j<nit; j++) if(dsg_gi.at(g,j) == 1)
 				{				
-					ll_poly2 f(a.colptr(j), theta.memptr(), r(j));
+					ll_poly2 f(a.colptr(j), theta.memptr(), r(j), 1);
 					vec pars = b.slice(d).col(j).head(ncat[j]);
 					pars[0] = A.at(j,d);
 					int itr=0,err;
 					double ll_itm=0;
 
-					dfpmin(pars, tol, itr, ll_itm, f,err);
-
+					//dfpmin(pars, tol, itr, ll_itm, f,err);
+					nlm(pars, tol, itr, ll_itm, f,err);
 					for(int kj=1;kj<ncat[j];kj++)
 						b.at(kj,j,d) = pars[kj-1];
 					A.at(j,d) = pars[0];
@@ -268,7 +268,8 @@ mat J_poly2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, co
 Rcpp::List Oakes_poly2(arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, arma::field<arma::mat>& r, 
 				const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 				arma::vec& theta, const arma::vec& mu, const arma::vec& sigma, const arma::ivec& gn, const arma::ivec& pgroup,
-				const arma::imat& dsg_ii, const arma::imat& dsg_gi,	const int ref_group=0)
+				const arma::imat& dsg_ii, const arma::imat& dsg_gi,	const int ref_group=0, 
+				const int A_prior=0, const double A_mu=0, const double A_sigma=0.5)
 {
 	const int ng = mu.n_elem, nit=a.n_cols;
 	const int npar = accu(ncat) + 2*(ng-1);
@@ -286,7 +287,7 @@ Rcpp::List Oakes_poly2(arma::imat& a, const arma::vec& A, const arma::mat& b, co
 
 	for(int i=0; i<nit; i++)
 	{				
-		ll_poly2 f(a.colptr(i), theta.memptr(), r(i));
+		ll_poly2 f(a.colptr(i), theta.memptr(), r(i), A_prior, A_mu, A_sigma);
 		vec pars = b.col(i).head(ncat[i]);
 		pars[0] = A[i];
 		mat h(ncat[i],ncat[i]);

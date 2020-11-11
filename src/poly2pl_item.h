@@ -13,12 +13,13 @@ struct ll_poly2
 	arma::mat r;
 	arma::vec p, theta, epb, typical_size;
 	arma::ivec a;	
+		
+	int nt, ncat, A_prior;
+	double amu,asig,asig2;
 	
-	int nt;
-	int ncat;
 	
 	// a includes 0 cat
-	ll_poly2(int* a_ptr, double* theta_ptr, arma::mat& r_) 
+	ll_poly2(int* a_ptr, double* theta_ptr, arma::mat& r_, const int a_prior=0, const double a_mu=0, const double a_sigma=0.5) 
 	{
 		ncat = r_.n_cols;
 		nt = r_.n_rows;
@@ -30,6 +31,19 @@ struct ll_poly2
 		a = arma::ivec(a_ptr, ncat,false,true);
 		r = arma::mat(r_.memptr(),nt,ncat,false,true);
 		typical_size = arma::vec(ncat, arma::fill::ones);
+		A_prior=a_prior;
+		if(a_prior==1)
+		{
+			amu = a_mu;
+			asig = a_sigma;
+			asig2 = SQR(a_sigma);
+		}
+	}
+	
+	double prior_part_ll(const double A)
+	{
+		if(A<=0) return std::numeric_limits<double>::infinity();
+		return std::log(asig) - std::log(std::exp(-SQR(amu-std::log(A))/(2*asig2))/A) + std::log(2.0)/2 + std::log(arma::datum::pi)/2; 
 	}
 	
 	// par = A,b2,b3, etc.
@@ -52,9 +66,17 @@ struct ll_poly2
 			for(int k=0; k<ncat; k++)
 				ll -= r.at(t,k) * std::log(p[k]/s);
 		}
-
+		if(A_prior==1)
+			ll += prior_part_ll(A);
 		return ll;
 	}
+	
+	double prior_part_df(const double A)
+	{
+		if(A<=0) return -std::numeric_limits<double>::infinity();
+		return (asig2 + std::log(A) - amu)/(A*asig2);
+	}
+	
 	//gradient of minus LL
 	void df(const arma::vec& par, arma::vec& g)
 	{
@@ -90,11 +112,17 @@ struct ll_poly2
 				}
 				g[k] -= A*a[k]*s3/s;
 			}		
-				
-				
-		
 		}
+		if(A_prior==1)
+			g[0] += prior_part_df(A);
 	}
+	
+	double prior_part_hess(const double A)
+	{
+		if(A<=0) return std::numeric_limits<double>::infinity();
+		return (amu-asig2 - std::log(A) +1)/(SQR(A)*asig2);
+	}
+	
 	//negative=true -> hessian of negative ll
 	void hess(const arma::vec& par, arma::mat& h, const bool negative=true)
 	{
@@ -152,6 +180,9 @@ struct ll_poly2
 		for(int i=0; i<ncat; i++)
 			for(int j=i+1; j<ncat; j++)
 				h.at(j,i) = h.at(i,j);
+		
+		if(A_prior==1)
+			h.at(0,0) += prior_part_hess(A);
 	}
 };
 

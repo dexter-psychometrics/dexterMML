@@ -28,6 +28,9 @@
 #' @param model 1PL or 2PL, see details.
 #' @param se should standard errors be determined. For large datasets with many items this can take some time. Set
 #' to false to save time.
+#' @param priorA set to TRUE to enable a lognormal prior distribution on the discrimination parameters. This is
+#' a good idea if you have data from an adaptive test and/or the algorithm fails to converge
+#' @param priorA_mu first moment of prior distribution on discrimination parameters. 0 is a sensible defa
 #'
 #' @return a list of things, to do: organize return value
 #'
@@ -50,9 +53,12 @@
 #' So for 2PL models MML is usually the method of choice.
 #'
 #'
-est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=TRUE)
+est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=TRUE,
+               priorA = FALSE, priorA_mu=0, priorA_sigma=0.5)
 {
   model = match.arg(model)
+  if(priorA_sigma <=0)
+    stop("priorA_sigma must be larger than 0")
 
   # prepare data from possibly different sources
   # to do: also accept mst db
@@ -60,6 +66,9 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=
   {
     dat = dataSrc
     mode(dat) = 'integer'
+    if(is.null(colnames(dat)))
+      colnames(dat) = sprintf("item%06i",1:ncol(dat))
+
     if(!is.null(group) && length(group) != nrow(dat))
       stop(sprintf("Length of group (%i) is not equal to number of rows in data (%i)",
                    length(group),nrow(dat)))
@@ -128,8 +137,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=
     group_n = as.integer(table(group))
     ref_group = which.max(group_n) -1L
   }
-
-  theta_grid = seq(-6,6,.6)
+  theta_grid = if(model=='2PL') seq(-6,6,.3) else seq(-6,6,.6)
 
   # estimation
 
@@ -202,7 +210,8 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=
 
     em = estimate_poly2(a, A, b, pre$ncat,
                         pre$pni, pre$pcni, pre$pi, pre$px,
-                        theta_grid, mu, sigma, group_n, group, ref_group,max_iter=1000)
+                        theta_grid, mu, sigma, group_n, group, ref_group,
+                        A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma)
 
     items = tibble(item_id = rep(colnames(dat),pre$ncat-1),
                    alpha = rep(em$A,pre$ncat-1L),
@@ -216,7 +225,8 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=
       res = Oakes_poly2(a, em$A, em$b, pre$ncat, em$r,
                       pre$pni, pre$pcni, pre$pi, pre$px,
                       theta_grid, em$mu, em$sd, group_n, group,
-                      design$items, design$groups, ref_group)
+                      design$items, design$groups, ref_group,
+                      A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma)
 
 
       SE = sqrt(-diag(solve(res$H)))

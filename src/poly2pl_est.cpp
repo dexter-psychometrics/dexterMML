@@ -69,7 +69,7 @@ void estep_poly2(const imat& a, const vec& A, const mat& b, const ivec& ncat, co
 Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::mat& b_start, const arma::ivec& ncat,
 						const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 						arma::vec& theta, const arma::vec& mu_start, const arma::vec& sigma_start, const arma::ivec& gn, const arma::ivec& pgroup, 
-						const int ref_group=0, const int max_iter=200)
+						const int ref_group=0, const int A_prior=0, const double A_mu=0, const double A_sigma=0.5, const int max_iter=200)
 {
 	const int nit = a.n_cols, nt = theta.n_elem, np = pni.n_elem, ng=gn.n_elem;
 	
@@ -101,21 +101,15 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 //pragma omp parallel for reduction(max: maxdif_A, maxdif_b) reduction(+:min_error)
 		for(int i=0; i<nit; i++)
 		{	
-			ll_poly2 f(a.colptr(i), theta.memptr(), r(i));
+			ll_poly2 f(a.colptr(i), theta.memptr(), r(i), A_prior, A_mu, A_sigma);
 			vec pars = b.col(i).head(ncat[i]);
 			pars[0] = A[i];
 			int itr=0,err=0;
 			double ll_itm=0;
 			
 			nlm(pars, tol, itr, ll_itm, f, err);	
-			//if((pars[0] < .05 || any(abs(pars)>30)))
-			//	continue;
+
 			min_error += err;
-			if(err>0)
-			{
-				printf("iter: %i, item: %i, error: %i\n",iter+1,i+1,err);
-				fflush(stdout);
-			}
 			maxdif_A = std::max(maxdif_A, std::abs(A[i] - pars[0]));
 			A[i] = pars[0];
 			for(int k=1;k<ncat[i];k++)
@@ -124,21 +118,17 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 				b.at(k,i) = pars[k];
 			}			
 		}
-		fflush(stdout);
-		
-		if(min_error>0 && iter>2)
+	
+		if(min_error>0)
 		{
 			printf("code: %i",min_error);
 			fflush(stdout);
-			return Rcpp::List::create(Named("A")=A, Named("b")=b, Named("thetabar") = thetabar, 
-									Named("LL") = ll, Named("niter")=iter,Named("r")=r); 
 			Rcpp::stop("minimization error");
 		}
 
-
-		min_error=0;
 		for(int g=0;g<ng;g++)
 		{			
+
 			if(g==ref_group)
 			{
 				mu[g] = 0;
@@ -149,6 +139,18 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 				mu[g] = sum_theta[g]/gn[g];		
 				sigma[g] = std::sqrt(sum_sigma2[g]/gn[g] - mu[g] * mu[g]);
 			}
+
+			/*
+			if(g==ref_group)
+				mu[g]=0;
+			else
+				mu[g] = sum_theta[g]/gn[g];
+			
+			if(g==ref_group && A_prior==0)
+				sigma[g]=1;
+			else
+				sigma[g] = std::sqrt(sum_sigma2[g]/gn[g] - mu[g] * mu[g]);
+				*/
 		}
 		
 		//printf("\r% 3i", iter);

@@ -33,24 +33,24 @@ plausible_values <- function(booklet_id, pop, pbn, pbcn, pbnp, pbcnp, scoretab, 
     .Call(`_dexterMML_plausible_values`, booklet_id, pop, pbn, pbcn, pbnp, pbcnp, scoretab, popn, dsg_item_id, bnit, bcnit, A, a, b, ncat, npv)
 }
 
-estimate_poly2 <- function(a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group = 0L, max_iter = 200L) {
-    .Call(`_dexterMML_estimate_poly2`, a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group, max_iter)
+estimate_poly2 <- function(a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group = 0L, A_prior = 0L, A_mu = 0, A_sigma = 0.5, max_iter = 200L) {
+    .Call(`_dexterMML_estimate_poly2`, a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group, A_prior, A_mu, A_sigma, max_iter)
 }
 
-test_ll_p2 <- function(a, theta, r, par) {
-    .Call(`_dexterMML_test_ll_p2`, a, theta, r, par)
+test_ll_p2 <- function(a, theta, r, par, prior = 0L) {
+    .Call(`_dexterMML_test_ll_p2`, a, theta, r, par, prior)
 }
 
-test_gradient_p2 <- function(a, theta, r, par) {
-    .Call(`_dexterMML_test_gradient_p2`, a, theta, r, par)
+test_gradient_p2 <- function(a, theta, r, par, prior = 0L) {
+    .Call(`_dexterMML_test_gradient_p2`, a, theta, r, par, prior)
 }
 
-test_hess_p2 <- function(a, theta, r, par) {
-    .Call(`_dexterMML_test_hess_p2`, a, theta, r, par)
+test_hess_p2 <- function(a, theta, r, par, prior = 0L) {
+    .Call(`_dexterMML_test_hess_p2`, a, theta, r, par, prior)
 }
 
-Oakes_poly2 <- function(a, A, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, ref_group = 0L) {
-    .Call(`_dexterMML_Oakes_poly2`, a, A, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, ref_group)
+Oakes_poly2 <- function(a, A, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, ref_group = 0L, A_prior = 0L, A_mu = 0, A_sigma = 0.5) {
+    .Call(`_dexterMML_Oakes_poly2`, a, A, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, ref_group, A_prior, A_mu, A_sigma)
 }
 
 test_nlm <- function(a, theta, r, par_in) {
