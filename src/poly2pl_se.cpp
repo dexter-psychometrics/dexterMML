@@ -112,7 +112,8 @@ void se_estep_poly2(const imat& a, const vec& A, const mat& b, const ivec& ncat,
 mat J_poly2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, const arma::ivec& ncat,
 						const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 						arma::vec& theta, const arma::vec& mu_fixed, const arma::vec& sigma_fixed, const arma::ivec& gn, const arma::ivec& pgroup, 
-						const arma::imat dsg_ii,const arma::imat dsg_gi, const int ref_group=0)
+						const arma::imat dsg_ii,const arma::imat dsg_gi, const int ref_group,
+						const int A_prior, const double A_mu, const double A_sigma)
 {
 	const int nit = a.n_cols, nt = theta.n_elem, ng=gn.n_elem;
 	
@@ -165,7 +166,7 @@ mat J_poly2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, co
 #pragma omp parallel for
 				for(int j=0; j<nit; j++) if(dsg_ii.at(j,i) == 1)
 				{				
-					ll_poly2 f(a.colptr(j), theta.memptr(), r(j));
+					ll_poly2 f(a.colptr(j), theta.memptr(), r(j),A_prior, A_mu, A_sigma);
 					vec pars = b.slice(d).col(j).head(ncat[i]);
 					pars[0] = A.at(j,d);
 
@@ -231,7 +232,7 @@ mat J_poly2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, co
 #pragma omp parallel for
 				for(int j=0; j<nit; j++) if(dsg_gi.at(g,j) == 1)
 				{				
-					ll_poly2 f(a.colptr(j), theta.memptr(), r(j), 1);
+					ll_poly2 f(a.colptr(j), theta.memptr(), r(j), A_prior, A_mu, A_sigma);
 					vec pars = b.slice(d).col(j).head(ncat[j]);
 					pars[0] = A.at(j,d);
 					int itr=0,err;
@@ -276,7 +277,7 @@ Rcpp::List Oakes_poly2(arma::imat& a, const arma::vec& A, const arma::mat& b, co
 	
 	
 	//Jacobian
-	mat J = J_poly2(a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, ref_group);
+	mat J = J_poly2(a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, ref_group,A_prior, A_mu, A_sigma);
 	
 	// observed hessian
 	const int max_cat = ncat.max();
