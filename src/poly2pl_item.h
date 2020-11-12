@@ -32,7 +32,7 @@ struct ll_poly2
 		r = arma::mat(r_.memptr(),nt,ncat,false,true);
 		typical_size = arma::vec(ncat, arma::fill::ones);
 		A_prior=a_prior;
-		if(a_prior==1)
+		if(a_prior!=0)
 		{
 			amu = a_mu;
 			asig = a_sigma;
@@ -42,8 +42,16 @@ struct ll_poly2
 	
 	double prior_part_ll(const double A)
 	{
-		if(A<=0) return std::numeric_limits<double>::infinity();
-		return std::log(asig) - std::log(std::exp(-SQR(amu-std::log(A))/(2*asig2))/A) + std::log(2.0)/2 + std::log(arma::datum::pi)/2; 
+		if(A_prior==1) //lognormal
+		{
+			if(A<=0) return std::numeric_limits<double>::infinity();
+			return std::log(asig) - std::log(std::exp(-SQR(amu-std::log(A))/(2*asig2))/A) + std::log(2.0)/2 + std::log(arma::datum::pi)/2; 
+		} 
+		else if(A_prior==2) //normal
+		{
+			return -R::dnorm(A,amu,asig,true);
+		}
+		return 0;
 	}
 	
 	// par = A,b2,b3, etc.
@@ -66,15 +74,22 @@ struct ll_poly2
 			for(int k=0; k<ncat; k++)
 				ll -= r.at(t,k) * std::log(p[k]/s);
 		}
-		if(A_prior==1)
-			ll += prior_part_ll(A);
+		ll += prior_part_ll(A);
 		return ll;
 	}
 	
 	double prior_part_df(const double A)
-	{
-		if(A<=0) return -std::numeric_limits<double>::infinity();
-		return (asig2 + std::log(A) - amu)/(A*asig2);
+	{		
+		if(A_prior==1) //lognormal
+		{
+			if(A<=0) return -std::numeric_limits<double>::infinity();
+			return (asig2 + std::log(A) - amu)/(A*asig2);
+		} 
+		else if(A_prior==2) //normal
+		{
+			return (A-amu)/SQR(asig);
+		}
+		return 0;
 	}
 	
 	//gradient of minus LL
@@ -113,14 +128,21 @@ struct ll_poly2
 				g[k] -= A*a[k]*s3/s;
 			}		
 		}
-		if(A_prior==1)
-			g[0] += prior_part_df(A);
+		g[0] += prior_part_df(A);
 	}
 	
 	double prior_part_hess(const double A)
 	{
-		if(A<=0) return std::numeric_limits<double>::infinity();
-		return (amu-asig2 - std::log(A) +1)/(SQR(A)*asig2);
+		if(A_prior==1) //lognormal
+		{
+			if(A<=0) return std::numeric_limits<double>::infinity();
+			return (amu-asig2 - std::log(A) +1)/(SQR(A)*asig2);
+		} 
+		else if(A_prior==2) //normal
+		{
+			return 1/SQR(asig);
+		}
+		return 0;
 	}
 	
 	//negative=true -> hessian of negative ll
@@ -181,8 +203,7 @@ struct ll_poly2
 			for(int j=i+1; j<ncat; j++)
 				h.at(j,i) = h.at(i,j);
 		
-		if(A_prior==1)
-			h.at(0,0) += prior_part_hess(A);
+		h.at(0,0) += prior_part_hess(A);
 	}
 };
 

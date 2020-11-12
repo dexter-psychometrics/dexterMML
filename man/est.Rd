@@ -10,9 +10,9 @@ est(
   group = NULL,
   model = c("1PL", "2PL"),
   se = TRUE,
-  priorA = FALSE,
-  priorA_mu = 0,
-  priorA_sigma = 0.5
+  priorA = c("none", "lognormal", "normal"),
+  priorA_mu = ifelse(priorA == "lognormal", 0, 1),
+  priorA_sigma = ifelse(priorA == "lognormal", 0.5, 0.2)
 )
 }
 \arguments{
@@ -28,10 +28,13 @@ properties together grouping people. See details.}
 \item{se}{should standard errors be determined. For large datasets with many items this can take some time. Set
 to false to save time.}
 
-\item{priorA}{set to TRUE to enable a lognormal prior distribution on the discrimination parameters. This is
-a good idea if you have data from an adaptive test and/or the algorithm fails to converge}
+\item{priorA}{if the estimation does not converge or gives extreme results, usually in an adaptive test or with too few
+observations for some items in your data, you can attempt to use a prior to improve the results. Choice of
+lognormal or normal}
 
-\item{priorA_mu}{first moment of prior distribution on discrimination parameters. 0 is a sensible defa}
+\item{priorA_mu}{first moment of prior distribution on discrimination parameters.}
+
+\item{priorA_sigma}{second moment of prior distribution on discrimination parameters.}
 }
 \value{
 a list of things, to do: organize return value

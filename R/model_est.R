@@ -28,9 +28,11 @@
 #' @param model 1PL or 2PL, see details.
 #' @param se should standard errors be determined. For large datasets with many items this can take some time. Set
 #' to false to save time.
-#' @param priorA set to TRUE to enable a lognormal prior distribution on the discrimination parameters. This is
-#' a good idea if you have data from an adaptive test and/or the algorithm fails to converge
-#' @param priorA_mu first moment of prior distribution on discrimination parameters. 0 is a sensible defa
+#' @param priorA if the estimation does not converge or gives extreme results, usually in an adaptive test or with too few
+#' observations for some items in your data, you can attempt to use a prior to improve the results. Choice of
+#' lognormal or normal
+#' @param priorA_mu first moment of prior distribution on discrimination parameters.
+#' @param priorA_sigma second moment of prior distribution on discrimination parameters.
 #'
 #' @return a list of things, to do: organize return value
 #'
@@ -54,11 +56,19 @@
 #'
 #'
 est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=TRUE,
-               priorA = FALSE, priorA_mu=0, priorA_sigma=0.5)
+               priorA = c('none','lognormal','normal'),
+               priorA_mu = ifelse(priorA=='lognormal',0,1),
+               priorA_sigma = ifelse(priorA=='lognormal',0.5,0.2))
 {
   model = match.arg(model)
+  priorA = match.arg(priorA)
+
+  force(priorA_mu)
   if(priorA_sigma <=0)
     stop("priorA_sigma must be larger than 0")
+
+  priorA = switch(priorA, lognormal=1L, normal=2L, 0L)
+
 
   # prepare data from possibly different sources
   # to do: also accept mst db

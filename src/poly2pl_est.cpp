@@ -98,7 +98,7 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 		
 		double maxdif_A=0, maxdif_b=0;
 		
-//pragma omp parallel for reduction(max: maxdif_A, maxdif_b) reduction(+:min_error)
+#pragma omp parallel for reduction(max: maxdif_A, maxdif_b) reduction(+:min_error)
 		for(int i=0; i<nit; i++)
 		{	
 			ll_poly2 f(a.colptr(i), theta.memptr(), r(i), A_prior, A_mu, A_sigma);
