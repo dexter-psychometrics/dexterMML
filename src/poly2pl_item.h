@@ -196,14 +196,16 @@ struct ll_poly2
 					h.at(k,j) -= A2*a[k]*a[j]*(p[k]*p[j]*sr)/SQR(s);
 			}		
 		}	
-		if(!negative)
-			h *= -1;
-		
+
 		for(int i=0; i<ncat; i++)
 			for(int j=i+1; j<ncat; j++)
 				h.at(j,i) = h.at(i,j);
 		
 		h.at(0,0) += prior_part_hess(A);
+		
+		if(!negative)
+			h *= -1;
+		
 	}
 };
 
