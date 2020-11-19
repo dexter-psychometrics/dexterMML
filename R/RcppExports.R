@@ -25,6 +25,18 @@ estimate_nrm <- function(a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, s
     .Call(`_dexterMML_estimate_nrm`, a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group, max_iter)
 }
 
+test_ll_nrm <- function(a, theta, r, par) {
+    .Call(`_dexterMML_test_ll_nrm`, a, theta, r, par)
+}
+
+test_gradient_nrm <- function(a, theta, r, par) {
+    .Call(`_dexterMML_test_gradient_nrm`, a, theta, r, par)
+}
+
+test_hess_nrm <- function(a, theta, r, par) {
+    .Call(`_dexterMML_test_hess_nrm`, a, theta, r, par)
+}
+
 Oakes_nrm <- function(a, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, ref_group = 0L) {
     .Call(`_dexterMML_Oakes_nrm`, a, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, ref_group)
 }

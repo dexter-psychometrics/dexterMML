@@ -45,7 +45,7 @@ to_dexter = function(a,logb,ncat,item_id, H=NULL)
   }
 
 
-  list(items=tibble(item_id=rep(item_id,ncat-1), item_score = a, beta=beta),
+  list(items=tibble(item_id=rep(item_id,ncat-1), item_score = a, beta=drop(beta)),
        cov.beta=cov.beta,cov.all=cov.all)
 }
 

@@ -173,7 +173,7 @@ mat J_poly2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, co
 					int itr=0,err=0;
 					double ll_itm=0;
 
-					dfpmin(pars, tol, itr, ll_itm, f,err);
+					nlm(pars, tol, itr, ll_itm, f,err);
 
 					for(int kj=1;kj<ncat[j];kj++)
 						b.at(kj,j,d) = pars[kj-1];
@@ -238,8 +238,8 @@ mat J_poly2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, co
 					int itr=0,err;
 					double ll_itm=0;
 
-					//dfpmin(pars, tol, itr, ll_itm, f,err);
 					nlm(pars, tol, itr, ll_itm, f,err);
+						
 					for(int kj=1;kj<ncat[j];kj++)
 						b.at(kj,j,d) = pars[kj-1];
 					A.at(j,d) = pars[0];

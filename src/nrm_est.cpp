@@ -112,9 +112,11 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 			vec pars(b.colptr(i)+1,ncat[i]-1);
 			int itr=0,err=0;
 			double ll_itm=0;
+			if(ncat[i] == 2)
+				D1min(pars, tol, itr, ll_itm, f, err); // 1 dimensional minimization
+			else
+				nlm(pars, tol, itr, ll_itm, f, err);	
 
-			dfpmin(pars, tol, itr, ll_itm, f,err);
-			//NRmin(pars, tol, itr, ll_itm, f,err);
 			min_error+=err;
 			NR+=itr;
 			for(int k=1;k<ncat[i];k++)

@@ -98,6 +98,8 @@ arma::mat plausible_values(const arma::ivec& booklet_id, const arma::ivec& pop, 
 				ivec stb = scoretab.subvec(pbcn[bpop], pbcn[bpop+1]-1); // check				
 
 				dqrng::normal_distribution prl_rnorm((double)mu[popnr], (double)sigma);
+				
+				// this is fine for people organized in booklets, but especially for n=1 booklets we should use a version with min/max
 				while(np>0)
 				{
 					//const double theta = R::rnorm((double)mu[popnr], (double)sigma);
@@ -116,7 +118,9 @@ arma::mat plausible_values(const arma::ivec& booklet_id, const arma::ivec& pop, 
 				
 						x += a.at(k,i);						
 					}
-					//Rcpp::checkUserInterrupt();
+					
+					//check for interruptible omp with progress bar
+					//https://cran.r-project.org/web/packages/RcppProgress/index.html
 					if(stb[x] > 0)
 					{
 						out(cscoretab[pbcn[bpop] + x] - stb[x], pvcol) = theta;

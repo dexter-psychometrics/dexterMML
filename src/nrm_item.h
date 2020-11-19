@@ -52,13 +52,6 @@ struct ll_nrm
 				ll -= r.at(t,k) * std::log(p[k]/s);
 		}		
 		
-		if(std::isinf(ll))
-		{
-			b.print("b:");
-			fflush(stdout);
-			Rcpp::stop("inf ll");
-		}
-
 		return ll;
 	}
 	//gradient of minus LL
@@ -85,13 +78,7 @@ struct ll_nrm
 				g[k-1] += (-r.at(t,k) * (s-exp_at.at(a[k],t)*eb[k-1]) + eb[k-1] * exp_at.at(a[k],t) * (ss-r.at(t,k)))/s;
 			}
 		}
-		
-		if(!g.is_finite())
-		{
-			b.print("b:");
-			fflush(stdout);
-			Rcpp::stop("inf gradient");
-		}
+
 	}
 	//negative=true -> hessian of negative ll
 	void hess(const arma::vec& b, arma::mat& h, const bool negative=true)
@@ -122,12 +109,13 @@ struct ll_nrm
 					h.at(i-1,j-1) += (ss*eb[i-1]*eb[j-1]*exp_at.at(a[i],t)*exp_at.at(a[j],t))/SQR(s);
 			}
 		}
-		if(!negative)
-			h *= -1;
-	
+			
 		for(int i=0;i<ncat-1;i++)
 			for(int j=i+1;j<ncat-1;j++)
 				h.at(j,i) = h.at(i,j);
+				
+		if(negative)
+			h *= -1;
 		
 	}
 

@@ -49,7 +49,7 @@ ability.mml = function(dataSrc, parms, predicate=NULL, method=c('MLE','WLE'), un
                         pre$pni, pre$pcni, pre$pi, pre$px,
                         WLE=(method=='WLE'), USE_A = (!unweight))
 
-        return(tibble(person_id=pid,theta=theta))
+        return(tibble(person_id=pid,theta=drop(theta)))
   }
 
 }

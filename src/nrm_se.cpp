@@ -167,7 +167,10 @@ mat J_nrm(arma::imat& a, const arma::mat& b_fixed, mat& exp_at, const arma::ivec
 					int itr=0,err;
 					double ll_itm=0;
 
-					dfpmin(pars, tol, itr, ll_itm, f,err);
+					if(ncat[j] == 2)
+						D1min(pars, tol, itr, ll_itm, f, err); // 1 dimensional minimization
+					else
+						nlm(pars, tol, itr, ll_itm, f, err);	
 
 					for(int kj=1;kj<ncat[j];kj++)
 						b.at(kj,j,d) = pars[kj-1];
@@ -237,7 +240,10 @@ mat J_nrm(arma::imat& a, const arma::mat& b_fixed, mat& exp_at, const arma::ivec
 					int itr=0,err;
 					double ll_itm=0;
 
-					dfpmin(pars, tol, itr, ll_itm, f,err);
+					if(ncat[j] == 2)
+						D1min(pars, tol, itr, ll_itm, f, err); // 1 dimensional minimization
+					else
+						nlm(pars, tol, itr, ll_itm, f, err);	
 
 					for(int kj=1;kj<ncat[j];kj++)
 						b.at(kj,j,d) = pars[kj-1];

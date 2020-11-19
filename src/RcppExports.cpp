@@ -119,6 +119,48 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// test_ll_nrm
+double test_ll_nrm(arma::ivec& a, arma::vec theta, arma::mat& r, const arma::vec& par);
+RcppExport SEXP _dexterMML_test_ll_nrm(SEXP aSEXP, SEXP thetaSEXP, SEXP rSEXP, SEXP parSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::ivec& >::type a(aSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type r(rSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type par(parSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_ll_nrm(a, theta, r, par));
+    return rcpp_result_gen;
+END_RCPP
+}
+// test_gradient_nrm
+arma::vec test_gradient_nrm(arma::ivec& a, arma::vec theta, arma::mat& r, const arma::vec& par);
+RcppExport SEXP _dexterMML_test_gradient_nrm(SEXP aSEXP, SEXP thetaSEXP, SEXP rSEXP, SEXP parSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::ivec& >::type a(aSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type r(rSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type par(parSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_gradient_nrm(a, theta, r, par));
+    return rcpp_result_gen;
+END_RCPP
+}
+// test_hess_nrm
+arma::mat test_hess_nrm(arma::ivec& a, arma::vec theta, arma::mat& r, const arma::vec& par);
+RcppExport SEXP _dexterMML_test_hess_nrm(SEXP aSEXP, SEXP thetaSEXP, SEXP rSEXP, SEXP parSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::ivec& >::type a(aSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type r(rSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type par(parSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_hess_nrm(a, theta, r, par));
+    return rcpp_result_gen;
+END_RCPP
+}
 // Oakes_nrm
 Rcpp::List Oakes_nrm(arma::imat& a, const arma::mat& b, const arma::ivec& ncat, arma::field<arma::mat>& r, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, arma::vec& theta, const arma::vec& mu, const arma::vec& sigma, const arma::ivec& gn, const arma::ivec& pgroup, const arma::imat& dsg_ii, const arma::imat& dsg_gi, const int ref_group);
 RcppExport SEXP _dexterMML_Oakes_nrm(SEXP aSEXP, SEXP bSEXP, SEXP ncatSEXP, SEXP rSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP thetaSEXP, SEXP muSEXP, SEXP sigmaSEXP, SEXP gnSEXP, SEXP pgroupSEXP, SEXP dsg_iiSEXP, SEXP dsg_giSEXP, SEXP ref_groupSEXP) {
@@ -295,6 +337,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_design_matrices", (DL_FUNC) &_dexterMML_design_matrices, 6},
     {"_dexterMML_pre_scoretab", (DL_FUNC) &_dexterMML_pre_scoretab, 10},
     {"_dexterMML_estimate_nrm", (DL_FUNC) &_dexterMML_estimate_nrm, 14},
+    {"_dexterMML_test_ll_nrm", (DL_FUNC) &_dexterMML_test_ll_nrm, 4},
+    {"_dexterMML_test_gradient_nrm", (DL_FUNC) &_dexterMML_test_gradient_nrm, 4},
+    {"_dexterMML_test_hess_nrm", (DL_FUNC) &_dexterMML_test_hess_nrm, 4},
     {"_dexterMML_Oakes_nrm", (DL_FUNC) &_dexterMML_Oakes_nrm, 16},
     {"_dexterMML_plausible_values", (DL_FUNC) &_dexterMML_plausible_values, 16},
     {"_dexterMML_estimate_poly2", (DL_FUNC) &_dexterMML_estimate_poly2, 18},

@@ -159,9 +159,6 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=
     a = categorize(pre$inp, pre$pni, pre$icnp, pre$pcni,pre$ip, pre$pi,
                        pre$icat, pre$imax,max(pre$ncat), pre$ix, pre$px)
 
-    # prox is een lelijk gedoetje voor poly, even gelaten
-    # see https://web.archive.org/web/20190719030511/https://www.rasch.org/rmt/rmt84k.htm
-
 
     b = apply(pre$icat,2, function(x) 1-log(2*x/lag(x)))
     b[1,] = 0
@@ -181,13 +178,11 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=
                       theta_grid, em$mu, em$sd, group_n, group,
                       design$items, design$groups, ref_group)
 
-      # the Jacobian does not seem wholly senang but I cannot find a mistake in the code
-      # maybe it should be done on a rerun of the estep with final parameters?
 
       ipar = sum(pre$ncat-1)
       dx = to_dexter(em$a,em$b,pre$ncat,colnames(dat),res$H)
       items = dx$items
-      items$SE_beta = sqrt(diag(dx$cov.beta))
+      items$SE_beta = sqrt(-diag(dx$cov.beta))
 
       pop = tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd))
       s = sqrt(-diag(dx$cov.all)[-(1:ipar)])
