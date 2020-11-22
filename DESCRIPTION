@@ -6,7 +6,7 @@ Date: 2020-09-28
 Author: Gunter Maris, Timo Bechger, Jesse Koops, Ivailo Partchev
 Maintainer: Jesse Koops <jesse.koops@cito.nl>
 Description: Fast 1Pl and 2PL estimation routines for situations where CML is impossible.
-License: Private
+License: GPL-3
 Imports: 
   Rcpp (>= 1.0.4.6),
   dplyr,
