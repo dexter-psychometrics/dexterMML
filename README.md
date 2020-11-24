@@ -52,8 +52,3 @@ devtools::install_github("jessekps/dexterMML")
 ``` r
 # to do: examples
 ```
-
-## Current limitations
-
-Plausible values (function `plausible_values.mml`) are currently highly
-inefficient for adaptive or random tests.

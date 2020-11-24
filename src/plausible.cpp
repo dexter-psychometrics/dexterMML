@@ -4,7 +4,7 @@
 #include <omp.h>
 #include "shared.h"
 using namespace arma;
-
+using Rcpp::Named;
 #define SEED std::round(R::runif(0,1) * 2147483647)
 
 /*
@@ -47,9 +47,10 @@ void sample_musig(const arma::ivec& popn, std::vector<long double>& mu,
 	sigma_old = sigma;	
 }
 
-
+// this is an adaptation of the dexter algorithm
+// works fine, however is unacceptably slow for adaptive or random tests
 // [[Rcpp::export]]
-arma::mat plausible_values(const arma::ivec& booklet_id, const arma::ivec& pop, const arma::ivec& pbn, const arma::ivec& pbcn, 
+arma::mat plausible_values_c(const arma::ivec& booklet_id, const arma::ivec& pop, const arma::ivec& pbn, const arma::ivec& pbcn, 
 							const arma::ivec& pbnp, const arma::ivec& pbcnp,
 							const arma::ivec& scoretab, 
 							const arma::ivec& popn, 
@@ -59,6 +60,7 @@ arma::mat plausible_values(const arma::ivec& booklet_id, const arma::ivec& pop, 
 {
 	const int nbp = pbn.n_elem, max_cat = a.n_rows, npop=popn.n_elem, nit=a.n_cols;
 	const int np = accu(popn);
+	const int max_thr = omp_get_max_threads();
 
 	std::vector<long double> mu(npop, 0);
 	long double sigma=4,sigma_old=4;
@@ -152,7 +154,103 @@ arma::mat plausible_values(const arma::ivec& booklet_id, const arma::ivec& pop, 
 
 		
 		sample_musig(popn, mu, sigma, sigma_old, mu_all, sigma_all);		
+		rng.long_jump(max_thr+1);
+	}
+	return out;
+}
 
+// using SVE
+// [[Rcpp::export]]
+arma::mat plausible_values_c2(const arma::vec& A, const arma::imat& a, const arma::mat& b, const arma::ivec& ncat,
+							const arma::ivec& pni, const arma::ivec& pcni, arma::ivec& pi, const arma::ivec& px, const arma::ivec& pop, const arma::ivec& popn, 
+							const int npv, const arma::vec& starting_values,
+							const int n_prior_updates=10, const int thin=10)
+{
+	const int np = pni.n_elem, nit = A.n_elem, npop=popn.n_elem, max_cat = a.n_rows;
+	
+	dqrng::xoshiro256plus rng(SEED); 	
+	dqrng::uniform_distribution prl_runif(0, 1);
+	dqrng::normal_distribution prl_rnorm(0, 1);
+	
+	const int max_thr = omp_get_max_threads();
+	
+	std::vector<long double> mu(npop, 0);
+	long double sigma=4,sigma_old=4;
+	double mu_all=0, sigma_all=1;
+		
+	mat out(np,npv);
+		
+	out.col(0) = starting_values;
+	mat aA(a.n_rows,nit,fill::zeros);
+	for(int i=0; i<nit; i++)
+		for(int k=1;k<ncat[i];k++)
+			aA.at(k,i) = a.at(k,i)* A[i];
+	
+	vec ws(np,fill::zeros);
+	
+	for(int p=0;p<np;p++)
+		for(int indx = pcni[p]; indx<pcni[p+1]; indx++)
+			ws[p] += aA.at(px[indx],pi[indx]);
+	
+	
+	int pvcol=0, prevcol;
+	for(int iter = -n_prior_updates;;iter++)
+	{	
+		prevcol=pvcol;
+		if(iter>=0 && iter % thin ==0)
+			pvcol++;
+		if(pvcol == npv)
+			break;
+			
+		std::fill(mu.begin(), mu.end(),0);
+		for(int p=0;p<np;p++)
+			mu[pop[p]] += out.at(p,pvcol);
+	
+		for(int ps=0;ps<npop;ps++)
+			mu[ps] /= popn[ps];
+		sigma=0;
+		for(int p=0;p<np;p++)
+			sigma += SQR(out.at(p,pvcol) - mu[pop[p]]);
+		sigma = std::sqrt(sigma/np);
+		
+#pragma omp parallel
+		{
+			// check if repeated declaration of this does not cause problems
+			// maybe we need to jump/use rng after parallel loop?			
+			dqrng::xoshiro256plus lrng(rng);      		
+			lrng.long_jump(omp_get_thread_num() + 1);			
+			vec P(max_cat);
+			P[0]=1;
+			int k;
+#pragma omp for			
+			for(int p=0;p<np;p++)
+			{		
+				//double theta = R::rnorm((double)mu[pop[p]], (double)sigma);
+				double theta = prl_rnorm(lrng) * sigma + mu[pop[p]];
+				double x=0;
+				for(int indx = pcni[p]; indx<pcni[p+1]; indx++)
+				{
+					const int i = pi[indx];
+					for(k=1; k<ncat[i]; k++)
+						P[k] = P[k-1] + std::exp(aA.at(k,i)*(theta-b.at(k,i)));
+
+					const double u=P[k-1]*prl_runif(lrng);
+					k=0;
+					while(u>P[k]) k++;		
+					x += aA.at(k,i);	
+				}
+				double acc = std::exp((theta-out.at(p, prevcol))*(ws[p]-x));
+				if(prl_runif(lrng) < acc)
+					out.at(p,pvcol)=theta;
+				else
+					out.at(p,pvcol)=out.at(p,prevcol);					
+			}
+		}
+		
+		
+		sample_musig(popn, mu, sigma, sigma_old, mu_all, sigma_all);
+		rng.long_jump(max_thr+1);
+		iter++;
 	}
 	return out;
 }

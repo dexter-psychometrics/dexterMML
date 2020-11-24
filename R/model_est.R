@@ -1,4 +1,6 @@
 
+### to do: test hessian poly2 with prior, +/- correct????
+
 #' DexterMML: MML addition to dexter
 #'
 #' For use in cases where CML is not possible, such as an adaptive test

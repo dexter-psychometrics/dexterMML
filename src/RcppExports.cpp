@@ -187,9 +187,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// plausible_values
-arma::mat plausible_values(const arma::ivec& booklet_id, const arma::ivec& pop, const arma::ivec& pbn, const arma::ivec& pbcn, const arma::ivec& pbnp, const arma::ivec& pbcnp, const arma::ivec& scoretab, const arma::ivec& popn, const arma::ivec& dsg_item_id, const arma::ivec& bnit, const arma::ivec& bcnit, const arma::vec& A, const arma::imat& a, const arma::mat& b, const arma::ivec& ncat, const int npv);
-RcppExport SEXP _dexterMML_plausible_values(SEXP booklet_idSEXP, SEXP popSEXP, SEXP pbnSEXP, SEXP pbcnSEXP, SEXP pbnpSEXP, SEXP pbcnpSEXP, SEXP scoretabSEXP, SEXP popnSEXP, SEXP dsg_item_idSEXP, SEXP bnitSEXP, SEXP bcnitSEXP, SEXP ASEXP, SEXP aSEXP, SEXP bSEXP, SEXP ncatSEXP, SEXP npvSEXP) {
+// plausible_values_c
+arma::mat plausible_values_c(const arma::ivec& booklet_id, const arma::ivec& pop, const arma::ivec& pbn, const arma::ivec& pbcn, const arma::ivec& pbnp, const arma::ivec& pbcnp, const arma::ivec& scoretab, const arma::ivec& popn, const arma::ivec& dsg_item_id, const arma::ivec& bnit, const arma::ivec& bcnit, const arma::vec& A, const arma::imat& a, const arma::mat& b, const arma::ivec& ncat, const int npv);
+RcppExport SEXP _dexterMML_plausible_values_c(SEXP booklet_idSEXP, SEXP popSEXP, SEXP pbnSEXP, SEXP pbcnSEXP, SEXP pbnpSEXP, SEXP pbcnpSEXP, SEXP scoretabSEXP, SEXP popnSEXP, SEXP dsg_item_idSEXP, SEXP bnitSEXP, SEXP bcnitSEXP, SEXP ASEXP, SEXP aSEXP, SEXP bSEXP, SEXP ncatSEXP, SEXP npvSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -209,7 +209,31 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::mat& >::type b(bSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type ncat(ncatSEXP);
     Rcpp::traits::input_parameter< const int >::type npv(npvSEXP);
-    rcpp_result_gen = Rcpp::wrap(plausible_values(booklet_id, pop, pbn, pbcn, pbnp, pbcnp, scoretab, popn, dsg_item_id, bnit, bcnit, A, a, b, ncat, npv));
+    rcpp_result_gen = Rcpp::wrap(plausible_values_c(booklet_id, pop, pbn, pbcn, pbnp, pbcnp, scoretab, popn, dsg_item_id, bnit, bcnit, A, a, b, ncat, npv));
+    return rcpp_result_gen;
+END_RCPP
+}
+// plausible_values_c2
+arma::mat plausible_values_c2(const arma::vec& A, const arma::imat& a, const arma::mat& b, const arma::ivec& ncat, const arma::ivec& pni, const arma::ivec& pcni, arma::ivec& pi, const arma::ivec& px, const arma::ivec& pop, const arma::ivec& popn, const int npv, const arma::vec& starting_values, const int n_prior_updates, const int thin);
+RcppExport SEXP _dexterMML_plausible_values_c2(SEXP ASEXP, SEXP aSEXP, SEXP bSEXP, SEXP ncatSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP popSEXP, SEXP popnSEXP, SEXP npvSEXP, SEXP starting_valuesSEXP, SEXP n_prior_updatesSEXP, SEXP thinSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type A(ASEXP);
+    Rcpp::traits::input_parameter< const arma::imat& >::type a(aSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type b(bSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type ncat(ncatSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pni(pniSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pcni(pcniSEXP);
+    Rcpp::traits::input_parameter< arma::ivec& >::type pi(piSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type px(pxSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type popn(popnSEXP);
+    Rcpp::traits::input_parameter< const int >::type npv(npvSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type starting_values(starting_valuesSEXP);
+    Rcpp::traits::input_parameter< const int >::type n_prior_updates(n_prior_updatesSEXP);
+    Rcpp::traits::input_parameter< const int >::type thin(thinSEXP);
+    rcpp_result_gen = Rcpp::wrap(plausible_values_c2(A, a, b, ncat, pni, pcni, pi, px, pop, popn, npv, starting_values, n_prior_updates, thin));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -341,7 +365,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_test_gradient_nrm", (DL_FUNC) &_dexterMML_test_gradient_nrm, 4},
     {"_dexterMML_test_hess_nrm", (DL_FUNC) &_dexterMML_test_hess_nrm, 4},
     {"_dexterMML_Oakes_nrm", (DL_FUNC) &_dexterMML_Oakes_nrm, 16},
-    {"_dexterMML_plausible_values", (DL_FUNC) &_dexterMML_plausible_values, 16},
+    {"_dexterMML_plausible_values_c", (DL_FUNC) &_dexterMML_plausible_values_c, 16},
+    {"_dexterMML_plausible_values_c2", (DL_FUNC) &_dexterMML_plausible_values_c2, 14},
     {"_dexterMML_estimate_poly2", (DL_FUNC) &_dexterMML_estimate_poly2, 18},
     {"_dexterMML_test_ll_p2", (DL_FUNC) &_dexterMML_test_ll_p2, 5},
     {"_dexterMML_test_gradient_p2", (DL_FUNC) &_dexterMML_test_gradient_p2, 5},

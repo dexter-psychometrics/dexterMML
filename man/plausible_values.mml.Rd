@@ -2,7 +2,7 @@
 % Please edit documentation in R/plausible_values.R
 \name{plausible_values.mml}
 \alias{plausible_values.mml}
-\title{palusible values}
+\title{plausible values}
 \usage{
 plausible_values.mml(
   dataSrc,
@@ -20,7 +20,7 @@ plausible_values.mml(
 \item{predicate}{An optional expression to subset data, if NULL all data is used}
 
 \item{covariates}{character vector indicating discrete person properties or, in case dataSrc is a matrix,
-a vector of groups}
+a vector of groups (integer or character)}
 
 \item{npv}{number of plausible values to draw per person}
 }
@@ -28,5 +28,5 @@ a vector of groups}
 data.frame
 }
 \description{
-palusible values
+This function uses the SVE algorithm (Marsman,...;) to produce a dependent sample of plausible values
 }

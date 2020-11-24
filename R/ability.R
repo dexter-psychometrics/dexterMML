@@ -26,7 +26,7 @@ ability.mml = function(dataSrc, parms, predicate=NULL, method=c('MLE','WLE'), un
 
   if(parms$model=='1PL')
   {
-    rsp = get_resp_data(db, qtpredicate=qtpredicate, env=env)
+    rsp = get_resp_data(dataSrc, qtpredicate=qtpredicate, env=env)
     return(ability(rsp,method=method,parms=parms$items))
 
   } else if(parms$model=='2PL')
