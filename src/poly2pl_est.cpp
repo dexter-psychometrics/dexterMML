@@ -1,7 +1,5 @@
 
 #include <RcppArmadillo.h>
-//#include <RcppEnsmallen.h>
-//#include <roptim.h>
 #include "minimize.h"
 #include "poly2pl_item.h"
 #include "shared.h"
@@ -69,6 +67,7 @@ void estep_poly2(const imat& a, const vec& A, const mat& b, const ivec& ncat, co
 Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::mat& b_start, const arma::ivec& ncat,
 						const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 						arma::vec& theta, const arma::vec& mu_start, const arma::vec& sigma_start, const arma::ivec& gn, const arma::ivec& pgroup, 
+						const arma::ivec& item_fixed,
 						const int ref_group=0, const int A_prior=0, const double A_mu=0, const double A_sigma=0.5, const int max_iter=200)
 {
 	const int nit = a.n_cols, nt = theta.n_elem, np = pni.n_elem, ng=gn.n_elem;
@@ -101,6 +100,8 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 #pragma omp parallel for reduction(max: maxdif_A, maxdif_b) reduction(+:min_error)
 		for(int i=0; i<nit; i++)
 		{	
+			if(item_fixed[i] == 1)
+				continue;
 			ll_poly2 f(a.colptr(i), theta.memptr(), r(i), A_prior, A_mu, A_sigma);
 			vec pars = b.col(i).head(ncat[i]);
 			pars[0] = A[i];

@@ -7,6 +7,9 @@ Author: Gunter Maris, Timo Bechger, Jesse Koops, Ivailo Partchev
 Maintainer: Jesse Koops <jesse.koops@cito.nl>
 Description: Fast 1Pl and 2PL estimation routines for situations where CML is impossible.
 License: GPL-3
+LazyData: yes
+Depends:
+    R (>= 3.5)
 Imports: 
   Rcpp (>= 1.0.4.6),
   dplyr,

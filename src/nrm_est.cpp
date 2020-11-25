@@ -1,4 +1,3 @@
-
 #include <RcppArmadillo.h>
 #include "minimize.h"
 #include "nrm_item.h"

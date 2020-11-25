@@ -112,7 +112,7 @@ void se_estep_poly2(const imat& a, const vec& A, const mat& b, const ivec& ncat,
 mat J_poly2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, const arma::ivec& ncat,
 						const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 						arma::vec& theta, const arma::vec& mu_fixed, const arma::vec& sigma_fixed, const arma::ivec& gn, const arma::ivec& pgroup, 
-						const arma::imat dsg_ii,const arma::imat dsg_gi, const int ref_group,
+						const arma::imat dsg_ii,const arma::imat dsg_gi, const arma::ivec& item_fixed, const int npar, const int ref_group,
 						const int A_prior, const double A_mu, const double A_sigma)
 {
 	const int nit = a.n_cols, nt = theta.n_elem, ng=gn.n_elem;
@@ -139,12 +139,10 @@ mat J_poly2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, co
 	
 	const ivec gdummy(ng,fill::zeros);
 	
-	
-	const int npar = accu(ncat) + 2*(ng-1);
 	mat jacob(npar, npar, fill::zeros);
 	
 	int p=0;
-	for(int i=0; i<nit; i++)
+	for(int i=0; i<nit; i++) if(item_fixed[i]==0)
 	{
 		for(int k=0; k<ncat[i]; k++)
 		{
@@ -187,7 +185,7 @@ mat J_poly2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, co
 				}
 			}
 			int q=0;
-			for(int j=0; j<nit; j++) 
+			for(int j=0; j<nit; j++) if(item_fixed[j]==0)
 			{
 				if(dsg_ii.at(j,i) == 1)
 				{
@@ -246,7 +244,7 @@ mat J_poly2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, co
 				}
 			}
 			int q=0;
-			for(int j=0; j<nit; j++) 
+			for(int j=0; j<nit; j++) if(item_fixed[j]==0)
 			{
 				if(dsg_ig.at(j,g) == 1)
 				{
@@ -269,15 +267,20 @@ mat J_poly2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, co
 Rcpp::List Oakes_poly2(arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, arma::field<arma::mat>& r, 
 				const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 				arma::vec& theta, const arma::vec& mu, const arma::vec& sigma, const arma::ivec& gn, const arma::ivec& pgroup,
-				const arma::imat& dsg_ii, const arma::imat& dsg_gi,	const int ref_group=0, 
+				const arma::imat& dsg_ii, const arma::imat& dsg_gi,	const arma::ivec& item_fixed, const int ref_group=0, 
 				const int A_prior=0, const double A_mu=0, const double A_sigma=0.5)
 {
 	const int ng = mu.n_elem, nit=a.n_cols;
-	const int npar = accu(ncat) + 2*(ng-1);
+	
+	int npar = 2*ng;
+	if(ref_group >= 0) npar -= 2;
+	for(int i=0; i<nit; i++) 
+		if(item_fixed[i]==0)
+			npar += ncat[i];
 	
 	
 	//Jacobian
-	mat J = J_poly2(a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, ref_group,A_prior, A_mu, A_sigma);
+	mat J = J_poly2(a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, npar, ref_group,A_prior, A_mu, A_sigma);
 	
 	// observed hessian
 	const int max_cat = ncat.max();
@@ -286,7 +289,7 @@ Rcpp::List Oakes_poly2(arma::imat& a, const arma::vec& A, const arma::mat& b, co
 	// fill items with analytical hessian based on r from last em iteration, ask Timo if that is correct
 	int p=0;
 
-	for(int i=0; i<nit; i++)
+	for(int i=0; i<nit; i++) if(item_fixed[i]==0)
 	{				
 		ll_poly2 f(a.colptr(i), theta.memptr(), r(i), A_prior, A_mu, A_sigma);
 		vec pars = b.col(i).head(ncat[i]);

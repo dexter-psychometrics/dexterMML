@@ -225,22 +225,40 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
 
   } else
   {
-    if(!is.null(fixed_param))
-      stop("not implemented: fixed parameters for 2PL")
     # this changes the response vectors px and ix in pre
     a = categorize(pre$inp, pre$pni, pre$icnp, pre$pcni,pre$ip, pre$pi,
                    pre$icat, pre$imax,max(pre$ncat), pre$ix, pre$px)
 
-    b = apply(pre$icat,2, function(x) 1-log(2*x/lag(x)))
-    b[1,] = 0
     A=rep(1,ncol(dat))
+
+    if(!is.null(fixed_param))
+    {
+      fixed_param = tibble(item_id=colnames(dat), .indx.=1:ncol(dat)) %>%
+        inner_join(fixed_param, by='item_id') %>%
+        arrange(.data$.indx., .data$item_score)
+
+      lapply(split(fixed_param, fixed_param$item_id), function(ipar)
+      {
+        i = ipar$.indx.[1]
+        if(all(a[2:pre$ncat[i],i] == ipar$item_score))
+        {
+          b[2:pre$ncat[i],i] <<- ipar$beta
+          A[i] = ipar$alpha[1]
+        } else
+        {
+          stop("Not implemented: mismatch between fixed parameters and data vs item scores")
+        }
+      })
+      fixed_items[unique(fixed_param$.indx.)] = 1L
+      ref_group = -1L
+    }
 
     mu = rep(0, length(group_n))
     sigma = rep(1, length(group_n))
 
     em = estimate_poly2(a, A, b, pre$ncat,
                         pre$pni, pre$pcni, pre$pi, pre$px,
-                        theta_grid, mu, sigma, group_n, group, ref_group,
+                        theta_grid, mu, sigma, group_n, group, fixed_items, ref_group,
                         A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma)
 
     items = tibble(item_id = rep(colnames(dat),pre$ncat-1),
@@ -252,28 +270,47 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
     if(se)
     {
       design = design_matrices(pre$pni, pre$pcni, pre$pi, group, ncol(dat), length(group_n))
+
+      if(!is.null(fixed_param))
+      {
+        w = which(fixed_items==1L)
+        design$items[w,] = 0L
+        design$items[,w] = 0L
+        design$groups[,w] = 0L
+      }
+
       res = Oakes_poly2(a, em$A, em$b, pre$ncat, em$r,
                       pre$pni, pre$pcni, pre$pi, pre$px,
                       theta_grid, em$mu, em$sd, group_n, group,
-                      design$items, design$groups, ref_group,
+                      design$items, design$groups, fixed_items,ref_group,
                       A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma)
 
-
       SE = sqrt(-diag(solve(res$H)))
-      ipar = sum(pre$ncat)
-      first = cumsum(lag(pre$ncat,default=1L))
-      items$SE_alpha = rep(SE[first],pre$ncat-1L)
-      items$SE_beta = (SE[1:ipar])[-first]
-      if(has_groups)
+      items$SE_alpha = NA_real_
+      items$SE_beta = NA_real_
+      i=1; px=1
+      for(ix in 1:ncol(dat))
       {
-        s = SE[-(1:ipar)]
-        r=ref_group
-        if(r==0)
-          s=c(NA,s)
-        else
-          s = c(s[1:(2*r)],NA,s[(2*r+1):length(s)])
-        pop$SE_mu = s[seq(1,length(s),2)]
-        pop$SE_sd = s[seq(2,length(s),2)]
+        k = pre$ncat[ix]
+        if(fixed_items[ix]==0L)
+        {
+          items$SE_alpha[i:(i+k-2)] = SE[px]
+          items$SE_beta[i:(i+k-2)] = SE[(px+1):(px+k-1)]
+          px=px+k
+        }
+        i = i+k-1
+      }
+      pop$SE_mu = NA_real_
+      pop$SE_sd = NA_real_
+      for(g in 1:length(group_n))
+      {
+        if(g != (ref_group+1))
+        {
+          pop$SE_mu[g] = SE[px]
+          pop$SE_sd[g] = SE[px+1L]
+          px=px+2L
+        }
+        i=i+1L
       }
     }
     pre$a=a
