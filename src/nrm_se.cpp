@@ -50,8 +50,8 @@ mat ll_group_nrm(const imat& a, const mat& b, const mat& exp_at, const ivec& nca
 }
 
 
-// estep where not to be update items and groups are skipped according to the design matrix
-// this is both faster and prevents rounding errors in the jacobian for 'almost 0' chanhes
+// estep where not to be updated items and groups are skipped according to the design matrix
+// this is both faster and prevents rounding errors in the jacobian for 'almost 0' chances
 
 void se_estep_nrm(imat& a, mat& b, const mat& exp_at, const ivec& ncat, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
 				const vec& theta, field<mat>& r, vec& sumtheta, vec& sumsig2, const vec& mu, const vec& sigma, const ivec& pgroup,
@@ -112,7 +112,7 @@ void se_estep_nrm(imat& a, mat& b, const mat& exp_at, const ivec& ncat, const iv
 mat J_nrm(arma::imat& a, const arma::mat& b_fixed, mat& exp_at, const arma::ivec& ncat,
 						const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 						arma::vec& theta, const arma::vec& mu_fixed, const arma::vec& sigma_fixed, const arma::ivec& gn, const arma::ivec& pgroup, 
-						const arma::imat dsg_ii,const arma::imat dsg_gi, const int ref_group=0)
+						const arma::imat dsg_ii,const arma::imat dsg_gi, const arma::ivec& item_fixed, const int npar, const int ref_group=0)
 {
 	const int nit = a.n_cols, nt = theta.n_elem, ng=gn.n_elem;
 	
@@ -138,12 +138,10 @@ mat J_nrm(arma::imat& a, const arma::mat& b_fixed, mat& exp_at, const arma::ivec
 	
 	const ivec gdummy(ng,fill::zeros);
 	
-	
-	const int npar = accu(ncat) - nit + 2*ng-1;
 	mat jacob(npar, npar, fill::zeros);
 	
 	int p=0;
-	for(int i=0; i<nit; i++)
+	for(int i=0; i<nit; i++) if(item_fixed[i]==0)
 	{
 		for(int k=1; k<ncat[i]; k++)
 		{
@@ -183,7 +181,7 @@ mat J_nrm(arma::imat& a, const arma::mat& b_fixed, mat& exp_at, const arma::ivec
 				}
 			}
 			int q=0;
-			for(int j=0; j<nit; j++) 
+			for(int j=0; j<nit; j++) if(item_fixed[j]==0)
 			{
 				if(dsg_ii.at(j,i) == 1)
 				{
@@ -250,7 +248,7 @@ mat J_nrm(arma::imat& a, const arma::mat& b_fixed, mat& exp_at, const arma::ivec
 				}
 			}
 			int q=0;
-			for(int j=0; j<nit; j++) 
+			for(int j=0; j<nit; j++) if(item_fixed[j]==0)
 			{
 				if(dsg_ig.at(j,g) == 1)
 				{
@@ -274,10 +272,15 @@ mat J_nrm(arma::imat& a, const arma::mat& b_fixed, mat& exp_at, const arma::ivec
 Rcpp::List Oakes_nrm(arma::imat& a, const arma::mat& b, const arma::ivec& ncat, arma::field<arma::mat>& r, 
 				const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 				arma::vec& theta, const arma::vec& mu, const arma::vec& sigma, const arma::ivec& gn, const arma::ivec& pgroup,
-				const arma::imat& dsg_ii, const arma::imat& dsg_gi,	const int ref_group=0)
+				const arma::imat& dsg_ii, const arma::imat& dsg_gi,	const arma::ivec& item_fixed, const int ref_group=0)
 {
 	const int ng = mu.n_elem, nit=a.n_cols, nt=theta.n_elem;
-	const int npar = accu(ncat) - nit + 2*ng-1;
+	//const int npar = accu(ncat) - nit + 2*ng-1;
+	int npar = 2*ng;
+	if(ref_group >= 0) npar--;
+	for(int i=0; i<nit; i++) 
+		if(item_fixed[i]==0)
+			npar += ncat[i] - 1;
 	
 	const int max_a = a.max();
 	
@@ -289,7 +292,7 @@ Rcpp::List Oakes_nrm(arma::imat& a, const arma::mat& b, const arma::ivec& ncat, 
 	
 	
 	//Jacobian
-	mat J = J_nrm(a, b, exp_at, ncat, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, ref_group);
+	mat J = J_nrm(a, b, exp_at, ncat, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, npar, ref_group);
 	
 	// observed hessian
 	const int max_cat = ncat.max();
@@ -298,7 +301,7 @@ Rcpp::List Oakes_nrm(arma::imat& a, const arma::mat& b, const arma::ivec& ncat, 
 	// fill items with analytical hessian based on r from last em iteration, ask Timo if that is correct
 	int p=0;
 
-	for(int i=0; i<nit; i++)
+	for(int i=0; i<nit; i++) if(item_fixed[i]==0)
 	{				
 		ll_nrm f(a.colptr(i), exp_at, r(i));
 		vec pars(b.colptr(i)+1,ncat[i]-1);

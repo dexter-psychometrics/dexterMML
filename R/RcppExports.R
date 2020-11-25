@@ -21,8 +21,8 @@ pre_scoretab <- function(booklet_id, pop, booklet_score, scoretab, dsg_booklet_i
     .Call(`_dexterMML_pre_scoretab`, booklet_id, pop, booklet_score, scoretab, dsg_booklet_id, dsg_item_id, a, ncat, nbk, npop)
 }
 
-estimate_nrm <- function(a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group = 0L, max_iter = 200L) {
-    .Call(`_dexterMML_estimate_nrm`, a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, ref_group, max_iter)
+estimate_nrm <- function(a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group = 0L, max_iter = 200L) {
+    .Call(`_dexterMML_estimate_nrm`, a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group, max_iter)
 }
 
 test_ll_nrm <- function(a, theta, r, par) {
@@ -37,8 +37,8 @@ test_hess_nrm <- function(a, theta, r, par) {
     .Call(`_dexterMML_test_hess_nrm`, a, theta, r, par)
 }
 
-Oakes_nrm <- function(a, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, ref_group = 0L) {
-    .Call(`_dexterMML_Oakes_nrm`, a, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, ref_group)
+Oakes_nrm <- function(a, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, ref_group = 0L) {
+    .Call(`_dexterMML_Oakes_nrm`, a, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, ref_group)
 }
 
 plausible_values_c <- function(booklet_id, pop, pbn, pbcn, pbnp, pbcnp, scoretab, popn, dsg_item_id, bnit, bcnit, A, a, b, ncat, npv) {

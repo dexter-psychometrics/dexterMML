@@ -19,10 +19,11 @@ makeD = function (a, first, last)
   return(D)
 }
 
-
-to_dexter = function(a,logb,ncat,item_id, H=NULL)
+# the dexter/oplm parametrisation, without renormalisation
+to_dexter = function(a,logb,ncat,item_id, H=NULL, fixed_items=NULL, ref_group=-1)
 {
   n=1:length(ncat)
+  any_fixed = !(is.null(fixed_items) || all(fixed_items==0))
 
   # without zero's
   a = as.integer(mapply(function(i,k){ a[2:k,i] },n,ncat))
@@ -37,16 +38,56 @@ to_dexter = function(a,logb,ncat,item_id, H=NULL)
 
   beta = DD %*% logb
 
-  k = length(logb)
+  items = tibble(item_id=rep(item_id,ncat-1), item_score = a, beta=drop(beta))
+  SE_pop = NULL
   if (!is.null(H))
   {
     cov.all = solve(H)
-    cov.beta = DD %*% cov.all[1:k,1:k] %*% t(DD)
+
+    if(any_fixed)
+    {
+      par_indx = which(rep(fixed_items, ncat-1L) == 0)
+      DD = DD[par_indx, par_indx]
+      k = length(par_indx)
+      cov.beta = DD %*% cov.all[1:k,1:k] %*% t(DD)
+      items$SE_beta = NA_real_
+      items$SE_beta[par_indx] = sqrt(-diag(cov.beta))
+    } else
+    {
+      k = length(logb)
+      cov.beta = DD %*% cov.all[1:k,1:k] %*% t(DD)
+      items$SE_beta = sqrt(-diag(cov.beta))
+    }
+    w = (k+1):nrow(cov.all)
+    SE_pop = sqrt(-diag(cov.all[w,w,drop=FALSE]))
+    if(ref_group==1)
+    {
+      SE_pop = c(NA,SE_pop)
+    } else if(ref_group>1)
+    {
+      w = ref_group*2-1
+      SE_pop = c(SE_pop[1:(w-1)],NA,SE_pop[w:length(SE_pop)])
+    }
   }
 
-
-  list(items=tibble(item_id=rep(item_id,ncat-1), item_score = a, beta=drop(beta)),
-       cov.beta=cov.beta,cov.all=cov.all)
+  list(items=items, SE_pop=SE_pop,
+       cov.beta=cov.beta, cov.all=cov.all)
 }
 
 
+
+
+# inverse of to_dexter
+# a=matrix(0:3,4,1)
+# logb=matrix(c(1,runif(3,0,3)),4,1)
+#
+# items = dexterMML:::to_dexter(a,logb,4,'bla')$items
+#
+# a=items$item_score; beta=items$beta
+# for single item
+from_dexter = function(a,beta)
+{
+  DD = makeD(a, 1, length(a))
+  solve(DD,beta)
+
+}

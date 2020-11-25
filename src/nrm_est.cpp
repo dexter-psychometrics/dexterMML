@@ -8,9 +8,6 @@ using namespace arma;
 using Rcpp::Named;
 
 
-
-// kan nog sneller gemaakt omdar er sufstats zijn voor deze 
-// x moet gehercodeerd zijn naar categorie nummers, zonder gaten
 void estep_nrm(imat& a, mat& b, const mat& exp_at, const ivec& ncat, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
 				const vec& theta, field<mat>& r, vec& thetabar, vec& sumtheta, vec& sumsig2, const vec& mu, const vec& sigma, const ivec& pgroup, double& ll)
 {
@@ -64,11 +61,12 @@ void estep_nrm(imat& a, mat& b, const mat& exp_at, const ivec& ncat, const ivec&
 }
 
 
-//a,b ncol items
+// if fixed parameters, set ref_group to a negative nbr
 // [[Rcpp::export]]
 Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ivec& ncat,
 						const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 						arma::vec& theta, const arma::vec& mu_start, const arma::vec& sigma_start, const arma::ivec& gn, const arma::ivec& pgroup, 
+						const arma::ivec& item_fixed,
 						const int ref_group=0, const int max_iter = 200)
 {
 	const int nit = a.n_cols, nt = theta.n_elem, np = pni.n_elem, ng=gn.n_elem;
@@ -103,11 +101,12 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 		estep_nrm(a, b, exp_at, ncat, pni, pcni, pi, px, 
 					theta, r, thetabar, sum_theta, sum_sigma2, mu, sigma, pgroup, ll);
 		
-		int NR=0;
 		double maxdif_b=0;
-#pragma omp parallel for reduction(max: maxdif_b) reduction(+:min_error,NR)
+#pragma omp parallel for reduction(max: maxdif_b) reduction(+:min_error)
 		for(int i=0; i<nit; i++)
 		{	
+			if(item_fixed[i] == 1)
+				continue;
 			ll_nrm f(a.colptr(i), exp_at, r(i));
 			vec pars(b.colptr(i)+1,ncat[i]-1);
 			int itr=0,err=0;
@@ -117,8 +116,7 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 			else
 				nlm(pars, tol, itr, ll_itm, f, err);	
 
-			min_error+=err;
-			NR+=itr;
+			min_error += err;
 			for(int k=1;k<ncat[i];k++)
 			{
 				maxdif_b = std::max(maxdif_b, std::abs(b.at(k,i) - pars[k-1]));
@@ -142,7 +140,7 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 		}
 		
 		//printf("\r% 3i", iter);
-		printf("iter: % 4i, logl: %.6f,  max b: %.8f, NR: %i\n", iter, ll, maxdif_b,NR);
+		printf("iter: % 4i, logl: %.6f,  max b: %.8f\n", iter, ll, maxdif_b);
 		fflush(stdout);
 		
 		

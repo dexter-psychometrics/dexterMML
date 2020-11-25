@@ -9,6 +9,7 @@ est(
   predicate = NULL,
   group = NULL,
   model = c("1PL", "2PL"),
+  fixed_param = NULL,
   se = TRUE,
   priorA = c("none", "lognormal", "normal"),
   priorA_mu = ifelse(priorA == "lognormal", 0, 1),
@@ -24,6 +25,8 @@ est(
 properties together grouping people. See details.}
 
 \item{model}{1PL or 2PL, see details.}
+
+\item{fixed_param}{data.frame with columns: item_id, item_score, beta and, if model is 2PL, also alpha.}
 
 \item{se}{should standard errors be determined. For large datasets with many items this can take some time. Set
 to false to save time.}

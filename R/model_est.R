@@ -28,6 +28,7 @@
 #' @param group if dataSrc is a matrix then a vector of length nrows, otherwise one or more person
 #' properties together grouping people. See details.
 #' @param model 1PL or 2PL, see details.
+#' @param fixed_param data.frame with columns: item_id, item_score, beta and, if model is 2PL, also alpha.
 #' @param se should standard errors be determined. For large datasets with many items this can take some time. Set
 #' to false to save time.
 #' @param priorA if the estimation does not converge or gives extreme results, usually in an adaptive test or with too few
@@ -57,7 +58,8 @@
 #' So for 2PL models MML is usually the method of choice.
 #'
 #'
-est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=TRUE,
+est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
+               fixed_param=NULL, se=TRUE,
                priorA = c('none','lognormal','normal'),
                priorA_mu = ifelse(priorA=='lognormal',0,1),
                priorA_sigma = ifelse(priorA=='lognormal',0.5,0.2))
@@ -153,6 +155,11 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=
 
   # estimation
 
+  fixed_items = rep(0L,ncol(dat))
+  # this needs to be done somewhat smarter to save a few itr
+  b = apply(pre$icat,2, function(x) 1-log(2*x/lag(x)))
+  b[1,] = 0
+
   if(model=='1PL')
   {
     # nominal response model
@@ -161,50 +168,66 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'), se=
     a = categorize(pre$inp, pre$pni, pre$icnp, pre$pcni,pre$ip, pre$pi,
                        pre$icat, pre$imax,max(pre$ncat), pre$ix, pre$px)
 
+    if(!is.null(fixed_param))
+    {
+      fixed_param = tibble(item_id=colnames(dat), .indx.=1:ncol(dat)) %>%
+        inner_join(fixed_param, by='item_id') %>%
+        arrange(.data$.indx., .data$item_score)
 
-    b = apply(pre$icat,2, function(x) 1-log(2*x/lag(x)))
-    b[1,] = 0
+      lapply(split(fixed_param, fixed_param$item_id), function(ipar)
+      {
+        i = ipar$.indx.[1]
+        if(all(a[2:pre$ncat[i],i] == ipar$item_score))
+        {
+          b[2:pre$ncat[i],i] <<- from_dexter(ipar$item_score, ipar$beta)
+        } else
+        {
+          stop("Not implemented: mismatch between fixed parameters and data vs item scores")
+        }
+      })
+      fixed_items[unique(fixed_param$.indx.)] = 1L
+      ref_group = -1L
+    }
 
     mu = rep(0, length(group_n))
     sigma = rep(1, length(group_n))
 
     em = estimate_nrm(a, b, pre$ncat,
                    pre$pni, pre$pcni, pre$pi, pre$px,
-                   theta_grid, mu, sigma, group_n, group, ref_group)
+                   theta_grid, mu, sigma, group_n, group, fixed_items, ref_group)
 
     if(se)
     {
       design = design_matrices(pre$pni, pre$pcni, pre$pi, group, ncol(dat), length(group_n))
+
+      if(!is.null(fixed_param))
+      {
+        w = which(fixed_items==1L)
+        design$items[w,] = 0L
+        design$items[,w] = 0L
+        design$groups[,w] = 0L
+      }
+
       res = Oakes_nrm(a, em$b, pre$ncat, em$r,
                       pre$pni, pre$pcni, pre$pi, pre$px,
                       theta_grid, em$mu, em$sd, group_n, group,
-                      design$items, design$groups, ref_group)
+                      design$items, design$groups, fixed_items, ref_group)
+      # needs some rearranging after this
+      dx = to_dexter(em$a,em$b,pre$ncat,colnames(dat),res$H, fixed_items,ref_group+1L)
+      pop = tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd),
+                   SE_mu=dx$SE_pop[seq(1,nrow(em$mu)*2,2)], SE_sigma=dx$SE_pop[seq(2,nrow(em$mu)*2,2)])
 
-
-      ipar = sum(pre$ncat-1)
-      dx = to_dexter(em$a,em$b,pre$ncat,colnames(dat),res$H)
-      items = dx$items
-      items$SE_beta = sqrt(-diag(dx$cov.beta))
-
-      pop = tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd))
-      s = sqrt(-diag(dx$cov.all)[-(1:ipar)])
-      r=ref_group
-      if(r==0)
-        s=c(NA,s)
-      else
-        s = c(s[1:(2*r)],NA,s[(2*r+1):length(s)])
-
-      pop$SE_mu = s[seq(1,length(s),2)]
-      pop$SE_sd = s[seq(2,length(s),2)]
-      return(list(items=items,pop=pop,em=em,pre=pre))
+      return(list(items=dx$items,pop=pop,em=em,pre=pre,model=model))
     }
     pre$a=a
-    return(list(items=to_dexter(em$a,exp(em$b),pre$ncat,colnames(dat))$items,em=em,pre=pre,model=model));
+    return(list(items=to_dexter(em$a,exp(em$b),pre$ncat,colnames(dat))$items,em=em,pre=pre,model=model))
 
 
   } else
   {
-    # this changes the respons vectors px and ix in pre
+    if(!is.null(fixed_param))
+      stop("not implemented: fixed parameters for 2PL")
+    # this changes the response vectors px and ix in pre
     a = categorize(pre$inp, pre$pni, pre$icnp, pre$pcni,pre$ip, pre$pi,
                    pre$icat, pre$imax,max(pre$ncat), pre$ix, pre$px)
 
