@@ -104,8 +104,6 @@ arma::mat plausible_values_c(const arma::vec& A, const arma::imat& a, const arma
 		
 #pragma omp parallel
 		{
-			// check if repeated declaration of this does not cause problems
-			// maybe we need to jump/use rng after parallel loop?			
 			dqrng::xoshiro256plus lrng(rng);      		
 			lrng.long_jump(omp_get_thread_num() + 1);			
 			vec P(max_cat);

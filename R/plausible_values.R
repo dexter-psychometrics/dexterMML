@@ -1,6 +1,8 @@
 #' plausible values
 #'
-#'This function uses the SVE algorithm (Marsman,...;) to produce a dependent sample of plausible values
+#' This function uses the Single Variable Exchange algorithm
+#' (Murray, Ghahramani & MacKay, 2012; see Marsman, Maris, Bechger & Glas, 2014, for application to IRT models)
+#' to produce a dependent sample of plausible values.
 #'
 #' @param dataSrc	a connection to a dexter database, a matrix, or a data.frame with columns: person_id, item_id, item_score
 #' @param parms	object produced by function est
@@ -11,64 +13,29 @@
 #'
 #' @returns data.frame
 #'
+#' @details
+#' This function uses the Single Variable Exchange algorithm
+#' (Murray, Ghahramani & MacKay,2012; see Marsman, Maris, Bechger & Glas, 2014, for application to IRT models)
+#' to produce a dependent sample of plausible values. The settings are such that the autocorrelation is reasonably low
+#' for tests with up to 40 items. To further lower the autocorrelation, e.g. for longer tests, the user can
+#' simply draw more plausible values than needed (see argument npv) and apply additional thinning.
+#'
+#' @references
+#' Marsman, M., Maris, G., Bechger, T. M., and Glas, C.A.C. (2014) Composition algorithms for Conditional Distributions.
+#' PhD thesis
+#' Murray, I., Ghahramani, Z., & MacKay, D. (2012). MCMC for doubly-intractable distributions. via: https://arxiv.org/abs/1206.6848
+#'
 plausible_values.mml = function(dataSrc, parms, predicate=NULL, covariates=NULL, npv=1)
 {
-  # this part copied form model est, should become function, to do: clean up
+  qtpredicate = eval(substitute(quote(predicate)))
+  env = caller_env()
+
+  data = get_mml_data(dataSrc,qtpredicate,env,covariates)
+
+  dat = data$dat
+  group = data$group
+  out = data$persons
   group=covariates
-  if(inherits(dataSrc, 'matrix'))
-  {
-    dat = dataSrc
-    mode(dat) = 'integer'
-    if(is.null(colnames(dat)))
-      colnames(dat) = sprintf("item%06i",1:ncol(dat))
-
-    if(!is.null(group) && length(group) != nrow(dat))
-      stop(sprintf("Length of group (%i) is not equal to number of rows in data (%i)",
-                   length(group),nrow(dat)))
-
-    person_id = if(is.null(rownames(dat))) sprintf("p%09i",1:nrow(dat)) else rownames(dat)
-    out=tibble(person_id=person_id)
-    if(!is.null(group))
-      out$group=group
-
-  } else
-  {
-    qtpredicate = eval(substitute(quote(predicate)))
-    env = caller_env()
-    dat = get_resp_matrix(dataSrc,qtpredicate,env)
-    # to do: possibility to handle groups in resp_matrix should become part of dexter
-    if(!is.null(group))
-    {
-      if(!is.character(group))
-        stop("Group should be a character variable")
-
-      if(inherits(dataSrc, "DBIConnection"))
-      {
-        # to do: allow booklet_id??
-        g = dbGetQuery(dataSrc,sprintf("SELECT person_id, %s FROM dxPersons;",
-                                       paste0(group, collapse=',')))
-      } else if(inherits(dataSrc, 'data.frame'))
-      {
-        g = distinct(dataSrc, .data$person_id, .keep_all=TRUE)
-      }
-      g = g %>%
-        mutate(person_id = factor(.data$person_id, levels=rownames(dat))) %>%
-        filter(!is.na(.data$person_id)) %>%
-        arrange(as.integer(.data$person_id))
-
-      out = g
-
-      if(length(group)== 1) group = g[[group]]
-      else
-      {
-        nc = c(sapply(group[length(group)-1], function(x) max(nchar(g[[x]]))),0L)
-        fmt = paste0("%-",nc,"s",collapse='_')
-        g = as.list(g[,group])
-        g$fmt = fmt
-        group = do.call(sprintf, g)
-      }
-    }
-  }
 
   max_score = max(dat,na.rm=TRUE)
 
@@ -76,21 +43,14 @@ plausible_values.mml = function(dataSrc, parms, predicate=NULL, covariates=NULL,
 
   if(is.null(group))
   {
-    has_groups=FALSE
     group = integer(nrow(dat))
-    ref_group = 0L
     group_n = nrow(dat)
-    group_id = 'population'
   } else
   {
-    has_groups = TRUE
     group = as.factor(group)
-    group_id = levels(group)
     group = as.integer(group) -1L
     group_n = as.integer(table(group))
-    ref_group = which.max(group_n) -1L
   }
-
 
   A = if(parms$model == '1PL') rep(1,ncol(parms$em$a)) else parms$em$A
 

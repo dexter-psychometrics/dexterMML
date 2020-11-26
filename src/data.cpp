@@ -1,5 +1,5 @@
 #include <RcppArmadillo.h>
-
+#include <stack>
 
 using namespace arma;
 using Rcpp::Named;
@@ -10,6 +10,7 @@ using Rcpp::Named;
 // gives two data sets:
 // person, item, score
 // item, person, score
+// to do: overkill ip is not used anywhere
 // [[Rcpp::export]]
 Rcpp::List mat_pre(arma::imat& dat, const int max_score)
 {
@@ -174,3 +175,108 @@ Rcpp::List design_matrices(const arma::ivec& pni, const arma::ivec& pcni, const 
 	item.diag().ones(); 
 	return Rcpp::List::create(Named("items")=item, Named("groups")=group);
 }
+
+// bitflag, 0=unidentified; 1=connected; 2,4,8 and combinations are tenously identified (should give warnings)
+// [[Rcpp::export]]
+int check_connected_c(const arma::imat& item, const arma::imat& group, const arma::ivec& item_fixed)
+{
+	const int nit = item.n_cols, ng=group.n_rows;
+
+	// items
+	arma::ivec item_groups(nit);
+	item_groups.fill(-1);
+	int nig=-1, out=0;
+	std::stack<int> st;
+
+	for(int j=0;j<nit;j++)
+	{
+		if(item_groups[j]<0)
+		{
+			st.push(j);
+			item_groups[j] = ++nig;
+			while(!st.empty())
+			{
+				int s = st.top();
+				st.pop();
+				for(int i=0;i<nit;i++)
+				{
+					if(item.at(i,s)>0 && item_groups[i]<0)
+					{
+						item_groups[i]=nig;
+						st.push(i);
+					}
+				}	
+			}
+		}
+	}
+	nig++;
+	if(nig==1) return 1; // connected via common items
+	
+	ivec ig_fixed(nig, fill::zeros);
+	for(int i=0; i<nit; i++) 
+		if(item_fixed[i]==1)
+			ig_fixed[item_groups[i]] = 1;
+	
+	if(all(ig_fixed==1))
+		out += 2; // connected via fixed items
+	
+	if(ng==1)
+		out += 4; //connected via groups
+	else
+	{		
+		imat igg(nig,ng, fill::zeros);
+		for(int g=0;g<ng;g++)
+			for(int i=0; i<nit; i++)
+				if(group.at(g,i) == 1)
+					igg.at(item_groups[i],g) = 1;
+
+		ivec group_connected(ng, fill::zeros);
+		st.push(0);
+		group_connected[0]=1;
+		while(!st.empty())
+		{
+			int g = st.top();
+			st.pop();		
+			for(int ig=0; ig<nig; ig++) if(igg.at(ig,g) == 1)
+			{
+				for(int g2=0; g2<ng; g2++) if(group_connected[g2]==0 && igg.at(ig,g2)==1) 
+				{
+					group_connected[g2] = 1;
+					st.push(g2);
+				}		
+			}		
+		}
+
+		if(all(group_connected==1))
+			out += 4; //connected via groups
+		else if(out!=2 && accu(item_fixed)>1)
+		{
+			group_connected.zeros();
+			for(int i=0; i<nit; i++) if(item_fixed[i]==1)
+			{
+				for(int g=0;g<ng;g++) if(group_connected[g]==0)
+				{
+					group_connected[g]=1;
+					st.push(g);
+				}
+			}
+			while(!st.empty())
+			{
+				int g = st.top();
+				st.pop();		
+				for(int ig=0; ig<nig; ig++) if(igg.at(ig,g) == 1)
+				{
+					for(int g2=0; g2<ng; g2++) if(group_connected[g2]==0 && igg.at(ig,g2)==1) 
+					{
+						group_connected[g2] = 1;
+						st.push(g2);
+					}		
+				}		
+			}
+			if(all(group_connected==1))
+				out += 8; //all populations that have no item overlap have 1 or more fixed items
+		}
+	}
+	return out;
+}
+

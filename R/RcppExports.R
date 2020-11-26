@@ -17,6 +17,10 @@ design_matrices <- function(pni, pcni, pi, pg, nit, ng) {
     .Call(`_dexterMML_design_matrices`, pni, pcni, pi, pg, nit, ng)
 }
 
+check_connected_c <- function(item, group, item_fixed) {
+    .Call(`_dexterMML_check_connected_c`, item, group, item_fixed)
+}
+
 estimate_nrm <- function(a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group = 0L, max_iter = 200L) {
     .Call(`_dexterMML_estimate_nrm`, a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group, max_iter)
 }

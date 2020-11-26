@@ -28,5 +28,19 @@ a vector of groups (integer or character)}
 data.frame
 }
 \description{
-This function uses the SVE algorithm (Marsman,...;) to produce a dependent sample of plausible values
+This function uses the Single Variable Exchange algorithm
+(Murray, Ghahramani & MacKay, 2012; see Marsman, Maris, Bechger & Glas, 2014, for application to IRT models)
+to produce a dependent sample of plausible values.
+}
+\details{
+This function uses the Single Variable Exchange algorithm
+(Murray, Ghahramani & MacKay,2012; see Marsman, Maris, Bechger & Glas, 2014, for application to IRT models)
+to produce a dependent sample of plausible values. The settings are such that the autocorrelation is reasonably low
+for tests with up to 40 items. To further lower the autocorrelation, e.g. for longer tests, the user can
+simply draw more plausible values than needed (see argument npv) and apply additional thinning.
+}
+\references{
+Marsman, M., Maris, G., Bechger, T. M., and Glas, C.A.C. (2014) Composition algorithms for Conditional Distributions.
+PhD thesis
+Murray, I., Ghahramani, Z., & MacKay, D. (2012). MCMC for doubly-intractable distributions. via: https://arxiv.org/abs/1206.6848
 }

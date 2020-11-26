@@ -40,10 +40,10 @@
 #' @return a list of things, to do: organize return value
 #'
 #' @details
-#' In a 1PL item difficulties on a logistic scale are estimated in a marginal Nominal Response Model.
-#' In a 2PL model items also get a discrimination. This
+#' In a 1PL item difficulties are estimated according to the Nominal Response Model.
+#' In a 2PL, the items also get a discrimination. This
 #' can be interpreted as a noise factor in the item measurement analogous to item test
-#' correlations in classical test theory. Both the 1PL and 2PL model can handle polytomous data (to do: 2PL poly not finished yet) and respect the item
+#' correlations in classical test theory. Both the 1PL and 2PL model can handle polytomous data and respect the item
 #' scores. Missing categories (e.g. an item scored 0,1,4) are allowed.
 #'
 #' Specifying grouping variables for test takers is very important in MML estimation. Failure to include
@@ -54,7 +54,7 @@
 #' model and can be better estimated with CML. Only in case of adaptive data (where CML is not allowed) should you
 #' use MML to estimate a 1PL.
 #'
-#' A 2PL cannnot be estimated using CML, except in case of complete data (see the interaction model in dexter).
+#' A 2PL cannnot be estimated using CML, except in the case of complete data (see the interaction model in dexter).
 #' So for 2PL models MML is usually the method of choice.
 #'
 #'
@@ -73,55 +73,13 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
 
   priorA = switch(priorA, lognormal=1L, normal=2L, 0L)
 
+  qtpredicate = eval(substitute(quote(predicate)))
+  env = caller_env()
 
-  # prepare data from possibly different sources
-  # to do: also accept mst db
-  if(inherits(dataSrc, 'matrix'))
-  {
-    dat = dataSrc
-    mode(dat) = 'integer'
-    if(is.null(colnames(dat)))
-      colnames(dat) = sprintf("item%06i",1:ncol(dat))
+  data = get_mml_data(dataSrc,qtpredicate,env,group)
 
-    if(!is.null(group) && length(group) != nrow(dat))
-      stop(sprintf("Length of group (%i) is not equal to number of rows in data (%i)",
-                   length(group),nrow(dat)))
-  } else
-  {
-    qtpredicate = eval(substitute(quote(predicate)))
-    env = caller_env()
-    dat = get_resp_matrix(dataSrc,qtpredicate,env)
-    # to do: possibility to handle groups in resp_matrix should become part of dexter
-    if(!is.null(group))
-    {
-      if(!is.character(group))
-        stop("Group should be a character variable")
-
-      if(inherits(dataSrc, "DBIConnection"))
-      {
-        # to do: allow booklet_id??
-        g = dbGetQuery(dataSrc,sprintf("SELECT person_id, %s FROM dxPersons;",
-                                  paste0(group, collapse=',')))
-      } else if(inherits(dataSrc, 'data.frame'))
-      {
-        g = distinct(dataSrc, .data$person_id, .keep_all=TRUE)
-      }
-      g = g %>%
-        mutate(person_id = factor(.data$person_id, levels=rownames(dat))) %>%
-        filter(!is.na(.data$person_id)) %>%
-        arrange(as.integer(.data$person_id))
-
-      if(length(group)== 1) group = g[[group]]
-      else
-      {
-        nc = c(sapply(group[length(group)-1], function(x) max(nchar(g[[x]]))),0L)
-        fmt = paste0("%-",nc,"s",collapse='_')
-        g = as.list(g[,group])
-        g$fmt = fmt
-        group = do.call(sprintf, g)
-      }
-    }
-  }
+  dat = data$dat
+  group = data$group
 
   ## datasrc preparation done
 
@@ -129,6 +87,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
   max_score = max(dat,na.rm=TRUE)
 
   pre = lapply(mat_pre(dat, max_score), drop)
+
 
   if(any(pre$imax < 1))
      stop('found items with maximum score 0')
@@ -151,11 +110,13 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
     group_n = as.integer(table(group))
     ref_group = which.max(group_n) -1L
   }
+
   theta_grid = if(model=='2PL') seq(-6,6,.3) else seq(-6,6,.6)
 
   # estimation
+  design = design_matrices(pre$pni, pre$pcni, pre$pi, group, ncol(dat), length(group_n))
 
-  fixed_items = rep(0L,ncol(dat))
+
   # this needs to be done somewhat smarter to save a few itr
   b = apply(pre$icat,2, function(x) 1-log(2*x/lag(x)))
   b[1,] = 0
@@ -168,6 +129,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
     a = categorize(pre$inp, pre$pni, pre$icnp, pre$pcni,pre$ip, pre$pi,
                        pre$icat, pre$imax,max(pre$ncat), pre$ix, pre$px)
 
+    fixed_items = rep(0L,ncol(dat))
     if(!is.null(fixed_param))
     {
       fixed_param = tibble(item_id=colnames(dat), .indx.=1:ncol(dat)) %>%
@@ -188,6 +150,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
       fixed_items[unique(fixed_param$.indx.)] = 1L
       ref_group = -1L
     }
+    check_connected(design, fixed_items)
 
     mu = rep(0, length(group_n))
     sigma = rep(1, length(group_n))
@@ -198,8 +161,6 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
 
     if(se)
     {
-      design = design_matrices(pre$pni, pre$pcni, pre$pi, group, ncol(dat), length(group_n))
-
       if(!is.null(fixed_param))
       {
         w = which(fixed_items==1L)
@@ -231,6 +192,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
 
     A=rep(1,ncol(dat))
 
+    fixed_items = rep(0L,ncol(dat))
     if(!is.null(fixed_param))
     {
       fixed_param = tibble(item_id=colnames(dat), .indx.=1:ncol(dat)) %>%
@@ -252,7 +214,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
       fixed_items[unique(fixed_param$.indx.)] = 1L
       ref_group = -1L
     }
-
+    check_connected(design, fixed_items)
     mu = rep(0, length(group_n))
     sigma = rep(1, length(group_n))
 
@@ -269,8 +231,6 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
     pop = tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd))
     if(se)
     {
-      design = design_matrices(pre$pni, pre$pcni, pre$pi, group, ncol(dat), length(group_n))
-
       if(!is.null(fixed_param))
       {
         w = which(fixed_items==1L)

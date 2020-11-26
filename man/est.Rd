@@ -46,10 +46,10 @@ a list of things, to do: organize return value
 Estimate a one or two parameter model using Marginal Maximum Likelihood
 }
 \details{
-In a 1PL item difficulties on a logistic scale are estimated in a marginal Nominal Response Model.
-In a 2PL model items also get a discrimination. This
+In a 1PL item difficulties are estimated according to the Nominal Response Model.
+In a 2PL, the items also get a discrimination. This
 can be interpreted as a noise factor in the item measurement analogous to item test
-correlations in classical test theory. Both the 1PL and 2PL model can handle polytomous data (to do: 2PL poly not finished yet) and respect the item
+correlations in classical test theory. Both the 1PL and 2PL model can handle polytomous data and respect the item
 scores. Missing categories (e.g. an item scored 0,1,4) are allowed.
 
 Specifying grouping variables for test takers is very important in MML estimation. Failure to include
@@ -60,6 +60,6 @@ Consequently there is rarely a good reason to use MML estimation for an 1PL sinc
 model and can be better estimated with CML. Only in case of adaptive data (where CML is not allowed) should you
 use MML to estimate a 1PL.
 
-A 2PL cannnot be estimated using CML, except in case of complete data (see the interaction model in dexter).
+A 2PL cannnot be estimated using CML, except in the case of complete data (see the interaction model in dexter).
 So for 2PL models MML is usually the method of choice.
 }

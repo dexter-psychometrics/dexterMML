@@ -18,5 +18,6 @@ Imports:
   dexter,
   stats
 LinkingTo: Rcpp, RcppArmadillo, dqrng, BH, sitmo
+Suggests: testthat
 Encoding: UTF-8
 RoxygenNote: 7.1.1
