@@ -33,19 +33,22 @@ void D1min(arma::vec& pars, const double gtol, int &iter, double &fret, T &funcd
 		return;
 	}
 	const int max_iter = 200;
-	const double min_step = 1e-10;
+	const double min_step = 1e-10, max_step=5;
+	double step;
 	
 	err = 0;
 	arma::vec g(1);
 	arma::mat h(1,1);
-	double step;
+
 	for(iter=1; iter<=max_iter; iter++)
 	{
 		funcd.df(pars,g);
 		funcd.hess(pars,h);
 	
 		step = g[0]/h[0];
-		
+		if(std::abs(step)>max_step)
+			step = std::copysign(max_step, step);
+				
 		pars[0] -= step;
 		
 		if(std::abs(g[0]) < gtol || std::abs(step) < min_step )
@@ -54,7 +57,7 @@ void D1min(arma::vec& pars, const double gtol, int &iter, double &fret, T &funcd
 	}
 	if(iter==max_iter)
 		err=2;
-	fret = funcd(pars);
+	
 }
 
 /*

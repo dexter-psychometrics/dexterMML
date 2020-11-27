@@ -54,6 +54,9 @@ get_mml_data = function(dataSrc, qtpredicate, env, group)
         g$fmt = fmt
         group = do.call(sprintf, g)
       }
+    } else
+    {
+      persons = tibble(person_id=rownames(dat))
     }
   }
   list(persons=persons,group=group,dat=dat)

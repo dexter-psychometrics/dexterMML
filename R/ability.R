@@ -26,30 +26,32 @@ ability.mml = function(dataSrc, parms, predicate=NULL, method=c('MLE','WLE'), un
 
   if(parms$model=='1PL')
   {
-    rsp = get_resp_data(dataSrc, qtpredicate=qtpredicate, env=env)
-    return(ability(rsp,method=method,parms=parms$items))
-
-  } else if(parms$model=='2PL')
+    A=rep(1,ncol(parms$em$b))
+    b=beta_matrix(parms$items$beta,parms$pre$ncat)
+    unweight=TRUE
+  } else
   {
-    if(!inherits(dataSrc, 'matrix'))
-      dataSrc = get_resp_matrix(dataSrc,qtpredicate,env=env) # a bit wasteful
+    A=parms$em$A
+    b=parms$em$b
+  }
 
-    max_score = max(dataSrc,na.rm=TRUE)
-    pre = lapply(mat_pre(dataSrc, max_score), drop)
+  if(!inherits(dataSrc, 'matrix'))
+    dataSrc = get_resp_matrix(dataSrc,qtpredicate,env=env) # a bit wasteful
 
-    # to do: this needs protections and checks
-    data_a = categorize(pre$inp, pre$pni, pre$icnp, pre$pcni,pre$ip, pre$pi,
+  max_score = max(dataSrc,na.rm=TRUE)
+  pre = lapply(mat_pre(dataSrc, max_score), drop)
+
+  # to do: this needs protections and checks
+  data_a = categorize(pre$inp, pre$pni, pre$icnp, pre$pcni,pre$ip, pre$pi,
                         parms$pre$icat, parms$pre$imax,max(parms$pre$ncat), pre$ix, pre$px)
 
-    pid = rownames(dataSrc)
-    if(is.null(pid))
-      pid = 1:nrow(dataSrc)
+  pid = rownames(dataSrc)
+  if(is.null(pid))
+    pid = 1:nrow(dataSrc)
 
-    theta = theta_2pl(data_a, parms$em$A, parms$em$b, parms$pre$ncat,
+  theta = theta_2pl(data_a, A, b, parms$pre$ncat,
                         pre$pni, pre$pcni, pre$pi, pre$px,
                         WLE=(method=='WLE'), USE_A = (!unweight))
 
-        return(tibble(person_id=pid,theta=drop(theta)))
-  }
-
+  tibble(person_id=pid,theta=drop(theta))
 }

@@ -81,18 +81,23 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
   dat = data$dat
   group = data$group
 
-  ## datasrc preparation done
-
   ## Pre and groups
   max_score = max(dat,na.rm=TRUE)
 
   pre = lapply(mat_pre(dat, max_score), drop)
 
-
   if(any(pre$imax < 1))
-     stop('found items with maximum score 0')
+  {
+    cat('Items with maximum score 0:\n')
+    print(colnames(dat)[pre$imax < 1])
+    stop('Some items have a maximum score of 0, model cannot be calibrated')
+  }
   if(any(pre$icat[1,]==0))
-    stop('found items without a zero score')
+  {
+    cat('Items without a 0 score:\n')
+    print(colnames(dat)[pre$icat[1,]==0])
+    stop('Some items have no 0 score category, model cannot be calibrated')
+  }
 
   if(is.null(group))
   {
@@ -181,7 +186,9 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
       return(list(items=dx$items,pop=pop,em=em,pre=pre,model=model))
     }
     pre$a=a
-    return(list(items=to_dexter(em$a,exp(em$b),pre$ncat,colnames(dat))$items,em=em,pre=pre,model=model))
+    pop=tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd))
+    return(list(items=to_dexter(em$a,exp(em$b),pre$ncat,colnames(dat))$items,
+                pop=pop,em=em,pre=pre,model=model))
 
 
   } else

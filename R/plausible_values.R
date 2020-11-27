@@ -52,12 +52,20 @@ plausible_values.mml = function(dataSrc, parms, predicate=NULL, covariates=NULL,
     group_n = as.integer(table(group))
   }
 
-  A = if(parms$model == '1PL') rep(1,ncol(parms$em$a)) else parms$em$A
+  if(parms$model=='1PL')
+  {
+    A=rep(1,ncol(parms$em$b))
+    b=beta_matrix(parms$items$beta,parms$pre$ncat)
+  } else
+  {
+    A=parms$em$A
+    b=parms$em$b
+  }
 
   data_a = categorize(pre$inp, pre$pni, pre$icnp, pre$pcni,pre$ip, pre$pi,
                       parms$pre$icat, parms$pre$imax,max(parms$pre$ncat), pre$ix, pre$px)
 
-  starting_values = theta_2pl(data_a, A, parms$em$b, parms$pre$ncat,
+  starting_values = theta_2pl(data_a, A, b, parms$pre$ncat,
                                       pre$pni, pre$pcni, pre$pi, pre$px,
                                       WLE=TRUE, USE_A = TRUE)
 
