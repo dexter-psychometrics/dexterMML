@@ -73,6 +73,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
 
   priorA = switch(priorA, lognormal=1L, normal=2L, 0L)
 
+  max_em_iterations = 500L
   qtpredicate = eval(substitute(quote(predicate)))
   env = caller_env()
 
@@ -162,7 +163,8 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
 
     em = estimate_nrm(a, b, pre$ncat,
                    pre$pni, pre$pcni, pre$pi, pre$px,
-                   theta_grid, mu, sigma, group_n, group, fixed_items, ref_group)
+                   theta_grid, mu, sigma, group_n, group, fixed_items, ref_group,
+                   max_iter=max_em_iterations)
 
     if(se)
     {
@@ -187,7 +189,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
     }
     pre$a=a
     pop=tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd))
-    return(list(items=to_dexter(em$a,exp(em$b),pre$ncat,colnames(dat))$items,
+    return(list(items=to_dexter(em$a,em$b,pre$ncat,colnames(dat))$items,
                 pop=pop,em=em,pre=pre,model=model))
 
 
@@ -228,7 +230,8 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
     em = estimate_poly2(a, A, b, pre$ncat,
                         pre$pni, pre$pcni, pre$pi, pre$px,
                         theta_grid, mu, sigma, group_n, group, fixed_items, ref_group,
-                        A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma)
+                        A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,
+                        max_iter=max_em_iterations)
 
     items = tibble(item_id = rep(colnames(dat),pre$ncat-1),
                    alpha = rep(em$A,pre$ncat-1L),

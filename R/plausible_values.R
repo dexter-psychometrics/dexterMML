@@ -69,7 +69,7 @@ plausible_values.mml = function(dataSrc, parms, predicate=NULL, covariates=NULL,
                                       pre$pni, pre$pcni, pre$pi, pre$px,
                                       WLE=TRUE, USE_A = TRUE)
 
-  pv =  plausible_values_c(A, data_a, parms$em$b, parms$pre$ncat,
+  pv =  plausible_values_c(A, data_a, b, parms$pre$ncat,
                          pre$pni, pre$pcni, pre$pi, pre$px, group, group_n,
                          as.integer(npv), starting_values,
                          n_prior_updates=70L, thin=70L)
