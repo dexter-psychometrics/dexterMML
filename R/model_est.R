@@ -142,6 +142,11 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
         inner_join(fixed_param, by='item_id') %>%
         arrange(.data$.indx., .data$item_score)
 
+      if(nrow(b)==2)
+      {
+        b[2,] = b[2,]- mean(b[2,]) + mean(fixed_param$beta)
+      }
+
       lapply(split(fixed_param, fixed_param$item_id), function(ipar)
       {
         i = ipar$.indx.[1]
@@ -208,19 +213,25 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
         inner_join(fixed_param, by='item_id') %>%
         arrange(.data$.indx., .data$item_score)
 
+      if(nrow(b)==2)
+      {
+        b[2,] = b[2,]- mean(b[2,]) + mean(fixed_param$beta)
+      }
+
       lapply(split(fixed_param, fixed_param$item_id), function(ipar)
       {
         i = ipar$.indx.[1]
         if(all(a[2:pre$ncat[i],i] == ipar$item_score))
         {
           b[2:pre$ncat[i],i] <<- ipar$beta
-          A[i] = ipar$alpha[1]
+          A[i] <<- ipar$alpha[1]
         } else
         {
           stop("Not implemented: mismatch between fixed parameters and data vs item scores")
         }
       })
       fixed_items[unique(fixed_param$.indx.)] = 1L
+      A[fixed_items==0L] = mean(A[fixed_items==1L])
       ref_group = -1L
     }
     check_connected(design, fixed_items)

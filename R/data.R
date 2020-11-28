@@ -79,14 +79,14 @@ check_connected = function(design, fixed_items)
     } else if(flag==4)
     {
       msg = paste("Design is only connected by assuming common population distributions.",
-                  "The calibration will be extremely sensitive to population misspecification.")
+                  "The calibration will be extremely sensitive to sampling error.")
 
     }  else if(flag==8)
     {
       msg = paste("Design is only connected by fixed items in combination with assuming common population distributions.",
-                  "The calibration will be extremely sensitive to misfit of fixed items AND population misspecification.")
+                  "The calibration will be extremely sensitive to misfit of fixed items AND sampling error.")
     }
-    warning(paste(msg,"Ideally you should use a connected design."), .call=FALSE)
+    warning(paste("Unconnected design.",msg,"Ideally you should use a connected design."), call.=FALSE)
   }
 }
 
