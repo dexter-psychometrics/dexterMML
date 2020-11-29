@@ -18,6 +18,8 @@
 #'
 "_PACKAGE"
 
+em_gridsep = list(`1PL`=c(.6,.3,.2),
+                  `2PL`=c(.3,.2,.1))
 
 #' Estimate a model using MML
 #'
@@ -117,7 +119,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
     ref_group = which.max(group_n) -1L
   }
 
-  theta_grid = if(model=='2PL') seq(-6,6,.3) else seq(-6,6,.6)
+
 
   # estimation
   design = design_matrices(pre$pni, pre$pcni, pre$pi, group, ncol(dat), length(group_n))
@@ -130,6 +132,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
   if(model=='1PL')
   {
     # nominal response model
+    theta_grid = seq(-6,6,.6)
 
     # this changes the respons vectors px and ix in pre
     a = categorize(pre$inp, pre$pni, pre$icnp, pre$pcni,pre$ip, pre$pi,
@@ -166,11 +169,11 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
     mu = rep(0, length(group_n))
     sigma = rep(1, length(group_n))
 
-    em = estimate_nrm(a, b, pre$ncat,
-                   pre$pni, pre$pcni, pre$pi, pre$px,
-                   theta_grid, mu, sigma, group_n, group, fixed_items, ref_group,
-                   max_iter=max_em_iterations)
 
+    em = estimate_nrm(a, b, pre$ncat,
+                     pre$pni, pre$pcni, pre$pi, pre$px,
+                     theta_grid, mu, sigma, group_n, group, fixed_items, ref_group,
+                     max_iter=max_em_iterations)
     if(se)
     {
       if(!is.null(fixed_param))
@@ -237,12 +240,22 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
     check_connected(design, fixed_items)
     mu = rep(0, length(group_n))
     sigma = rep(1, length(group_n))
-
-    em = estimate_poly2(a, A, b, pre$ncat,
-                        pre$pni, pre$pcni, pre$pi, pre$px,
-                        theta_grid, mu, sigma, group_n, group, fixed_items, ref_group,
-                        A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,
-                        max_iter=max_em_iterations)
+    for(iter in 1:3)
+    {
+      theta_grid = seq(-6,6,em_gridsep[['2PL']][iter])
+      em = estimate_poly2(a, A, b, pre$ncat,
+                          pre$pni, pre$pcni, pre$pi, pre$px,
+                          theta_grid, mu, sigma, group_n, group, fixed_items, ref_group,
+                          A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,
+                          max_iter=max_em_iterations)
+      if(em$err==0) break
+      if(iter==3)
+      {
+        # this is a little harsh, check whether max change is acceptably close.
+        warning("estimates do not converge, results cannot be trusted")
+      }
+      A=em$A; b=em$b; mu=em$mu; sigma=em$sd
+    }
 
     items = tibble(item_id = rep(colnames(dat),pre$ncat-1),
                    alpha = rep(em$A,pre$ncat-1L),

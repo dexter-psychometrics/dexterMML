@@ -4,7 +4,7 @@
 using namespace arma;
 
 
-
+/*
 arma::vec gaussian_pts(const double mu, const double s, const arma::vec& theta)
 {
 	const int nt = theta.n_elem;
@@ -18,6 +18,21 @@ arma::vec gaussian_pts(const double mu, const double s, const arma::vec& theta)
 	
 	return out;
 }
+*/
+arma::vec gaussian_pts(const double mu, const double s, const arma::vec& theta)
+{
+	const int nt = theta.n_elem;
+	arma::vec out(nt);
+
+	for(int i=0; i<nt; i++)
+		out[i] = R::dnorm(theta[i],mu,s,false);
+
+	out = out / accu(out);
+	
+	return out;
+}
+
+
 
 
 // += for fields with all equal dimensons for use in omp reduction

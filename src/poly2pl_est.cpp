@@ -10,7 +10,7 @@ using Rcpp::Named;
 
 
 void estep_poly2(const imat& a, const vec& A, const mat& b, const ivec& ncat, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
-				const vec& theta, field<mat>& r, vec& thetabar, vec& sumtheta, vec& sumsig2, const vec& mu, const vec& sigma, const ivec& pgroup, double& ll)
+				const vec& theta, field<mat>& r, vec& thetabar, vec& sumtheta, vec& sumsig2, const vec& mu, const vec& sigma, const ivec& pgroup, long double& ll)
 {
 	const int nit = ncat.n_elem, nt = theta.n_elem, np = pni.n_elem, ng = mu.n_elem;
 	
@@ -86,17 +86,16 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 	vec sum_theta(ng), sum_sigma2(ng);
 	
 	const double tol = 1e-8;
-	int iter = 0, min_error=0;
-	double ll;
+	int iter = 0, min_error=0,stop=0;
+	long double ll, old_ll=-std::numeric_limits<long double>::max();
+	double maxdif_A, maxdif_b;
 	
 	for(; iter<max_iter; iter++)
 	{
 		estep_poly2(a, A, b, ncat, pni, pcni, pi, px, 
 					theta, r, thetabar, sum_theta, sum_sigma2, mu, sigma, pgroup, ll);
 		
-		
-		double maxdif_A=0, maxdif_b=0;
-		
+		maxdif_A=0; maxdif_b=0;
 #pragma omp parallel for reduction(max: maxdif_A, maxdif_b) reduction(+:min_error)
 		for(int i=0; i<nit; i++)
 		{	
@@ -111,20 +110,22 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 			nlm(pars, tol, itr, ll_itm, f, err);	
 
 			min_error += err;
-			maxdif_A = std::max(maxdif_A, std::abs(A[i] - pars[0]));
-			A[i] = pars[0];
-			for(int k=1;k<ncat[i];k++)
+			if(err==0)
 			{
-				maxdif_b = std::max(maxdif_b, std::abs(b.at(k,i) - pars[k]));
-				b.at(k,i) = pars[k];
-			}			
+				maxdif_A = std::max(maxdif_A, std::abs(A[i] - pars[0]));
+				A[i] = pars[0];
+				for(int k=1;k<ncat[i];k++)
+				{
+					maxdif_b = std::max(maxdif_b, std::abs(b.at(k,i) - pars[k]));
+					b.at(k,i) = pars[k];
+				}		
+			}
 		}
 	
 		if(min_error>0)
 		{
-			printf("code: %i",min_error);
-			fflush(stdout);
-			Rcpp::stop("minimization error");
+			stop += 1;
+			break;
 		}
 
 		for(int g=0;g<ng;g++)
@@ -140,34 +141,28 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 				mu[g] = sum_theta[g]/gn[g];		
 				sigma[g] = std::sqrt(sum_sigma2[g]/gn[g] - mu[g] * mu[g]);
 			}
-
-			/*
-			if(g==ref_group)
-				mu[g]=0;
-			else
-				mu[g] = sum_theta[g]/gn[g];
-			
-			if(g==ref_group && A_prior==0)
-				sigma[g]=1;
-			else
-				sigma[g] = std::sqrt(sum_sigma2[g]/gn[g] - mu[g] * mu[g]);
-				*/
 		}
 		
-		//printf("\r% 3i", iter);
-		printf("iter: % 4i, logl: %.6f,  max a: %.8f, max b: %.8f\n", iter, ll, maxdif_A, maxdif_b);
+		printf("iter: % 4i, logl: %.6f,  max a: %.8f, max b: %.8f\n", iter, (double)ll, maxdif_A, maxdif_b);
 		fflush(stdout);
-		
-		
+				
 		if(maxdif_b < .0001 && maxdif_A < .0001)
 			break;
-		
+		if(ll < old_ll)
+		{
+			stop += 2;
+			break;
+		}
+		old_ll = ll;		
 	}
+	if(iter>=max_iter-1)
+		stop += 4;
 	
 	printf("\n");
 	fflush(stdout);
 	
 	return Rcpp::List::create(Named("A")=A, Named("b")=b, Named("thetabar") = thetabar, Named("mu") = mu, Named("sd") = sigma, 
-									Named("LL") = ll, Named("niter")=iter,Named("r")=r); 
+									Named("r")=r, Named("LL") = (double)ll, Named("niter")=iter,
+									Named("err")=stop, Named("maxdif_A")=maxdif_A,Named("maxdif_b")=maxdif_b); 
 }
 
