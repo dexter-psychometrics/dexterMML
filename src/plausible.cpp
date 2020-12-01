@@ -53,9 +53,11 @@ void sample_musig(const arma::ivec& popn, std::vector<long double>& mu,
 arma::mat plausible_values_c(const arma::vec& A, const arma::imat& a, const arma::mat& b, const arma::ivec& ncat,
 							const arma::ivec& pni, const arma::ivec& pcni, arma::ivec& pi, const arma::ivec& px, const arma::ivec& pop, const arma::ivec& popn, 
 							const int npv, const arma::vec& starting_values,
-							const int n_prior_updates=10, const int thin=10)
+							const int n_prior_updates=10, const int thin=10, const int pgw=80)
 {
 	const int np = pni.n_elem, nit = A.n_elem, npop=popn.n_elem, max_cat = a.n_rows;
+	progress prog(n_prior_updates+(npv-1)*thin+1, pgw,15);
+	int tick=0;
 	
 	dqrng::xoshiro256plus rng(SEED); 	
 	dqrng::uniform_distribution prl_runif(0, 1);
@@ -132,12 +134,12 @@ arma::mat plausible_values_c(const arma::vec& A, const arma::imat& a, const arma
 				else
 					out.at(p,pvcol)=out.at(p,prevcol);					
 			}
-		}
-		
-		
+		}		
 		sample_musig(popn, mu, sigma, sigma_old, mu_all, sigma_all);
 		rng.long_jump(max_thr+1);
+		prog.update(++tick);
 		iter++;
 	}
+	prog.close();
 	return out;
 }

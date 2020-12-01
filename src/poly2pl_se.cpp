@@ -113,9 +113,10 @@ mat J_poly2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, co
 						const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 						arma::vec& theta, const arma::vec& mu_fixed, const arma::vec& sigma_fixed, const arma::ivec& gn, const arma::ivec& pgroup, 
 						const arma::imat dsg_ii,const arma::imat dsg_gi, const arma::ivec& item_fixed, const int npar, const int ref_group,
-						const int A_prior, const double A_mu, const double A_sigma)
+						const int A_prior, const double A_mu, const double A_sigma, progress& prog)
 {
 	const int nit = a.n_cols, nt = theta.n_elem, ng=gn.n_elem;
+	int tick=0;
 	
 	imat dsg_ig = dsg_gi.t();
 	
@@ -206,6 +207,7 @@ mat J_poly2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, co
 			}
 			p++;
 		}
+		prog.update(++tick);
 	}
 	// groups
 	for(int g=0; g<ng; g++) if(g!=ref_group)
@@ -255,7 +257,8 @@ mat J_poly2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, co
 				q += ncat[j];
 			}
 			p++;
-		}	
+		}
+		prog.update(++tick);
 	}
 	
 	return jacob;
@@ -268,7 +271,7 @@ Rcpp::List Oakes_poly2(arma::imat& a, const arma::vec& A, const arma::mat& b, co
 				const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 				arma::vec& theta, const arma::vec& mu, const arma::vec& sigma, const arma::ivec& gn, const arma::ivec& pgroup,
 				const arma::imat& dsg_ii, const arma::imat& dsg_gi,	const arma::ivec& item_fixed, const int ref_group=0, 
-				const int A_prior=0, const double A_mu=0, const double A_sigma=0.5)
+				const int A_prior=0, const double A_mu=0, const double A_sigma=0.5, const int pgw=80)
 {
 	const int ng = mu.n_elem, nit=a.n_cols;
 	
@@ -278,9 +281,12 @@ Rcpp::List Oakes_poly2(arma::imat& a, const arma::vec& A, const arma::mat& b, co
 		if(item_fixed[i]==0)
 			npar += ncat[i];
 	
+	int max_tick = nit-accu(item_fixed) + mu.n_elem;
+	if(ref_group >= 0) max_tick++;
+	progress prog(max_tick, pgw);	
 	
 	//Jacobian
-	mat J = J_poly2(a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, npar, ref_group,A_prior, A_mu, A_sigma);
+	mat J = J_poly2(a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, npar, ref_group,A_prior, A_mu, A_sigma, prog);
 	
 	// observed hessian
 	const int max_cat = ncat.max();
@@ -331,6 +337,8 @@ Rcpp::List Oakes_poly2(arma::imat& a, const arma::vec& A, const arma::mat& b, co
 	}
 
 	mat hess = obs+(J+J.t())/2;	
+
+	prog.close();
 
 	return Rcpp::List::create(Named("observed")=obs, Named("J")=J, Named("H")=hess);
 }

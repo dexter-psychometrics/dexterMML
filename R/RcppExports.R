@@ -13,6 +13,10 @@ categorize <- function(inp, pni, icnp, pcni, ip, pi, icat, imax, max_cat, ix, px
     .Call(`_dexterMML_categorize`, inp, pni, icnp, pcni, ip, pi, icat, imax, max_cat, ix, px)
 }
 
+scale_b <- function(b, ncat, item_fixed) {
+    invisible(.Call(`_dexterMML_scale_b`, b, ncat, item_fixed))
+}
+
 design_matrices <- function(pni, pcni, pi, pg, nit, ng) {
     .Call(`_dexterMML_design_matrices`, pni, pcni, pi, pg, nit, ng)
 }
@@ -21,8 +25,8 @@ check_connected_c <- function(item, group, item_fixed) {
     .Call(`_dexterMML_check_connected_c`, item, group, item_fixed)
 }
 
-estimate_nrm <- function(a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group = 0L, max_iter = 200L) {
-    .Call(`_dexterMML_estimate_nrm`, a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group, max_iter)
+estimate_nrm <- function(a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group = 0L, max_iter = 200L, pgw = 80L) {
+    .Call(`_dexterMML_estimate_nrm`, a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group, max_iter, pgw)
 }
 
 test_ll_nrm <- function(a, theta, r, par) {
@@ -37,16 +41,16 @@ test_hess_nrm <- function(a, theta, r, par) {
     .Call(`_dexterMML_test_hess_nrm`, a, theta, r, par)
 }
 
-Oakes_nrm <- function(a, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, ref_group = 0L) {
-    .Call(`_dexterMML_Oakes_nrm`, a, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, ref_group)
+Oakes_nrm <- function(a, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, ref_group = 0L, pgw = 80L) {
+    .Call(`_dexterMML_Oakes_nrm`, a, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, ref_group, pgw)
 }
 
-plausible_values_c <- function(A, a, b, ncat, pni, pcni, pi, px, pop, popn, npv, starting_values, n_prior_updates = 10L, thin = 10L) {
-    .Call(`_dexterMML_plausible_values_c`, A, a, b, ncat, pni, pcni, pi, px, pop, popn, npv, starting_values, n_prior_updates, thin)
+plausible_values_c <- function(A, a, b, ncat, pni, pcni, pi, px, pop, popn, npv, starting_values, n_prior_updates = 10L, thin = 10L, pgw = 80L) {
+    .Call(`_dexterMML_plausible_values_c`, A, a, b, ncat, pni, pcni, pi, px, pop, popn, npv, starting_values, n_prior_updates, thin, pgw)
 }
 
-estimate_poly2 <- function(a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group = 0L, A_prior = 0L, A_mu = 0, A_sigma = 0.5, max_iter = 200L) {
-    .Call(`_dexterMML_estimate_poly2`, a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group, A_prior, A_mu, A_sigma, max_iter)
+estimate_poly2 <- function(a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group = 0L, A_prior = 0L, A_mu = 0, A_sigma = 0.5, max_iter = 200L, pgw = 80L) {
+    .Call(`_dexterMML_estimate_poly2`, a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group, A_prior, A_mu, A_sigma, max_iter, pgw)
 }
 
 test_ll_p2 <- function(a, theta, r, par, prior = 0L) {
@@ -61,8 +65,8 @@ test_hess_p2 <- function(a, theta, r, par, prior = 0L) {
     .Call(`_dexterMML_test_hess_p2`, a, theta, r, par, prior)
 }
 
-Oakes_poly2 <- function(a, A, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, ref_group = 0L, A_prior = 0L, A_mu = 0, A_sigma = 0.5) {
-    .Call(`_dexterMML_Oakes_poly2`, a, A, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, ref_group, A_prior, A_mu, A_sigma)
+Oakes_poly2 <- function(a, A, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, ref_group = 0L, A_prior = 0L, A_mu = 0, A_sigma = 0.5, pgw = 80L) {
+    .Call(`_dexterMML_Oakes_poly2`, a, A, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, ref_group, A_prior, A_mu, A_sigma, pgw)
 }
 
 test_nlm <- function(a, theta, r, par_in) {

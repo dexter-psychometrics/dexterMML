@@ -142,6 +142,35 @@ arma::imat categorize(const arma::ivec& inp, const arma::ivec& pni,
 	return a;
 }
 
+// at the moment only for NRM parametrisation !!
+// also not correct for poly yet
+// [[Rcpp::export]]
+void scale_b(arma::mat& b, const arma::ivec& ncat, const arma::ivec& item_fixed)
+{
+	double mean_free=0, mean_fixed=0;
+	const int nit = b.n_cols, n_fixed = accu(item_fixed);
+	const int n_free =  nit - n_fixed;
+	
+	for(int i=0; i<nit; i++)
+		for(int j=1; j<ncat[i]; j++)
+		{
+			mean_free += b.at(i,j) * (1-item_fixed[i]);
+			mean_fixed += b.at(i,j) * item_fixed[i];	
+		}
+	mean_free /= n_free;
+	mean_fixed /= n_fixed;
+	double adj = mean_fixed - mean_free;
+	
+	for(int i=0; i<nit; i++)
+		if(item_fixed[i]==0)
+			for(int j=1; j<ncat[i]; j++)
+				b.at(i,j) += adj;
+}
+
+
+/****************************
+* Designs
+*****************************/
 
 // [[Rcpp::export]]
 Rcpp::List design_matrices(const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& pg, const int nit, const int ng)

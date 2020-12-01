@@ -1,4 +1,6 @@
 
+# functions for reparametrisations of the NRM
+
 makeD = function (a, first, last)
 {
   k = length(a)
@@ -99,5 +101,5 @@ from_dexter = function(a,beta)
 {
   DD = makeD(a, 1, length(a))
   solve(DD,beta)
-
 }
+

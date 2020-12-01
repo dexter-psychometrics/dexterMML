@@ -1,4 +1,3 @@
-
 #include <RcppArmadillo.h>
 #include "minimize.h"
 #include "poly2pl_item.h"
@@ -6,8 +5,6 @@
 
 using namespace arma;
 using Rcpp::Named;
-
-
 
 void estep_poly2(const imat& a, const vec& A, const mat& b, const ivec& ncat, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
 				const vec& theta, field<mat>& r, vec& thetabar, vec& sumtheta, vec& sumsig2, const vec& mu, const vec& sigma, const ivec& pgroup, long double& ll)
@@ -68,9 +65,12 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 						const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 						arma::vec& theta, const arma::vec& mu_start, const arma::vec& sigma_start, const arma::ivec& gn, const arma::ivec& pgroup, 
 						const arma::ivec& item_fixed,
-						const int ref_group=0, const int A_prior=0, const double A_mu=0, const double A_sigma=0.5, const int max_iter=200)
+						const int ref_group=0, const int A_prior=0, const double A_mu=0, const double A_sigma=0.5, 
+						const int max_iter=200, const int pgw=80)
 {
 	const int nit = a.n_cols, nt = theta.n_elem, np = pni.n_elem, ng=gn.n_elem;
+	
+	progress_est prog(max_iter, pgw);
 	
 	mat b = b_start;
 	vec A = A_start;
@@ -85,7 +85,7 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 	
 	vec sum_theta(ng), sum_sigma2(ng);
 	
-	const double tol = 1e-8;
+	const double tol = 1e-10;
 	int iter = 0, min_error=0,stop=0;
 	long double ll, old_ll=-std::numeric_limits<long double>::max();
 	double maxdif_A, maxdif_b;
@@ -94,6 +94,12 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 	{
 		estep_poly2(a, A, b, ncat, pni, pcni, pi, px, 
 					theta, r, thetabar, sum_theta, sum_sigma2, mu, sigma, pgroup, ll);
+		
+		if(ll < old_ll)
+		{
+			stop += 2;
+			break;
+		}
 		
 		maxdif_A=0; maxdif_b=0;
 #pragma omp parallel for reduction(max: maxdif_A, maxdif_b) reduction(+:min_error)
@@ -143,23 +149,20 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 			}
 		}
 		
-		printf("iter: % 4i, logl: %.6f,  max a: %.8f, max b: %.8f\n", iter, (double)ll, maxdif_A, maxdif_b);
-		fflush(stdout);
+		//printf("iter: % 4i, logl: %.6f,  max a: %.8f, max b: %.8f\n", iter, (double)ll, maxdif_A, maxdif_b);
+		//fflush(stdout);
+		
+		prog.update(std::max(maxdif_b, maxdif_A), iter);
 				
 		if(maxdif_b < .0001 && maxdif_A < .0001)
 			break;
-		if(ll < old_ll)
-		{
-			stop += 2;
-			break;
-		}
+		
 		old_ll = ll;		
 	}
 	if(iter>=max_iter-1)
 		stop += 4;
 	
-	printf("\n");
-	fflush(stdout);
+	prog.close();
 	
 	return Rcpp::List::create(Named("A")=A, Named("b")=b, Named("thetabar") = thetabar, Named("mu") = mu, Named("sd") = sigma, 
 									Named("r")=r, Named("LL") = (double)ll, Named("niter")=iter,

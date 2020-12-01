@@ -54,6 +54,9 @@ scores. Missing categories (e.g. an item scored 0,1,4) are allowed.
 
 Specifying grouping variables for test takers is very important in MML estimation. Failure to include
 relevant grouping can seriously bias parameter and subsequent ability estimation.
+}
+\section{choice of calibration method}{
+
 
 Note that MML estimation requires extra assumptions about the population distribution compared to CML.
 Consequently there is rarely a good reason to use MML estimation for an 1PL since it is an exponential family
@@ -63,3 +66,29 @@ use MML to estimate a 1PL.
 A 2PL cannnot be estimated using CML, except in the case of complete data (see the interaction model in dexter).
 So for 2PL models MML is usually the method of choice.
 }
+
+\section{troubleshooting}{
+
+
+The EM algorithm tries to converge on a solution up to a precision of 0.0001. It usually succeeds.
+If it is not successful
+a message or warning is given (dependent on the severity of the situation). A message can usually be ignored if
+you are happy with a slightly lower precision. In case of a warning, the (less precise) results are
+still returned to facilitate identification of the problem but you should generally not trust the results very much.
+
+The following possible solutions can be tried in such a case:
+
+\describe{
+\item{omit fixed parameters}{If you use fixed parameters, try to calibrate without fixed parameters
+first and plot the results against your fixed parameters. If these do not fall approximately on
+a straight line, you might need to omit some of the fixed parameters that show the most misfit.}
+\item{linear subsets 1PL}{If your testdata includes adaptive or random tests, but it contains
+a significant subset of items that was administered only as linear or multi stage tests, you can use the functions fit_enorm
+or fit_enorm_mst in dexter and dexterMST respectively to fit a CML solution on this subset. Next you
+can fit the complete dataset with dexterMML while fixing the parameters of the linearly administered items.}
+\item{priors in 2PL}{If the results of the calibration are very extreme (e.g. parameters with absolute values >60) it
+might be necessary to use a prior distribution on the discrimination parameters.
+This may happen with adaptive test data.}
+}
+}
+

@@ -112,14 +112,15 @@ void se_estep_nrm(imat& a, mat& b, const mat& exp_at, const ivec& ncat, const iv
 mat J_nrm(arma::imat& a, const arma::mat& b_fixed, mat& exp_at, const arma::ivec& ncat,
 						const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 						arma::vec& theta, const arma::vec& mu_fixed, const arma::vec& sigma_fixed, const arma::ivec& gn, const arma::ivec& pgroup, 
-						const arma::imat dsg_ii,const arma::imat dsg_gi, const arma::ivec& item_fixed, const int npar, const int ref_group=0)
+						const arma::imat dsg_ii,const arma::imat dsg_gi, const arma::ivec& item_fixed, const int npar, const int ref_group,
+						progress& prog)
 {
 	const int nit = a.n_cols, nt = theta.n_elem, ng=gn.n_elem;
+	int tick=0;
 	
 	imat dsg_ig = dsg_gi.t();
 	
-	cube b(b_fixed.n_rows, b_fixed.n_cols, 2);
-	
+	cube b(b_fixed.n_rows, b_fixed.n_cols, 2);	
 	
 	mat mu(ng,2), sigma(ng,2);
 	vec sum_theta(ng), sum_sigma2(ng);
@@ -208,6 +209,7 @@ mat J_nrm(arma::imat& a, const arma::mat& b_fixed, mat& exp_at, const arma::ivec
 			}
 			p++;
 		}
+		prog.update(++tick);
 	}
 	// groups, almost a verbatim copy of the above, have to find a neater way maybe
 	for(int g=0; g<ng; g++)
@@ -260,7 +262,8 @@ mat J_nrm(arma::imat& a, const arma::mat& b_fixed, mat& exp_at, const arma::ivec
 				q += ncat[j]-1;
 			}
 			p++;
-		}	
+		}
+		prog.update(++tick);
 	}
 	
 	return jacob;
@@ -272,7 +275,7 @@ mat J_nrm(arma::imat& a, const arma::mat& b_fixed, mat& exp_at, const arma::ivec
 Rcpp::List Oakes_nrm(arma::imat& a, const arma::mat& b, const arma::ivec& ncat, arma::field<arma::mat>& r, 
 				const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 				arma::vec& theta, const arma::vec& mu, const arma::vec& sigma, const arma::ivec& gn, const arma::ivec& pgroup,
-				const arma::imat& dsg_ii, const arma::imat& dsg_gi,	const arma::ivec& item_fixed, const int ref_group=0)
+				const arma::imat& dsg_ii, const arma::imat& dsg_gi,	const arma::ivec& item_fixed, const int ref_group=0, const int pgw=80)
 {
 	const int ng = mu.n_elem, nit=a.n_cols, nt=theta.n_elem;
 	//const int npar = accu(ncat) - nit + 2*ng-1;
@@ -282,7 +285,8 @@ Rcpp::List Oakes_nrm(arma::imat& a, const arma::mat& b, const arma::ivec& ncat, 
 		if(item_fixed[i]==0)
 			npar += ncat[i] - 1;
 	
-	const int max_a = a.max();
+	const int max_a = a.max(), max_tick = nit-accu(item_fixed) + mu.n_elem + 1;
+	progress prog(max_tick, pgw);	
 	
 	//lookup table
 	mat exp_at(max_a+1, nt, fill::ones);
@@ -292,7 +296,7 @@ Rcpp::List Oakes_nrm(arma::imat& a, const arma::mat& b, const arma::ivec& ncat, 
 	
 	
 	//Jacobian
-	mat J = J_nrm(a, b, exp_at, ncat, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, npar, ref_group);
+	mat J = J_nrm(a, b, exp_at, ncat, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, npar, ref_group, prog);
 	
 	// observed hessian
 	const int max_cat = ncat.max();
@@ -351,6 +355,7 @@ Rcpp::List Oakes_nrm(arma::imat& a, const arma::mat& b, const arma::ivec& ncat, 
 
 
 	mat hess = obs+(J+J.t())/2;	
+	prog.close();
 
 	return Rcpp::List::create(Named("observed")=obs, Named("J")=J, Named("H")=hess);
 }

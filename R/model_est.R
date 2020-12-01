@@ -18,8 +18,33 @@
 #'
 "_PACKAGE"
 
-em_gridsep = list(`1PL`=c(.6,.3,.2),
-                  `2PL`=c(.3,.2,.1))
+bitflag = function(flag,i=1:32) as.integer(intToBits(flag))[i]==1L
+
+em_report = function(em)
+{
+  if(em$err>0)
+  {
+    flags = bitflag(em$err,1:3)
+    msg = c("minimization error occurred","decreasing likelihood","maximum iterations reached")[flags]
+    msg = paste0(paste0(msg,collapse=' and '),'.')
+    precision = max(em$maxdif_A, em$maxdif_b)
+
+    if(precision < .001)
+    {
+      message("The EM solution has a low precision (< .001). Reasons:",msg,
+              "See the section 'troubleshooting' in the help documentation for possible solutions.")
+    } else if(precision < .01)
+    {
+      warning("The EM solution has a very low precision (< .01). Reasons:",msg,
+              "See the section 'troubleshooting' in the help documentation for possible solutions.",call.=FALSE)
+    } else
+    {
+      warning("The EM algorithm did not converge. Reasons:",msg,
+              "See the section 'troubleshooting' in the help documentation for possible solutions.",call.=FALSE)
+    }
+  }
+}
+
 
 #' Estimate a model using MML
 #'
@@ -42,6 +67,7 @@ em_gridsep = list(`1PL`=c(.6,.3,.2),
 #' @return a list of things, to do: organize return value
 #'
 #' @details
+#'
 #' In a 1PL item difficulties are estimated according to the Nominal Response Model.
 #' In a 2PL, the items also get a discrimination. This
 #' can be interpreted as a noise factor in the item measurement analogous to item test
@@ -51,6 +77,8 @@ em_gridsep = list(`1PL`=c(.6,.3,.2),
 #' Specifying grouping variables for test takers is very important in MML estimation. Failure to include
 #' relevant grouping can seriously bias parameter and subsequent ability estimation.
 #'
+#' @section choice of calibration method:
+#'
 #' Note that MML estimation requires extra assumptions about the population distribution compared to CML.
 #' Consequently there is rarely a good reason to use MML estimation for an 1PL since it is an exponential family
 #' model and can be better estimated with CML. Only in case of adaptive data (where CML is not allowed) should you
@@ -58,6 +86,30 @@ em_gridsep = list(`1PL`=c(.6,.3,.2),
 #'
 #' A 2PL cannnot be estimated using CML, except in the case of complete data (see the interaction model in dexter).
 #' So for 2PL models MML is usually the method of choice.
+#'
+#' @section troubleshooting:
+#'
+#' The EM algorithm tries to converge on a solution up to a precision of 0.0001. It usually succeeds.
+#' If it is not successful
+#' a message or warning is given (dependent on the severity of the situation). A message can usually be ignored if
+#' you are happy with a slightly lower precision. In case of a warning, the (less precise) results are
+#' still returned to facilitate identification of the problem but you should generally not trust the results very much.
+#'
+#' The following possible solutions can be tried in such a case:
+#'
+#' \describe{
+#' \item{omit fixed parameters}{If you use fixed parameters, try to calibrate without fixed parameters
+#' first and plot the results against your fixed parameters. If these do not fall approximately on
+#' a straight line, you might need to omit some of the fixed parameters that show the most misfit.}
+#' \item{linear subsets 1PL}{If your testdata includes adaptive or random tests, but it contains
+#' a significant subset of items that was administered only as linear or multi stage tests, you can use the functions fit_enorm
+#' or fit_enorm_mst in dexter and dexterMST respectively to fit a CML solution on this subset. Next you
+#' can fit the complete dataset with dexterMML while fixing the parameters of the linearly administered items.}
+#' \item{priors in 2PL}{If the results of the calibration are very extreme (e.g. parameters with absolute values >60) it
+#' might be necessary to use a prior distribution on the discrimination parameters.
+#' This may happen with adaptive test data.}
+#' }
+#'
 #'
 #'
 est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
@@ -75,7 +127,9 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
 
   priorA = switch(priorA, lognormal=1L, normal=2L, 0L)
 
-  max_em_iterations = 500L
+  pgw = getOption("width")
+  theta_grid = seq(-6,6,.3)
+  max_em_iterations = 800L
   qtpredicate = eval(substitute(quote(predicate)))
   env = caller_env()
 
@@ -119,24 +173,24 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
     ref_group = which.max(group_n) -1L
   }
 
-
-
   # estimation
   design = design_matrices(pre$pni, pre$pcni, pre$pi, group, ncol(dat), length(group_n))
-
-
-  # this needs to be done somewhat smarter to save a few itr
-  b = apply(pre$icat,2, function(x) 1-log(2*x/lag(x)))
-  b[1,] = 0
+  if(se) cat("(1/2) Parameter estimation\n")
 
   if(model=='1PL')
   {
     # nominal response model
-    theta_grid = seq(-6,6,.6)
 
     # this changes the respons vectors px and ix in pre
     a = categorize(pre$inp, pre$pni, pre$icnp, pre$pcni,pre$ip, pre$pi,
                        pre$icat, pre$imax,max(pre$ncat), pre$ix, pre$px)
+
+    b = apply(pre$icat,2, function(x) 1-log(2*x/lag(x)))
+    b[1,] = 0
+    for(i in 1:ncol(b))
+    {
+      b[2:pre$ncat[i],i] = from_dexter(a[2:pre$ncat[i],i],b[2:pre$ncat[i],i])
+    }
 
     fixed_items = rep(0L,ncol(dat))
     if(!is.null(fixed_param))
@@ -145,10 +199,6 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
         inner_join(fixed_param, by='item_id') %>%
         arrange(.data$.indx., .data$item_score)
 
-      if(nrow(b)==2)
-      {
-        b[2,] = b[2,]- mean(b[2,]) + mean(fixed_param$beta)
-      }
 
       lapply(split(fixed_param, fixed_param$item_id), function(ipar)
       {
@@ -161,7 +211,13 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
           stop("Not implemented: mismatch between fixed parameters and data vs item scores")
         }
       })
+
       fixed_items[unique(fixed_param$.indx.)] = 1L
+
+      # to do: how does this work for poly
+      if(nrow(b)==2)
+        scale_b(b,pre$ncat,fixed_items)
+
       ref_group = -1L
     }
     check_connected(design, fixed_items)
@@ -169,13 +225,17 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
     mu = rep(0, length(group_n))
     sigma = rep(1, length(group_n))
 
-
     em = estimate_nrm(a, b, pre$ncat,
-                     pre$pni, pre$pcni, pre$pi, pre$px,
-                     theta_grid, mu, sigma, group_n, group, fixed_items, ref_group,
-                     max_iter=max_em_iterations)
+                        pre$pni, pre$pcni, pre$pi, pre$px,
+                        theta_grid, mu, sigma, group_n, group, fixed_items, ref_group,
+                        max_iter=max_em_iterations,pgw=pgw)
+
+    em_report(em)
+    if(em$err != 0L && em$maxdif_b>.001) se=FALSE
+
     if(se)
     {
+      cat("(2/2) Computing standard errors\n")
       if(!is.null(fixed_param))
       {
         w = which(fixed_items==1L)
@@ -187,7 +247,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
       res = Oakes_nrm(a, em$b, pre$ncat, em$r,
                       pre$pni, pre$pcni, pre$pi, pre$px,
                       theta_grid, em$mu, em$sd, group_n, group,
-                      design$items, design$groups, fixed_items, ref_group)
+                      design$items, design$groups, fixed_items, ref_group,pgw=pgw)
       # needs some rearranging after this
       dx = to_dexter(em$a,em$b,pre$ncat,colnames(dat),res$H, fixed_items,ref_group+1L)
       pop = tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd),
@@ -208,6 +268,9 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
                    pre$icat, pre$imax,max(pre$ncat), pre$ix, pre$px)
 
     A=rep(1,ncol(dat))
+
+    b = apply(pre$icat,2, function(x) 1-log(2*x/lag(x)))
+    b[1,] = 0
 
     fixed_items = rep(0L,ncol(dat))
     if(!is.null(fixed_param))
@@ -240,22 +303,15 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
     check_connected(design, fixed_items)
     mu = rep(0, length(group_n))
     sigma = rep(1, length(group_n))
-    for(iter in 1:3)
-    {
-      theta_grid = seq(-6,6,em_gridsep[['2PL']][iter])
-      em = estimate_poly2(a, A, b, pre$ncat,
+
+    em = estimate_poly2(a, A, b, pre$ncat,
                           pre$pni, pre$pcni, pre$pi, pre$px,
                           theta_grid, mu, sigma, group_n, group, fixed_items, ref_group,
                           A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,
-                          max_iter=max_em_iterations)
-      if(em$err==0) break
-      if(iter==3)
-      {
-        # this is a little harsh, check whether max change is acceptably close.
-        warning("estimates do not converge, results cannot be trusted")
-      }
-      A=em$A; b=em$b; mu=em$mu; sigma=em$sd
-    }
+                          max_iter=max_em_iterations,pgw=pgw)
+
+    em_report(em)
+    if(em$err != 0L && max(em$maxdif_b,em$maxdif_A)>.001) se=FALSE
 
     items = tibble(item_id = rep(colnames(dat),pre$ncat-1),
                    alpha = rep(em$A,pre$ncat-1L),
@@ -265,6 +321,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
     pop = tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd))
     if(se)
     {
+      cat("(2/2) Computing standard errors\n")
       if(!is.null(fixed_param))
       {
         w = which(fixed_items==1L)
@@ -277,7 +334,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
                       pre$pni, pre$pcni, pre$pi, pre$px,
                       theta_grid, em$mu, em$sd, group_n, group,
                       design$items, design$groups, fixed_items,ref_group,
-                      A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma)
+                      A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,pgw=pgw)
 
       SE = sqrt(-diag(solve(res$H)))
       items$SE_alpha = NA_real_
