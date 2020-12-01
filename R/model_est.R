@@ -31,16 +31,16 @@ em_report = function(em)
 
     if(precision < .001)
     {
-      message("The EM solution has a low precision (< .001). Reasons:",msg,
-              "See the section 'troubleshooting' in the help documentation for possible solutions.")
+      message("The EM solution has a lower accuracy (~",round(precision,5),"). Reasons: ",msg,
+              " See the section 'troubleshooting' in the help documentation for possible solutions.")
     } else if(precision < .01)
     {
-      warning("The EM solution has a very low precision (< .01). Reasons:",msg,
-              "See the section 'troubleshooting' in the help documentation for possible solutions.",call.=FALSE)
+      warning("The EM solution has low accuracy (~",round(precision,4),"). Reasons: ",msg,
+              " See the section 'troubleshooting' in the help documentation for possible solutions.",call.=FALSE)
     } else
     {
-      warning("The EM algorithm did not converge. Reasons:",msg,
-              "See the section 'troubleshooting' in the help documentation for possible solutions.",call.=FALSE)
+      warning("The EM algorithm did not converge. Reasons: ",msg,
+              " See the section 'troubleshooting' in the help documentation for possible solutions.",call.=FALSE)
     }
   }
 }
@@ -64,10 +64,9 @@ em_report = function(em)
 #' @param priorA_mu first moment of prior distribution on discrimination parameters.
 #' @param priorA_sigma second moment of prior distribution on discrimination parameters.
 #'
-#' @return a list of things, to do: organize return value
+#' @return an object of type parms_mml, see \code{\link{coef.parms_mml}}.
 #'
 #' @details
-#'
 #' In a 1PL item difficulties are estimated according to the Nominal Response Model.
 #' In a 2PL, the items also get a discrimination. This
 #' can be interpreted as a noise factor in the item measurement analogous to item test
@@ -76,8 +75,6 @@ em_report = function(em)
 #'
 #' Specifying grouping variables for test takers is very important in MML estimation. Failure to include
 #' relevant grouping can seriously bias parameter and subsequent ability estimation.
-#'
-#' @section choice of calibration method:
 #'
 #' Note that MML estimation requires extra assumptions about the population distribution compared to CML.
 #' Consequently there is rarely a good reason to use MML estimation for an 1PL since it is an exponential family
@@ -88,7 +85,6 @@ em_report = function(em)
 #' So for 2PL models MML is usually the method of choice.
 #'
 #' @section troubleshooting:
-#'
 #' The EM algorithm tries to converge on a solution up to a precision of 0.0001. It usually succeeds.
 #' If it is not successful
 #' a message or warning is given (dependent on the severity of the situation). A message can usually be ignored if
@@ -105,7 +101,7 @@ em_report = function(em)
 #' a significant subset of items that was administered only as linear or multi stage tests, you can use the functions fit_enorm
 #' or fit_enorm_mst in dexter and dexterMST respectively to fit a CML solution on this subset. Next you
 #' can fit the complete dataset with dexterMML while fixing the parameters of the linearly administered items.}
-#' \item{priors in 2PL}{If the results of the calibration are very extreme (e.g. parameters with absolute values >60) it
+#' \item{priors in 2PL}{If the results of the calibration are extreme (e.g. parameters with absolute values >50) it
 #' might be necessary to use a prior distribution on the discrimination parameters.
 #' This may happen with adaptive test data.}
 #' }
@@ -253,14 +249,14 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
       pop = tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd),
                    SE_mu=dx$SE_pop[seq(1,nrow(em$mu)*2,2)], SE_sigma=dx$SE_pop[seq(2,nrow(em$mu)*2,2)])
 
-      return(list(items=dx$items,pop=pop,em=em,pre=pre,model=model))
+      out = list(items=dx$items,pop=pop,em=em,pre=pre,model=model)
+    } else
+    {
+      pre$a=a
+      pop=tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd))
+      out = list(items=to_dexter(em$a,em$b,pre$ncat,colnames(dat))$items,
+                  pop=pop,em=em,pre=pre,model=model)
     }
-    pre$a=a
-    pop=tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd))
-    return(list(items=to_dexter(em$a,em$b,pre$ncat,colnames(dat))$items,
-                pop=pop,em=em,pre=pre,model=model))
-
-
   } else
   {
     # this changes the response vectors px and ix in pre
@@ -365,7 +361,33 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
       }
     }
     pre$a=a
-    return(list(items=items,pop=pop,em=em,pre=pre,model=model))
+    out = list(items=items,pop=pop,em=em,pre=pre,model=model)
   }
+  class(out) = append('parms_mml',class(out))
+  out
+}
 
+coef.parms_mml = function(object, what=c('items','populations','likelihood'))
+{
+  what=match.arg(what)
+  if(what=='items')
+    return(object$items)
+  if(what=='populations')
+    return(object$pop)
+  if(what=='likelihood')
+    return(c("log likelihood"=object$em$LL))
+}
+
+print.parms_mml = function(x,...)
+{
+  m = if(any(x$items$item_score) > 1) ' polytomous ' else ' dichotomous '
+
+  p = paste0( 'MML parameters for',m,x$model,
+              '\nitems: ', ncol(x$em$b),
+              '\npersons: ', length(x$pre$pni),
+              '\niterations:',x$em$niter,
+              '\nUse coef() or coefficients() to extract the item parameters.\n')
+
+  cat(p)
+  invisible(x)
 }
