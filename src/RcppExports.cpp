@@ -27,35 +27,31 @@ BEGIN_RCPP
 END_RCPP
 }
 // mat_pre
-Rcpp::List mat_pre(arma::imat& dat, const int max_score);
+Rcpp::List mat_pre(const arma::imat& dat, const int max_score);
 RcppExport SEXP _dexterMML_mat_pre(SEXP datSEXP, SEXP max_scoreSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::imat& >::type dat(datSEXP);
+    Rcpp::traits::input_parameter< const arma::imat& >::type dat(datSEXP);
     Rcpp::traits::input_parameter< const int >::type max_score(max_scoreSEXP);
     rcpp_result_gen = Rcpp::wrap(mat_pre(dat, max_score));
     return rcpp_result_gen;
 END_RCPP
 }
 // categorize
-arma::imat categorize(const arma::ivec& inp, const arma::ivec& pni, const arma::ivec& icnp, const arma::ivec& pcni, const arma::ivec& ip, const arma::ivec& pi, const arma::imat& icat, const arma::ivec& imax, const int max_cat, arma::ivec& ix, arma::ivec& px);
-RcppExport SEXP _dexterMML_categorize(SEXP inpSEXP, SEXP pniSEXP, SEXP icnpSEXP, SEXP pcniSEXP, SEXP ipSEXP, SEXP piSEXP, SEXP icatSEXP, SEXP imaxSEXP, SEXP max_catSEXP, SEXP ixSEXP, SEXP pxSEXP) {
+arma::imat categorize(const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::imat& icat, const arma::ivec& imax, const int max_cat, arma::ivec& px);
+RcppExport SEXP _dexterMML_categorize(SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP icatSEXP, SEXP imaxSEXP, SEXP max_catSEXP, SEXP pxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::ivec& >::type inp(inpSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type pni(pniSEXP);
-    Rcpp::traits::input_parameter< const arma::ivec& >::type icnp(icnpSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type pcni(pcniSEXP);
-    Rcpp::traits::input_parameter< const arma::ivec& >::type ip(ipSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type pi(piSEXP);
     Rcpp::traits::input_parameter< const arma::imat& >::type icat(icatSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type imax(imaxSEXP);
     Rcpp::traits::input_parameter< const int >::type max_cat(max_catSEXP);
-    Rcpp::traits::input_parameter< arma::ivec& >::type ix(ixSEXP);
     Rcpp::traits::input_parameter< arma::ivec& >::type px(pxSEXP);
-    rcpp_result_gen = Rcpp::wrap(categorize(inp, pni, icnp, pcni, ip, pi, icat, imax, max_cat, ix, px));
+    rcpp_result_gen = Rcpp::wrap(categorize(pni, pcni, pi, icat, imax, max_cat, px));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -345,7 +341,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_theta_2pl", (DL_FUNC) &_dexterMML_theta_2pl, 10},
     {"_dexterMML_mat_pre", (DL_FUNC) &_dexterMML_mat_pre, 2},
-    {"_dexterMML_categorize", (DL_FUNC) &_dexterMML_categorize, 11},
+    {"_dexterMML_categorize", (DL_FUNC) &_dexterMML_categorize, 7},
     {"_dexterMML_scale_b", (DL_FUNC) &_dexterMML_scale_b, 3},
     {"_dexterMML_design_matrices", (DL_FUNC) &_dexterMML_design_matrices, 6},
     {"_dexterMML_check_connected_c", (DL_FUNC) &_dexterMML_check_connected_c, 3},

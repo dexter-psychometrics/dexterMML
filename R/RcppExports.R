@@ -9,8 +9,8 @@ mat_pre <- function(dat, max_score) {
     .Call(`_dexterMML_mat_pre`, dat, max_score)
 }
 
-categorize <- function(inp, pni, icnp, pcni, ip, pi, icat, imax, max_cat, ix, px) {
-    .Call(`_dexterMML_categorize`, inp, pni, icnp, pcni, ip, pi, icat, imax, max_cat, ix, px)
+categorize <- function(pni, pcni, pi, icat, imax, max_cat, px) {
+    .Call(`_dexterMML_categorize`, pni, pcni, pi, icat, imax, max_cat, px)
 }
 
 scale_b <- function(b, ncat, item_fixed) {

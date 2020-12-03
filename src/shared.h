@@ -53,7 +53,7 @@ struct progress
 	}
 	void update(const int iter)
 	{
-		int p = std::round((100.0*iter)/max_iter);
+		int p = std::min(int(std::round((100.0*iter)/max_iter)),100);
 		if(p!=perc)
 		{
 			perc=p;

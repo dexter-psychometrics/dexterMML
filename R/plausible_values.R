@@ -62,8 +62,8 @@ plausible_values.mml = function(dataSrc, parms, predicate=NULL, covariates=NULL,
     b=parms$em$b
   }
 
-  data_a = categorize(pre$inp, pre$pni, pre$icnp, pre$pcni,pre$ip, pre$pi,
-                      parms$pre$icat, parms$pre$imax,max(parms$pre$ncat), pre$ix, pre$px)
+  data_a = categorize(pre$pni, pre$pcni, pre$pi,
+                      parms$pre$icat, parms$pre$imax,max(parms$pre$ncat), pre$px)
 
   starting_values = theta_2pl(data_a, A, b, parms$pre$ncat,
                                       pre$pni, pre$pcni, pre$pi, pre$px,

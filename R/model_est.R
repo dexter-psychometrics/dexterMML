@@ -171,49 +171,46 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
 
   # estimation
   design = design_matrices(pre$pni, pre$pcni, pre$pi, group, ncol(dat), length(group_n))
+  
+  # this changes the respons vectors px and ix in pre
+  a = categorize(pre$pni, pre$pcni, pre$pi,
+                       pre$icat, pre$imax,max(pre$ncat), pre$px)
+  
   if(se) cat("(1/2) Parameter estimation\n")
 
   if(model=='1PL')
   {
     # nominal response model
+    b=start.1pl(a,pre$icat,pre$ncat)
 
-    # this changes the respons vectors px and ix in pre
-    a = categorize(pre$inp, pre$pni, pre$icnp, pre$pcni,pre$ip, pre$pi,
-                       pre$icat, pre$imax,max(pre$ncat), pre$ix, pre$px)
-
-    b = apply(pre$icat,2, function(x) 1-log(2*x/lag(x)))
-    b[1,] = 0
-    for(i in 1:ncol(b))
-    {
-      b[2:pre$ncat[i],i] = from_dexter(a[2:pre$ncat[i],i],b[2:pre$ncat[i],i])
-    }
-
+    
     fixed_items = rep(0L,ncol(dat))
     if(!is.null(fixed_param))
     {
-      fixed_param = tibble(item_id=colnames(dat), .indx.=1:ncol(dat)) %>%
-        inner_join(fixed_param, by='item_id') %>%
-        arrange(.data$.indx., .data$item_score)
+      fixed_param = tibble(item_id=colnames(dat), index=1:ncol(dat)) %>%
+        inner_join(fixed_param, by='item_id',suffix=c('','.y')) %>%
+        arrange(.data$index, .data$item_score)
 
-
-      lapply(split(fixed_param, fixed_param$item_id), function(ipar)
+      fpar = split(fixed_param,fixed_param$index)
+      shift = 0
+      for(x in fpar)
       {
-        i = ipar$.indx.[1]
-        if(all(a[2:pre$ncat[i],i] == ipar$item_score))
+        i = x$index[1]
+        if(all(a[2:pre$ncat[i],i] == x$item_score))
         {
-          b[2:pre$ncat[i],i] <<- from_dexter(ipar$item_score, ipar$beta)
+          shift = shift - log(sum(exp(b[2:pre$ncat[i],i])))
+          b[2:pre$ncat[i],i] = from_dexter(x$item_score, x$beta)
+          shift = shift + log(sum(exp(b[2:pre$ncat[i],i])))
         } else
         {
           stop("Not implemented: mismatch between fixed parameters and data vs item scores")
         }
-      })
+      }
 
-      fixed_items[unique(fixed_param$.indx.)] = 1L
-
-      # to do: how does this work for poly
-      if(nrow(b)==2)
-        scale_b(b,pre$ncat,fixed_items)
-
+      fixed_items[unique(fixed_param$index)] = 1L
+      shift = shift / sum(fixed_items)
+      b[2:nrow(b),fixed_items==0L] = b[2:nrow(b),fixed_items==0L] + shift
+      
       ref_group = -1L
     }
     check_connected(design, fixed_items)
@@ -259,10 +256,6 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
     }
   } else
   {
-    # this changes the response vectors px and ix in pre
-    a = categorize(pre$inp, pre$pni, pre$icnp, pre$pcni,pre$ip, pre$pi,
-                   pre$icat, pre$imax,max(pre$ncat), pre$ix, pre$px)
-
     A=rep(1,ncol(dat))
 
     b = apply(pre$icat,2, function(x) 1-log(2*x/lag(x)))
@@ -367,6 +360,13 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
   out
 }
 
+
+#' Extract information from MML fit object
+#' 
+#' @param object object returned by est
+#' @param what information to extract
+#' 
+#' 
 coef.parms_mml = function(object, what=c('items','populations','likelihood'))
 {
   what=match.arg(what)

@@ -103,3 +103,20 @@ from_dexter = function(a,beta)
   solve(DD,beta)
 }
 
+# to do: test for items with >2 categories
+start.1pl = function(a,icat,ncat)
+{
+  b=matrix(0,nrow(a),ncol(a))
+  nc = sqrt(1.702)
+  for(i in seq_along(ncat))
+  {
+    b[2:ncat[i],i] = nc*(log(icat[2:ncat[i],i]/icat[1,i]) - a[1:(ncat[i]-1)])
+  }
+  b
+}
+
+
+
+
+
+

@@ -5,69 +5,60 @@ using namespace arma;
 using Rcpp::Named;
 
 
+int count_not_NA(const imat& dat)
+{
+	const int sz = dat.n_cols*dat.n_rows;
+	const int r4 = sz % 4;
+	int nn=0;
+	for(int i=0;i<r4;i++)
+		nn += dat[i] >= 0;
+#pragma omp parallel for reduction(+: nn)
+	for(int i=r4;i<sz;i+=4)
+	{
+		nn += dat[i] >= 0;
+		nn += dat[i+1] >= 0;
+		nn += dat[i+2] >= 0;
+		nn += dat[i+3] >= 0;	
+	}
+	return nn;
+}
 
-// to do: min should be >=0
-// gives two data sets:
-// person, item, score
-// item, person, score
-// to do: overkill ip is not used anywhere
+
 // [[Rcpp::export]]
-Rcpp::List mat_pre(arma::imat& dat, const int max_score)
+Rcpp::List mat_pre(const arma::imat& dat, const int max_score)
 {
 	const int nit = dat.n_cols, np = dat.n_rows;
 	
 	imat icat(max_score+1,nit, fill::zeros);
 	ivec inp(nit,fill::zeros);
 	ivec psum(np,fill::zeros), pni(np,fill::zeros);
+	
+	const int sz = count_not_NA(dat);
+	ivec pi(sz),px(sz);
 
-// margins
-	for(int i=0; i<nit; i++)
+	int pp=0;
+	for(int p=0; p<np; p++)
 	{
-		const ivec rsp(dat.colptr(i), np, false, true);
-
-		for(int p=0; p<np; p++)
+		for(int i=0; i<nit; i++)
 		{
-			if(rsp[p]>=0) // NA test
+			if(dat.at(p,i) >=0)
 			{
-				psum[p] += rsp[p];				
+				int rsp = dat.at(p,i);
+				psum[p] += rsp;				
 				inp[i]++;
 				pni[p]++;
-				icat.at(rsp[p],i)++;			
-			}		
-		}	
-	}
-
-	// cumulative pointers	
-	ivec icnp(nit+1), pcni(np+1);
-	icnp[0] = 0;
-	pcni[0] = 0;
-	std::partial_sum(inp.begin(),inp.end(),icnp.begin()+1);
-	std::partial_sum(pni.begin(),pni.end(),pcni.begin()+1);
-
-	// response vectors organized two ways
-	const int sz = icnp[nit];
-	
-	ivec ip(sz), ix(sz), pi(sz),px(sz);
-	
-	ivec pindx(pcni.memptr(), np, true, true);
-
-	for(int i=0; i<nit; i++)
-	{
-		const ivec rsp(dat.colptr(i), np, false, true);
-		int indx = icnp[i];
-
-		for(int p=0; p<np; p++)
-		{
-			if(rsp[p]>=0)
-			{
-				ip[indx] = p;
-				ix[indx++] = rsp[p];
-				pi[pindx[p]] = i;
-				px[pindx[p]++] = rsp[p]; 
+				icat.at(rsp,i)++;	
+				pi[pp] = i;
+				px[pp++] = rsp; 
 			}
 		}
 	}
-	
+
+	// cumulative pointers	
+	ivec pcni(np+1);
+	pcni[0] = 0;
+	std::partial_sum(pni.begin(),pni.end(),pcni.begin()+1);
+
 	ivec imax(nit), isum(nit,fill::zeros), ncat(nit, fill::zeros);
 	for(int i=0;i<nit;i++)
 	{
@@ -85,22 +76,22 @@ Rcpp::List mat_pre(arma::imat& dat, const int max_score)
 	}
 	
 	return Rcpp::List::create(
-		Named("pi") = pi, Named("px") = px, Named("ip") = ip, Named("ix") = ix,
-		Named("inp") = inp, Named("icnp") = icnp, Named("pni") = pni, Named("pcni") = pcni,
+		Named("pi") = pi, Named("px") = px, 
+		Named("inp") = inp, Named("pni") = pni, Named("pcni") = pcni,
 		Named("icat") = icat, Named("ncat") = ncat, Named("imax") = imax, Named("isum") = isum, Named("psum") = psum);
 }
 
 
 
-// ix and px changed in place if necessary
+// px changed in place if necessary
 // returns matrix a
 // [[Rcpp::export]]
-arma::imat categorize(const arma::ivec& inp, const arma::ivec& pni,
-						const arma::ivec& icnp, const arma::ivec& pcni,
-						const arma::ivec& ip, const arma::ivec& pi,				
+arma::imat categorize(const arma::ivec& pni,
+						const arma::ivec& pcni,
+						const arma::ivec& pi,				
 						const arma::imat& icat, const arma::ivec& imax,
 						const int max_cat,
-						arma::ivec& ix, arma::ivec& px)
+						arma::ivec& px)
 {
 	
 	const int nit = icat.n_cols, np = pni.n_elem;
@@ -127,12 +118,6 @@ arma::imat categorize(const arma::ivec& inp, const arma::ivec& pni,
 	if(recode)
 	{	
 #pragma omp parallel for	
-		for(int i=0; i<nit; i++)
-		{
-			for(int j=icnp[i]; j<icnp[i+1]; j++)
-				ix[j] = ai.at(ix[j],i);
-		}
-#pragma omp parallel for	
 		for(int p=0; p<np; p++)
 		{
 			for(int j=pcni[p]; j<pcni[p+1]; j++)
@@ -142,30 +127,6 @@ arma::imat categorize(const arma::ivec& inp, const arma::ivec& pni,
 	return a;
 }
 
-// at the moment only for NRM parametrisation !!
-// also not correct for poly yet
-// [[Rcpp::export]]
-void scale_b(arma::mat& b, const arma::ivec& ncat, const arma::ivec& item_fixed)
-{
-	double mean_free=0, mean_fixed=0;
-	const int nit = b.n_cols, n_fixed = accu(item_fixed);
-	const int n_free =  nit - n_fixed;
-	
-	for(int i=0; i<nit; i++)
-		for(int j=1; j<ncat[i]; j++)
-		{
-			mean_free += b.at(i,j) * (1-item_fixed[i]);
-			mean_fixed += b.at(i,j) * item_fixed[i];	
-		}
-	mean_free /= n_free;
-	mean_fixed /= n_fixed;
-	double adj = mean_fixed - mean_free;
-	
-	for(int i=0; i<nit; i++)
-		if(item_fixed[i]==0)
-			for(int j=1; j<ncat[i]; j++)
-				b.at(i,j) += adj;
-}
 
 
 /****************************

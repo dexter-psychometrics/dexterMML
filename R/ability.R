@@ -42,8 +42,9 @@ ability.mml = function(dataSrc, parms, predicate=NULL, method=c('MLE','WLE'), un
   pre = lapply(mat_pre(dataSrc, max_score), drop)
 
   # to do: this needs protections and checks
-  data_a = categorize(pre$inp, pre$pni, pre$icnp, pre$pcni,pre$ip, pre$pi,
-                        parms$pre$icat, parms$pre$imax,max(parms$pre$ncat), pre$ix, pre$px)
+  data_a = categorize(pre$pni, pre$pcni, pre$pi,
+                        parms$pre$icat, parms$pre$imax,max(parms$pre$ncat), pre$px)
+
 
   pid = rownames(dataSrc)
   if(is.null(pid))
