@@ -55,7 +55,7 @@ plausible_values.mml = function(dataSrc, parms, predicate=NULL, covariates=NULL,
   if(parms$model=='1PL')
   {
     A=rep(1,ncol(parms$em$b))
-    b=beta_matrix(parms$items$beta,parms$pre$ncat)
+    b=-parms$em$b/parms$em$a
   } else
   {
     A=parms$em$A

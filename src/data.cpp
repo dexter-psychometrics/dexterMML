@@ -59,7 +59,7 @@ Rcpp::List mat_pre(const arma::imat& dat, const int max_score)
 	pcni[0] = 0;
 	std::partial_sum(pni.begin(),pni.end(),pcni.begin()+1);
 
-	ivec imax(nit), isum(nit,fill::zeros), ncat(nit, fill::zeros);
+	ivec imax(nit,fill::zeros), isum(nit,fill::zeros), ncat(nit, fill::zeros);
 	for(int i=0;i<nit;i++)
 	{
 		for(int k = max_score; k>=0; k--)
@@ -126,8 +126,6 @@ arma::imat categorize(const arma::ivec& pni,
 	}	
 	return a;
 }
-
-
 
 /****************************
 * Designs

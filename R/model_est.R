@@ -175,7 +175,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
   # this changes the respons vectors px and ix in pre
   a = categorize(pre$pni, pre$pcni, pre$pi,
                        pre$icat, pre$imax,max(pre$ncat), pre$px)
-  
+
   if(se) cat("(1/2) Parameter estimation\n")
 
   if(model=='1PL')
@@ -245,11 +245,9 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
       dx = to_dexter(em$a,em$b,pre$ncat,colnames(dat),res$H, fixed_items,ref_group+1L)
       pop = tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd),
                    SE_mu=dx$SE_pop[seq(1,nrow(em$mu)*2,2)], SE_sigma=dx$SE_pop[seq(2,nrow(em$mu)*2,2)])
-
       out = list(items=dx$items,pop=pop,em=em,pre=pre,model=model)
     } else
     {
-      pre$a=a
       pop=tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd))
       out = list(items=to_dexter(em$a,em$b,pre$ncat,colnames(dat))$items,
                   pop=pop,em=em,pre=pre,model=model)
@@ -353,9 +351,11 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
         i=i+1L
       }
     }
-    pre$a=a
     out = list(items=items,pop=pop,em=em,pre=pre,model=model)
   }
+  out$theta_grid = theta_grid
+  out$item_id=colnames(dat)
+  out$em$a=a
   class(out) = append('parms_mml',class(out))
   out
 }

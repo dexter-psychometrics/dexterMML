@@ -5,16 +5,16 @@ theta_2pl <- function(a, A, b, ncat, pni, pcni, pi, px, WLE = FALSE, USE_A = TRU
     .Call(`_dexterMML_theta_2pl`, a, A, b, ncat, pni, pcni, pi, px, WLE, USE_A)
 }
 
+E_score <- function(theta, A, a, b, items, ncat) {
+    .Call(`_dexterMML_E_score`, theta, A, a, b, items, ncat)
+}
+
 mat_pre <- function(dat, max_score) {
     .Call(`_dexterMML_mat_pre`, dat, max_score)
 }
 
 categorize <- function(pni, pcni, pi, icat, imax, max_cat, px) {
     .Call(`_dexterMML_categorize`, pni, pcni, pi, icat, imax, max_cat, px)
-}
-
-scale_b <- function(b, ncat, item_fixed) {
-    invisible(.Call(`_dexterMML_scale_b`, b, ncat, item_fixed))
 }
 
 design_matrices <- function(pni, pcni, pi, pg, nit, ng) {

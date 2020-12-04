@@ -26,6 +26,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// E_score
+arma::vec E_score(const arma::vec& theta, const arma::vec& A, const arma::imat& a, const arma::mat& b, const arma::ivec& items, const arma::ivec& ncat);
+RcppExport SEXP _dexterMML_E_score(SEXP thetaSEXP, SEXP ASEXP, SEXP aSEXP, SEXP bSEXP, SEXP itemsSEXP, SEXP ncatSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type A(ASEXP);
+    Rcpp::traits::input_parameter< const arma::imat& >::type a(aSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type b(bSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type items(itemsSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type ncat(ncatSEXP);
+    rcpp_result_gen = Rcpp::wrap(E_score(theta, A, a, b, items, ncat));
+    return rcpp_result_gen;
+END_RCPP
+}
 // mat_pre
 Rcpp::List mat_pre(const arma::imat& dat, const int max_score);
 RcppExport SEXP _dexterMML_mat_pre(SEXP datSEXP, SEXP max_scoreSEXP) {
@@ -53,18 +69,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::ivec& >::type px(pxSEXP);
     rcpp_result_gen = Rcpp::wrap(categorize(pni, pcni, pi, icat, imax, max_cat, px));
     return rcpp_result_gen;
-END_RCPP
-}
-// scale_b
-void scale_b(arma::mat& b, const arma::ivec& ncat, const arma::ivec& item_fixed);
-RcppExport SEXP _dexterMML_scale_b(SEXP bSEXP, SEXP ncatSEXP, SEXP item_fixedSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat& >::type b(bSEXP);
-    Rcpp::traits::input_parameter< const arma::ivec& >::type ncat(ncatSEXP);
-    Rcpp::traits::input_parameter< const arma::ivec& >::type item_fixed(item_fixedSEXP);
-    scale_b(b, ncat, item_fixed);
-    return R_NilValue;
 END_RCPP
 }
 // design_matrices
@@ -340,9 +344,9 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_theta_2pl", (DL_FUNC) &_dexterMML_theta_2pl, 10},
+    {"_dexterMML_E_score", (DL_FUNC) &_dexterMML_E_score, 6},
     {"_dexterMML_mat_pre", (DL_FUNC) &_dexterMML_mat_pre, 2},
     {"_dexterMML_categorize", (DL_FUNC) &_dexterMML_categorize, 7},
-    {"_dexterMML_scale_b", (DL_FUNC) &_dexterMML_scale_b, 3},
     {"_dexterMML_design_matrices", (DL_FUNC) &_dexterMML_design_matrices, 6},
     {"_dexterMML_check_connected_c", (DL_FUNC) &_dexterMML_check_connected_c, 3},
     {"_dexterMML_estimate_nrm", (DL_FUNC) &_dexterMML_estimate_nrm, 16},

@@ -76,17 +76,6 @@ to_dexter = function(a,logb,ncat,item_id, H=NULL, fixed_items=NULL, ref_group=-1
        cov.beta=cov.beta, cov.all=cov.all)
 }
 
-beta_matrix = function(beta,ncat)
-{
-  b=matrix(0,max(ncat),length(ncat))
-  x=1L
-  for(i in seq_along(ncat))
-  {
-    b[2:ncat[i],i] = beta[x:(x+ncat[i]-2L)]
-    x=x+ncat[i]-1L
-  }
-  b
-}
 
 
 # inverse of to_dexter
@@ -114,9 +103,4 @@ start.1pl = function(a,icat,ncat)
   }
   b
 }
-
-
-
-
-
 

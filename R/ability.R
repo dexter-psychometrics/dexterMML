@@ -27,7 +27,7 @@ ability.mml = function(dataSrc, parms, predicate=NULL, method=c('MLE','WLE'), un
   if(parms$model=='1PL')
   {
     A=rep(1,ncol(parms$em$b))
-    b=beta_matrix(parms$items$beta,parms$pre$ncat)
+    b=-parms$em$b/parms$em$a
     unweight=TRUE
   } else
   {

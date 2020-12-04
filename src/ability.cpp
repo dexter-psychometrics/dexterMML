@@ -156,3 +156,12 @@ arma::vec theta_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b,
 	//if(!WLE && !USE_A)
 	return templ_theta_2pl<false, false>(a, A, b, ncat, pni, pcni, pi, px);
 }
+// [[Rcpp::export]]
+arma::vec E_score(const arma::vec& theta, const arma::vec& A, const arma::imat& a, const arma::mat& b, const arma::ivec& items, const arma::ivec& ncat)
+{
+	const int nt = theta.n_elem;
+	vec out(nt);
+	for(int i=0; i<nt; i++)
+		out[i] = E_2pl<false,false>(theta[i], A, a, b, items, ncat);
+	return out;
+}
