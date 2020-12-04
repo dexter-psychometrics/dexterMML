@@ -77,3 +77,36 @@ plausible_values.mml = function(dataSrc, parms, predicate=NULL, covariates=NULL,
   colnames(pv) = sprintf("PV%i",1:ncol(pv))
   cbind(out, as.data.frame(pv))
 }
+
+
+sim_2pl = function(pars,theta)
+{
+  pars = select(ungroup(pars),.data$item_id,.data$item_score,.data$alpha,.data$beta) %>%
+    mutate(item_score=as.integer(item_score)) %>%
+    arrange(item_id,item_score)
+  
+  #check alpha equal?
+  
+  items = pars %>%
+    group_by(item_id) %>%
+    summarise(ncat=n()+1,alpha=first(alpha)) 
+  
+  ncat=items$ncat
+  
+  a=matrix(0L,max(items$ncat),nrow(items))
+  b=matrix(0,max(items$ncat),nrow(items))
+  
+  pars = split(pars,pars$item_id)
+  for(i in seq_along(pars))
+  {
+    a[2:ncat[i],i]=pars[[i]]$item_score
+    b[2:ncat[i],i]=pars[[i]]$beta
+  }
+  
+  dat = sim_2plc(a, items$alpha, b, ncat,theta)
+  colnames(dat) = items$item_id
+  dat
+}
+
+
+

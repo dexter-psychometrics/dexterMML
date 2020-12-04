@@ -143,3 +143,43 @@ arma::mat plausible_values_c(const arma::vec& A, const arma::imat& a, const arma
 	prog.close();
 	return out;
 }
+
+
+// simulation
+// [[Rcpp::export]]
+arma::imat sim_2plc(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat,
+					const arma::vec& theta)
+{
+	const int nit=a.n_cols, np=theta.n_elem,m=a.n_rows;
+	mat aA(a.n_rows,nit,fill::zeros);
+	for(int i=0; i<nit; i++)
+		for(int k=1;k<ncat[i];k++)
+			aA.at(k,i) = a.at(k,i)* A[i];
+	imat out(np,nit);
+	dqrng::xoshiro256plus rng(SEED); 	
+	dqrng::uniform_distribution prl_runif(0, 1);
+#pragma omp parallel
+	{	
+		vec P(m);	
+		dqrng::xoshiro256plus lrng(rng);      		
+		lrng.long_jump(omp_get_thread_num() + 1);
+		int k;
+	#pragma omp for
+		for(int i=0;i<nit;i++)
+		{		
+			P[0]=1;
+			for(int p=0;p<np;p++)
+			{
+				for(k=1; k<ncat[i]; k++)
+					P[k] = P[k-1] + std::exp(aA.at(k,i)*(theta[p]-b.at(k,i)));
+				const double u=P[k-1]*prl_runif(lrng);
+				k=0;
+				while(u>P[k]) k++;	
+				out.at(p,i)=k;
+			}
+		}
+	}
+	return out;
+}
+
+

@@ -49,6 +49,10 @@ plausible_values_c <- function(A, a, b, ncat, pni, pcni, pi, px, pop, popn, npv,
     .Call(`_dexterMML_plausible_values_c`, A, a, b, ncat, pni, pcni, pi, px, pop, popn, npv, starting_values, n_prior_updates, thin, pgw)
 }
 
+sim_2plc <- function(a, A, b, ncat, theta) {
+    .Call(`_dexterMML_sim_2plc`, a, A, b, ncat, theta)
+}
+
 estimate_poly2 <- function(a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group = 0L, A_prior = 0L, A_mu = 0, A_sigma = 0.5, max_iter = 200L, pgw = 80L) {
     .Call(`_dexterMML_estimate_poly2`, a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group, A_prior, A_mu, A_sigma, max_iter, pgw)
 }
