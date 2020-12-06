@@ -391,3 +391,71 @@ print.parms_mml = function(x,...)
   cat(p)
   invisible(x)
 }
+
+merge_arglists = function(args, default = NULL, override = NULL)
+{
+  if(!is.null(default))
+    args = modifyList(default, args)
+  
+  if(!is.null(override))
+    args = modifyList(args, override)
+  
+  args
+}
+
+plot.parms_mml = function(parms,items=NULL,nbins=5,ci=.95,...)
+{
+  if(parms$model=='1PL')
+  {
+    A=rep(1,ncol(parms$em$b))
+    b=-parms$em$b/parms$em$a
+  } else
+  {
+    A=parms$em$A
+    b=parms$em$b
+  }
+  if(is.null(items))
+    items = parms$item_id
+  ii = match(items,parms$item_id)
+  if(anyNA(ii))
+    stop(paste('Items:', paste(items[is.na(ii)],collapse=', '),'not found.'),call.=FALSE)
+  
+  qnt = abs(qnorm((1-ci)/2))
+  cmin = function(p, n) pmax(0, p - qnt * sqrt(p*(1-p)/n))
+  cmax = function(p, n) pmin(1, p + qnt * sqrt(p*(1-p)/n))
+  
+  user.args = list(...)
+  default.args = list(bty='l',xlab = expression(theta), ylab='score',main='$item_id',col='grey80')
+  
+  for(i in ii)
+  {
+    max_score = parms$pre$imax[i]
+    print(i)
+    x = plot_data(parms$pre$pcni, parms$pre$pi, parms$pre$px, parms$pre$inp,parms$em$thetabar, 
+                  parms$em$a,i-1L) %>%
+      mutate(bin=ntile(.data$theta,nbins)) %>%
+      group_by(.data$bin) %>%
+      summarise(m=mean(.data$theta),obs=mean(.data$item_score),n=n()) %>%
+      ungroup() %>%
+      mutate(expected = E_score(.data$m, A, parms$em$a, b, i-1L, parms$pre$ncat)) %>%
+      mutate(conf_min = max_score * cmin(.data$expected/max_score, .data$n),
+             conf_max = max_score * cmax(.data$expected/max_score, .data$n)) %>%
+      mutate(outlier = .data$obs < .data$conf_min | .data$obs > .data$conf_max)
+    
+    
+    plot.args = merge_arglists(user.args,
+                              default=default.args,
+                               override=list(x = x$m,y = x$expected, type="l",
+                                             ylim=c(0,parms$pre$imax[i])))
+    plot.args$main = gsub('$item_id',parms$item_id[i],plot.args$main,fixed=TRUE)
+    do.call(plot,plot.args)
+    
+    suppressWarnings({
+      arrows(x$m, x$conf_min, 
+             x$m, x$conf_max, 
+             length=0.05, angle=90, code=3, col=plot.args$col)})
+    
+    points(x$m,x$obs,bg=x$outlier*2,pch=21)
+    lines(x$m,x$obs)
+  }
+}

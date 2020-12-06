@@ -71,6 +71,23 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// plot_data
+Rcpp::DataFrame plot_data(const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, const arma::ivec& inp, const arma::vec& theta, const arma::imat& a, const int item);
+RcppExport SEXP _dexterMML_plot_data(SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP inpSEXP, SEXP thetaSEXP, SEXP aSEXP, SEXP itemSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pcni(pcniSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pi(piSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type px(pxSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type inp(inpSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const arma::imat& >::type a(aSEXP);
+    Rcpp::traits::input_parameter< const int >::type item(itemSEXP);
+    rcpp_result_gen = Rcpp::wrap(plot_data(pcni, pi, px, inp, theta, a, item));
+    return rcpp_result_gen;
+END_RCPP
+}
 // design_matrices
 Rcpp::List design_matrices(const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& pg, const int nit, const int ng);
 RcppExport SEXP _dexterMML_design_matrices(SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pgSEXP, SEXP nitSEXP, SEXP ngSEXP) {
@@ -362,6 +379,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_E_score", (DL_FUNC) &_dexterMML_E_score, 6},
     {"_dexterMML_mat_pre", (DL_FUNC) &_dexterMML_mat_pre, 2},
     {"_dexterMML_categorize", (DL_FUNC) &_dexterMML_categorize, 7},
+    {"_dexterMML_plot_data", (DL_FUNC) &_dexterMML_plot_data, 7},
     {"_dexterMML_design_matrices", (DL_FUNC) &_dexterMML_design_matrices, 6},
     {"_dexterMML_check_connected_c", (DL_FUNC) &_dexterMML_check_connected_c, 3},
     {"_dexterMML_estimate_nrm", (DL_FUNC) &_dexterMML_estimate_nrm, 16},

@@ -127,6 +127,33 @@ arma::imat categorize(const arma::ivec& pni,
 	return a;
 }
 
+// [[Rcpp::export]]
+Rcpp::DataFrame plot_data(const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, const arma::ivec& inp, const arma::vec& theta, 
+							const arma::imat& a, const int item)
+{
+	const int nrsp=inp[item];
+	ivec out_x(nrsp);
+	vec out_theta(nrsp);
+	
+	int ii=0,p=0;
+	while(ii<nrsp)
+	{
+		for(int indx = pcni[p]; indx<pcni[p+1]; indx++)
+		{
+			if(pi[indx]<item)
+				continue;
+			if(pi[indx] == item)
+			{
+				out_x[ii] = a.at(px[indx],item);
+				out_theta[ii++] = theta[p];
+			}
+			break;
+		}
+		p++;
+	}
+	return Rcpp::DataFrame::create(Named("item_score")=out_x, Named("theta")=out_theta);
+}
+
 /****************************
 * Designs
 *****************************/

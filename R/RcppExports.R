@@ -17,6 +17,10 @@ categorize <- function(pni, pcni, pi, icat, imax, max_cat, px) {
     .Call(`_dexterMML_categorize`, pni, pcni, pi, icat, imax, max_cat, px)
 }
 
+plot_data <- function(pcni, pi, px, inp, theta, a, item) {
+    .Call(`_dexterMML_plot_data`, pcni, pi, px, inp, theta, a, item)
+}
+
 design_matrices <- function(pni, pcni, pi, pg, nit, ng) {
     .Call(`_dexterMML_design_matrices`, pni, pcni, pi, pg, nit, ng)
 }
