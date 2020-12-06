@@ -365,9 +365,10 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
 #' 
 #' @param object object returned by est
 #' @param what information to extract
+#' @param ... ignored
 #' 
 #' 
-coef.parms_mml = function(object, what=c('items','populations','likelihood'))
+coef.parms_mml = function(object, what=c('items','populations','likelihood'),...)
 {
   what=match.arg(what)
   if(what=='items')
@@ -377,6 +378,7 @@ coef.parms_mml = function(object, what=c('items','populations','likelihood'))
   if(what=='likelihood')
     return(c("log likelihood"=object$em$LL))
 }
+
 
 print.parms_mml = function(x,...)
 {
@@ -403,8 +405,24 @@ merge_arglists = function(args, default = NULL, override = NULL)
   args
 }
 
-plot.parms_mml = function(parms,items=NULL,nbins=5,ci=.95,...)
+#' Plot for fitted MML models
+#' 
+#' The plot shows 'fit' by comparing the expected score based on the model (grey line)
+#' with the average scores based on the data (black line with dots) for groups of students
+#' with similar estimated ability.
+#' 
+#' @param x object produced by fit_enorm
+#' @param items item_id's of items to plot, if NULL, one plot for each item is made
+#' @param nbins number of ability groups
+#' @param ci confidence interval for the error bars, between 0 and 1. 
+#' Default = 0.95 for a 95\% confidence interval
+#' @param ... further arguments to plot
+#' 
+#' @method plot prms
+#' 
+plot.parms_mml = function(x,items=NULL,nbins=5,ci=.95,...)
 {
+  parms=x
   if(parms$model=='1PL')
   {
     A=rep(1,ncol(parms$em$b))
@@ -430,7 +448,6 @@ plot.parms_mml = function(parms,items=NULL,nbins=5,ci=.95,...)
   for(i in ii)
   {
     max_score = parms$pre$imax[i]
-    print(i)
     x = plot_data(parms$pre$pcni, parms$pre$pi, parms$pre$px, parms$pre$inp,parms$em$thetabar, 
                   parms$em$a,i-1L) %>%
       mutate(bin=ntile(.data$theta,nbins)) %>%

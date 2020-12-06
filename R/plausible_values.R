@@ -82,14 +82,14 @@ plausible_values.mml = function(dataSrc, parms, predicate=NULL, covariates=NULL,
 sim_2pl = function(pars,theta)
 {
   pars = select(ungroup(pars),.data$item_id,.data$item_score,.data$alpha,.data$beta) %>%
-    mutate(item_score=as.integer(item_score)) %>%
-    arrange(item_id,item_score)
+    mutate(item_score=as.integer(.data$item_score)) %>%
+    arrange(.data$item_id,.data$item_score)
   
   #check alpha equal?
   
   items = pars %>%
-    group_by(item_id) %>%
-    summarise(ncat=n()+1,alpha=first(alpha)) 
+    group_by(.data$item_id) %>%
+    summarise(ncat=n()+1,alpha=first(.data$alpha)) 
   
   ncat=items$ncat
   
