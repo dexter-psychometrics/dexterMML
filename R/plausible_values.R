@@ -78,9 +78,21 @@ plausible_values.mml = function(dataSrc, parms, predicate=NULL, covariates=NULL,
   cbind(out, as.data.frame(pv))
 }
 
-
+#' Simulate data for a 2pl
+#'
+#' note: to simulate form a 1pl, you can omit the alpha column or set it to 1
+#'
+#' @param pars data.frame with columns alpha, item_score and beta
+#' @param theta vector of abilities
+#' 
+#' @returns matrix with persons as rows and items as columns
+#' 
 sim_2pl = function(pars,theta)
 {
+  colnames(pars) = tolower(colnames(pars))
+  if(!'alpha' %in% colnames(pars))
+    pars$alpha=1
+  
   pars = select(ungroup(pars),.data$item_id,.data$item_score,.data$alpha,.data$beta) %>%
     mutate(item_score=as.integer(.data$item_score)) %>%
     arrange(.data$item_id,.data$item_score)

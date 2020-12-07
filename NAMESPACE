@@ -12,6 +12,7 @@ importFrom(utils, "modifyList")
 export(est)
 export(ability.mml)
 export(plausible_values.mml)
+export(sim_2pl)
 
 S3method(print,parms_mml)
 S3method(coef,parms_mml)

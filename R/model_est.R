@@ -256,34 +256,35 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
   {
     A=rep(1,ncol(dat))
 
-    b = apply(pre$icat,2, function(x) 1-log(2*x/lag(x)))
-    b[1,] = 0
+    b=start.2pl(a,pre$icat,pre$ncat)
 
     fixed_items = rep(0L,ncol(dat))
     if(!is.null(fixed_param))
     {
-      fixed_param = tibble(item_id=colnames(dat), .indx.=1:ncol(dat)) %>%
-        inner_join(fixed_param, by='item_id') %>%
-        arrange(.data$.indx., .data$item_score)
-
-      if(nrow(b)==2)
+      fixed_param = tibble(item_id=colnames(dat), index=1:ncol(dat)) %>%
+        inner_join(fixed_param, by='item_id',suffix=c('','.y')) %>%
+        arrange(.data$index, .data$item_score)
+      
+      fpar = split(fixed_param,fixed_param$index)
+      shift = 0
+      for(x in fpar)
       {
-        b[2,] = b[2,]- mean(b[2,]) + mean(fixed_param$beta)
-      }
-
-      lapply(split(fixed_param, fixed_param$item_id), function(ipar)
-      {
-        i = ipar$.indx.[1]
-        if(all(a[2:pre$ncat[i],i] == ipar$item_score))
+        i = x$index[1]
+        if(all(a[2:pre$ncat[i],i] == x$item_score))
         {
-          b[2:pre$ncat[i],i] <<- ipar$beta
-          A[i] <<- ipar$alpha[1]
+          shift = shift - log(sum(exp(b[2:pre$ncat[i],i])))
+          b[2:pre$ncat[i],i] = x$beta
+          shift = shift + log(sum(exp(b[2:pre$ncat[i],i])))
+          A[i] = x$alpha[1]
         } else
         {
           stop("Not implemented: mismatch between fixed parameters and data vs item scores")
         }
-      })
-      fixed_items[unique(fixed_param$.indx.)] = 1L
+      }
+      
+      fixed_items[unique(fixed_param$index)] = 1L
+      shift = shift / sum(fixed_items)
+      b[2:nrow(b),fixed_items==0L] = b[2:nrow(b),fixed_items==0L] + shift
       A[fixed_items==0L] = mean(A[fixed_items==1L])
       ref_group = -1L
     }
@@ -418,7 +419,7 @@ merge_arglists = function(args, default = NULL, override = NULL)
 #' Default = 0.95 for a 95\% confidence interval
 #' @param ... further arguments to plot
 #' 
-#' @method plot prms
+#' @method plot parms_mml
 #' 
 plot.parms_mml = function(x,items=NULL,nbins=5,ci=.95,...)
 {

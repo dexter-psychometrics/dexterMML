@@ -99,8 +99,20 @@ start.1pl = function(a,icat,ncat)
   nc = sqrt(1.702)
   for(i in seq_along(ncat))
   {
-    b[2:ncat[i],i] = nc*(log(icat[2:ncat[i],i]/icat[1,i]) - a[1:(ncat[i]-1)])
+    icat_i = icat[a[1:ncat[i],i]+1L,i]
+    b[2:ncat[i],i] = nc*(log(icat_i[2:ncat[i]]/icat_i[1]) - a[1:(ncat[i]-1)])
   }
   b
 }
 
+start.2pl = function(a,icat,ncat)
+{
+  b=matrix(0,nrow(a),ncol(a))
+  nc = -sqrt(1.702)
+  for(i in seq_along(ncat))
+  {
+    icat_i = icat[a[1:ncat[i],i]+1L,i]
+    b[2:ncat[i],i] = nc*(log(icat_i[2:ncat[i]]/icat_i[1]))
+  }
+  b
+}

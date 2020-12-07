@@ -4,12 +4,14 @@
 \alias{coef.parms_mml}
 \title{Extract information from MML fit object}
 \usage{
-\method{coef}{parms_mml}(object, what = c("items", "populations", "likelihood"))
+\method{coef}{parms_mml}(object, what = c("items", "populations", "likelihood"), ...)
 }
 \arguments{
 \item{object}{object returned by est}
 
 \item{what}{information to extract}
+
+\item{...}{ignored}
 }
 \description{
 Extract information from MML fit object

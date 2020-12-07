@@ -175,7 +175,7 @@ arma::imat sim_2plc(const arma::imat& a, const arma::vec& A, const arma::mat& b,
 				const double u=P[k-1]*prl_runif(lrng);
 				k=0;
 				while(u>P[k]) k++;	
-				out.at(p,i)=k;
+				out.at(p,i)=a.at(k,i);
 			}
 		}
 	}

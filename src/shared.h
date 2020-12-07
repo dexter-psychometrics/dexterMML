@@ -115,7 +115,9 @@ struct progress_est : progress
 		if(hist.size()>=2)
 		{
 			double a = (hist.back() - hist.front())/hist.size();
-			max_iter = std::min((int)(std::ceil((target - hist.back())/a) + iter), max_max_iter);
+			if((target - hist.back())/a > 0)
+				max_iter = std::min((int)(std::ceil((target - hist.back())/a) + iter), max_max_iter);
+			
 		} 
 		else max_iter = max_max_iter/2;
 		progress::update(iter);
