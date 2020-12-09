@@ -4,7 +4,7 @@
 \alias{plot.parms_mml}
 \title{Plot for fitted MML models}
 \usage{
-\method{plot}{prms}(x, items = NULL, nbins = 5, ci = 0.95, ...)
+\method{plot}{parms_mml}(x, items = NULL, nbins = 5, ci = 0.95, ...)
 }
 \arguments{
 \item{x}{object produced by fit_enorm}

@@ -35,7 +35,7 @@ initializer( omp_priv = vec_init(omp_orig) )
 struct progress
 {
 	int max_iter, perc, ckInterrupt,calls, bar_width;
-	bool draw_bar;
+	bool draw_bar, draw_any;
 	std::string fmt;
 
 	progress(const int max_iter_, const int char_width, const int ckInterrupt_=5)
@@ -45,6 +45,7 @@ struct progress
 		ckInterrupt = ckInterrupt_;
 		bar_width = char_width - 8;
 		draw_bar = bar_width >= 5;
+		draw_any = char_width >= 4;
 		if(draw_bar)
 		{
 			fmt = std::string("\r|%-") + std::to_string(bar_width) + std::string("s|% 3i%%");			
@@ -70,16 +71,19 @@ struct progress
 			int bw = std::round(bar_width * perc/100.0);
 			Rprintf(fmt.c_str(), std::string(bw,'=').c_str(), perc);
 		}
-		else Rprintf("\r% 3i%%", perc);	
+		else if(draw_any) Rprintf("\r% 3i%%", perc);	
 	}	
 	void close()
 	{
-		if(perc<100)
+		if(draw_any)
 		{
-			perc=100;
-			draw();
+			if(perc<100)
+			{
+				perc=100;
+				draw();
+			}
+			Rprintf("\n");
 		}
-		Rprintf("\n");
 	}
 };
 

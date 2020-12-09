@@ -123,7 +123,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
 
   priorA = switch(priorA, lognormal=1L, normal=2L, 0L)
 
-  pgw = getOption("width")
+  pgw = progress_width()
   theta_grid = seq(-6,6,.3)
   max_em_iterations = 800L
   qtpredicate = eval(substitute(quote(predicate)))

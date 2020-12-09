@@ -72,7 +72,7 @@ plausible_values.mml = function(dataSrc, parms, predicate=NULL, covariates=NULL,
   pv =  plausible_values_c(A, data_a, b, parms$pre$ncat,
                          pre$pni, pre$pcni, pre$pi, pre$px, group, group_n,
                          as.integer(npv), starting_values,
-                         n_prior_updates=70L, thin=70L,pgw = getOption("width"))
+                         n_prior_updates=70L, thin=70L,pgw = progress_width())
 
   colnames(pv) = sprintf("PV%i",1:ncol(pv))
   cbind(out, as.data.frame(pv))
