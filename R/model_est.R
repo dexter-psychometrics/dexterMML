@@ -176,7 +176,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
   a = categorize(pre$pni, pre$pcni, pre$pi,
                        pre$icat, pre$imax,max(pre$ncat), pre$px)
 
-  if(se) cat("(1/2) Parameter estimation\n")
+  if(se && pgw>0) cat("(1/2) Parameter estimation\n")
 
   if(model=='1PL')
   {
@@ -228,7 +228,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
 
     if(se)
     {
-      cat("(2/2) Computing standard errors\n")
+      if(pgw>0) cat("(2/2) Computing standard errors\n")
       if(!is.null(fixed_param))
       {
         w = which(fixed_items==1L)
