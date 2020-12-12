@@ -526,6 +526,7 @@ static int opt_stop(const arma::vec& xpls, double fpls, const arma::vec& gpls, c
  * VALUE :
  *	`itrmcd' : termination code
  */
+
 	const int n = x.n_elem;
     int i, jtrmcd;
     double d, relgrd, relstp, rgx, rsx;
@@ -752,6 +753,8 @@ void R_nlm(arma::vec& x, T& fcn,
     if (itrmcd != 0) 
 	{
 		optdrv_end(xpls, x, gpls, g, fpls, f, msg, itrmcd);
+		xpls=p;
+		gpls=f;
 		return;
     }
 
@@ -811,6 +814,10 @@ void nlm(arma::vec& p, const double gtol, int &iter, double &fret, T &funcd, int
 	double fscale=1; // estimate of size of f at minimum, leave at R default for now
 	double dlt = 1; //trust region radius
 	/*R: max(1000 * sqrt(sum((p/typsize)^2)), 1000)*/
+	//p.print("p:");
+	//typsiz.print("typsiz:");
+	//(p/typsiz).print("div:");
+	
 	double stepmx = std::max(10 * std::sqrt(arma::accu(arma::square(p/typsiz))),10.0);
 	double steptl = 1e-6; //R has 1e-6
 	
@@ -820,8 +827,7 @@ void nlm(arma::vec& p, const double gtol, int &iter, double &fret, T &funcd, int
 				   dlt, gtol, stepmx, steptl,
 				   xpls, fret, gpls, itrmcd,
 				   iter);
-	
-	p = xpls;
+	p = xpls; 
 }
 
 

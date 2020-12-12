@@ -51,7 +51,7 @@ mat ll_group_poly2(const imat& a, const vec& A, const mat& b,  const ivec& ncat,
 
 
 // estep where not to be update items and groups are skipped according to the design matrix
-// this is both faster and prevents rounding errors in the jacobian for 'almost 0' chanhes
+// this is both faster and prevents rounding errors in the jacobian for 'almost 0' chances
 
 void se_estep_poly2(const imat& a, const vec& A, const mat& b, const ivec& ncat, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
 				const vec& theta, field<mat>& r, vec& sumtheta, vec& sumsig2, const vec& mu, const vec& sigma, const ivec& pgroup,
