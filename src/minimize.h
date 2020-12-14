@@ -753,8 +753,8 @@ void R_nlm(arma::vec& x, T& fcn,
     if (itrmcd != 0) 
 	{
 		optdrv_end(xpls, x, gpls, g, fpls, f, msg, itrmcd);
-		xpls=p;
-		gpls=f;
+		xpls=x;
+		fpls=f;
 		return;
     }
 

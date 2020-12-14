@@ -112,7 +112,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
                fixed_param=NULL, se=TRUE,
                priorA = c('none','lognormal','normal'),
                priorA_mu = ifelse(priorA=='lognormal',0,1),
-               priorA_sigma = ifelse(priorA=='lognormal',0.5,0.2))
+               priorA_sigma = ifelse(priorA=='lognormal',0.5,0.2),grd=seq(-6,6,.3))
 {
   model = match.arg(model)
   priorA = match.arg(priorA)
@@ -124,7 +124,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
   priorA = switch(priorA, lognormal=1L, normal=2L, 0L)
 
   pgw = progress_width()
-  theta_grid = seq(-6,6,.3)
+  theta_grid = grd #seq(-6,6,.3)
   max_em_iterations = 800L
   qtpredicate = eval(substitute(quote(predicate)))
   env = caller_env()
@@ -245,12 +245,12 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
       dx = to_dexter(em$a,em$b,pre$ncat,colnames(dat),res$H, fixed_items,ref_group+1L)
       pop = tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd),
                    SE_mu=dx$SE_pop[seq(1,nrow(em$mu)*2,2)], SE_sigma=dx$SE_pop[seq(2,nrow(em$mu)*2,2)])
-      out = list(items=dx$items,pop=pop,em=em,pre=pre,model=model)
+      out = list(items=dx$items,pop=pop,em=em,pre=pre)
     } else
     {
       pop=tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd))
       out = list(items=to_dexter(em$a,em$b,pre$ncat,colnames(dat))$items,
-                  pop=pop,em=em,pre=pre,model=model)
+                  pop=pop,em=em,pre=pre)
     }
   } else
   {
@@ -352,11 +352,18 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
         i=i+1L
       }
     }
-    out = list(items=items,pop=pop,em=em,pre=pre,model=model)
+    out = list(items=items,pop=pop,em=em,pre=pre)
   }
   out$theta_grid = theta_grid
   out$item_id=colnames(dat)
+  out$pre$fixed_items=fixed_items
+  out$pre$group_n=group_n
+  out$pre$ref_group = ref_group
+  out$pre$group=group
+  out$model=model
   out$em$a=a
+  if(model=='2PL')
+    out$prior=list(A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma)
   class(out) = append('parms_mml',class(out))
   out
 }
@@ -369,15 +376,13 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
 #' @param ... ignored
 #' 
 #' 
-coef.parms_mml = function(object, what=c('items','populations','likelihood'),...)
+coef.parms_mml = function(object, what=c('items','populations'),...)
 {
   what=match.arg(what)
   if(what=='items')
     return(object$items)
   if(what=='populations')
     return(object$pop)
-  if(what=='likelihood')
-    return(c("log likelihood"=object$em$LL))
 }
 
 
@@ -476,4 +481,34 @@ plot.parms_mml = function(x,items=NULL,nbins=5,ci=.95,...)
     points(x$m,x$obs,bg=x$outlier*2,pch=21)
     lines(x$m,x$obs)
   }
+}
+
+logLik.parms_mml = function(object,...)
+{
+  nodes = list(...)$nodes
+  if(is.null(nodes))
+  {
+    ll = object$em$LL
+  } else
+  {
+    #internal
+    nodes = sort(nodes)
+    pre=object$pre
+    e=object
+    if(e$model=='1PL')
+    {
+      ll = estimate_nrm(e$em$a, e$em$b, pre$ncat,
+                        pre$pni, pre$pcni, pre$pi, pre$px,
+                        nodes, e$em$mu, e$em$sd, pre$group_n, pre$group, pre$fixed_items, 
+                        pre$ref_group, max_iter=1L,pgw=-1)$LL
+    } else
+    {
+      ll = estimate_poly2(e$em$a, e$em$A, e$em$b, pre$ncat,
+                          pre$pni, pre$pcni, pre$pi, pre$px,
+                          nodes, e$em$mu, e$em$sd, pre$group_n, pre$group, pre$fixed_items, 
+                          pre$ref_group, e$prior$A_prior, e$prior$A_mu, e$prior$A_sigma,
+                          max_iter=1L,pgw=-1L)$LL
+    }
+  }
+  c("log likelihood"=ll)
 }

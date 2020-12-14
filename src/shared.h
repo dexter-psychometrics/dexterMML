@@ -71,7 +71,7 @@ struct progress
 			int bw = std::round(bar_width * perc/100.0);
 			Rprintf(fmt.c_str(), std::string(bw,'=').c_str(), perc);
 		}
-		else if(draw_any) Rprintf("\r% 3i%%", perc);	
+		else if(draw_any) Rprintf("\r% 4i%%", perc);	
 	}	
 	void close()
 	{

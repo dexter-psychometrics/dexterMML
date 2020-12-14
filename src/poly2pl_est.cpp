@@ -114,7 +114,7 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 			double ll_itm=0;
 			
 			nlm(pars, tol, itr, ll_itm, f, err);	
-			if(std::abs(A[i]) < .05 || max(abs(pars)) > 50)
+			if(A_prior!=1 && (std::abs(A[i]) < .05 || max(abs(pars)) > 50))
 			{
 				// 2pl can be poorly identified with local minima
 				// on opposite sides of A=0, attempt to break out with a restart of nlm
@@ -130,6 +130,8 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 					err=err2;
 				}			
 			}
+			if(std::abs(pars[0])<1e-6)
+				err=10;
 
 			min_error += err;
 			if(err==0)
