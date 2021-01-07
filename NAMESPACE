@@ -9,7 +9,7 @@ importFrom(stats, "var", "sd", "weighted.mean","qnorm")
 importFrom(graphics, "arrows", "lines", "points")
 importFrom(utils, "modifyList")
 
-export(est)
+export(fit_marginal)
 export(ability.mml)
 export(plausible_values.mml)
 export(sim_2pl)

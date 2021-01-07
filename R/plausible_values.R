@@ -5,7 +5,7 @@
 #' to produce a dependent sample of plausible values.
 #'
 #' @param dataSrc	a connection to a dexter database, a matrix, or a data.frame with columns: person_id, item_id, item_score
-#' @param parms	object produced by function est
+#' @param parms	object produced by function fit_marginal
 #' @param predicate An optional expression to subset data, if NULL all data is used
 #' @param covariates character vector indicating discrete person properties or, in case dataSrc is a matrix,
 #' a vector of groups (integer or character)

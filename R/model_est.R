@@ -24,19 +24,20 @@ em_report = function(em)
 {
   if(em$err>0)
   {
-    flags = bitflag(em$err,1:3)
-    msg = c("minimization error occurred","decreasing likelihood","maximum iterations reached")[flags]
+    flags = bitflag(em$err,1:4)
+    msg = c("minimization error occurred","decreasing likelihood","maximum iterations reached",
+            "alpha prameters near zero")[flags]
     msg = paste0(paste0(msg,collapse=' and '),'.')
     precision = max(em$maxdif_A, em$maxdif_b)
+    if(flags[4])
+    {
+      warning("Some alpha parameters are too close to zero, the model is unidentified")
+    }
 
     if(precision < .001)
     {
       message("The EM solution has a lower accuracy (~",round(precision,5),"). Reasons: ",msg,
               " See the section 'troubleshooting' in the help documentation for possible solutions.")
-    } else if(precision < .01)
-    {
-      warning("The EM solution has low accuracy (~",round(precision,4),"). Reasons: ",msg,
-              " See the section 'troubleshooting' in the help documentation for possible solutions.",call.=FALSE)
     } else
     {
       warning("The EM algorithm did not converge. Reasons: ",msg,
@@ -87,20 +88,20 @@ em_report = function(em)
 #' @section troubleshooting:
 #' The EM algorithm tries to converge on a solution up to a precision of 0.0001. It usually succeeds.
 #' If it is not successful
-#' a message or warning is given (dependent on the severity of the situation). A message can usually be ignored if
-#' you are happy with a slightly lower precision. In case of a warning, the (less precise) results are
+#' a message or warning is given (dependent on the severity of the situation). The (less precise/unconverged) results are
 #' still returned to facilitate identification of the problem but you should generally not trust the results very much.
 #'
 #' The following possible solutions can be tried in such a case:
 #'
 #' \describe{
+#' \item{omit items with too few observations}{Items may have an insufficient number of observations. This is especially problematic
+#' for a 2PL. There is no clear cut lower bound independent of the purpose of the estimation. However, items with fewer
+#' than 100 observations will often cause technical problems in the estimation.}
+#' \item{omit problematic items}{For a 2PL, items that have an alpha parameter very near zero, the beta parameter is undefined
+#' and will not converge. You can either set a prior on the alpha parameter or omit these items (based on the results of the failed calibration)}
 #' \item{omit fixed parameters}{If you use fixed parameters, try to calibrate without fixed parameters
 #' first and plot the results against your fixed parameters. If these do not fall approximately on
 #' a straight line, you might need to omit some of the fixed parameters that show the most misfit.}
-#' \item{linear subsets 1PL}{If your testdata includes adaptive or random tests, but it contains
-#' a significant subset of items that was administered only as linear or multi stage tests, you can use the functions fit_enorm
-#' or fit_enorm_mst in dexter and dexterMST respectively to fit a CML solution on this subset. Next you
-#' can fit the complete dataset with dexterMML while fixing the parameters of the linearly administered items.}
 #' \item{priors in 2PL}{If the results of the calibration are extreme (e.g. parameters with absolute values >50) it
 #' might be necessary to use a prior distribution on the discrimination parameters.
 #' This may happen with adaptive test data.}
@@ -108,11 +109,11 @@ em_report = function(em)
 #'
 #'
 #'
-est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
+fit_marginal = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
                fixed_param=NULL, se=TRUE,
                priorA = c('none','lognormal','normal'),
                priorA_mu = ifelse(priorA=='lognormal',0,1),
-               priorA_sigma = ifelse(priorA=='lognormal',0.5,0.2),grd=seq(-6,6,.3))
+               priorA_sigma = ifelse(priorA=='lognormal',0.5,0.2))
 {
   model = match.arg(model)
   priorA = match.arg(priorA)
@@ -124,7 +125,7 @@ est = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
   priorA = switch(priorA, lognormal=1L, normal=2L, 0L)
 
   pgw = progress_width()
-  theta_grid = grd #seq(-6,6,.3)
+  theta_grid = seq(-6,6,.3)
   max_em_iterations = 800L
   qtpredicate = eval(substitute(quote(predicate)))
   env = caller_env()
