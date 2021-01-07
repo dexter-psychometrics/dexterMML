@@ -58,6 +58,7 @@ test_that('2pl with fixed_parameters',{
   add_booklet(db, verbAggrData, "agg")
   f=fit_enorm(db)
   p=coef(f)
+  close_project(db)
   p$alpha = rep(runif(24,.5,1.5),each=2)
   theta = rnorm(5000,-.5,2)
 
