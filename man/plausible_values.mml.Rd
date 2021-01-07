@@ -15,7 +15,7 @@ plausible_values.mml(
 \arguments{
 \item{dataSrc}{a connection to a dexter database, a matrix, or a data.frame with columns: person_id, item_id, item_score}
 
-\item{parms}{object produced by function est}
+\item{parms}{object produced by function fit_marginal}
 
 \item{predicate}{An optional expression to subset data, if NULL all data is used}
 

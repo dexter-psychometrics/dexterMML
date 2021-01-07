@@ -210,8 +210,6 @@ struct ll_poly2
 };
 
 
-
-
 #endif
 
 
