@@ -47,7 +47,7 @@ em_report = function(em)
 }
 
 
-#' Estimate a model using MML
+#' Fit a marginal model
 #'
 #' Estimate a one or two parameter model using Marginal Maximum Likelihood
 #'
@@ -55,15 +55,14 @@ em_report = function(em)
 #' @param predicate logical predicate to filter dataSrc, has no effect when dataSrc is a matrix
 #' @param group if dataSrc is a matrix then a vector of length nrows, otherwise one or more person
 #' properties together grouping people. See details.
-#' @param model 1PL or 2PL, see details.
 #' @param fixed_param data.frame with columns: item_id, item_score, beta and, if model is 2PL, also alpha.
 #' @param se should standard errors be determined. For large datasets with many items this can take some time. Set
 #' to false to save time.
-#' @param priorA if the estimation does not converge or gives extreme results, usually in an adaptive test or with too few
+#' @param prior_alpha if the estimation does not converge or gives extreme results, usually in an adaptive test or with too few
 #' observations for some items in your data, you can attempt to use a prior to improve the results. Choice of
 #' lognormal or normal
-#' @param priorA_mu first moment of prior distribution on discrimination parameters.
-#' @param priorA_sigma second moment of prior distribution on discrimination parameters.
+#' @param prior_alpha_mu first moment of prior distribution on discrimination parameters.
+#' @param prior_alpha_sigma second moment of prior distribution on discrimination parameters.
 #'
 #' @return an object of type parms_mml, see \code{\link{coef.parms_mml}}.
 #'
@@ -107,28 +106,47 @@ em_report = function(em)
 #' This may happen with adaptive test data.}
 #' }
 #'
-#'
-#'
-fit_marginal = function(dataSrc, predicate=NULL, group = NULL, model= c('1PL','2PL'),
+fit_1pl = function(dataSrc, predicate=NULL, group = NULL, 
+                   fixed_param=NULL, se=TRUE)
+{
+  env = caller_env()
+  qtpredicate = eval(substitute(quote(predicate)))
+  est(dataSrc, qtpredicate, env,group=group,model='1PL',
+      fixed_param=fixed_param,se=se) 
+}
+
+#' @rdname fit_1pl
+fit_2pl = function(dataSrc, predicate=NULL, group = NULL, 
+                   fixed_param=NULL, se=TRUE,
+                   prior_alpha = c('none','lognormal','normal'),
+                   prior_alpha_mu = ifelse(prior_alpha=='lognormal',0,1),
+                   prior_alpha_sigma = ifelse(prior_alpha=='lognormal',0.5,0.2))
+{
+  prior_alpha = match.arg(prior_alpha)
+  force(prior_alpha_mu)
+  if(prior_alpha_sigma <=0)
+    stop("prior_alpha_sigma must be larger than 0")
+  priorA = switch(prior_alpha, lognormal=1L, normal=2L, 0L)
+  qtpredicate = eval(substitute(quote(predicate)))
+  env = caller_env()
+  
+  est(dataSrc, qtpredicate, env,group=group,model='2PL',
+      fixed_param=fixed_param,se=se,
+      priorA=0L, priorA_mu=prior_alpha_mu, priorA_sigma=prior_alpha_sigma)
+}
+
+
+est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL','2PL'),
                fixed_param=NULL, se=TRUE,
-               priorA = c('none','lognormal','normal'),
-               priorA_mu = ifelse(priorA=='lognormal',0,1),
-               priorA_sigma = ifelse(priorA=='lognormal',0.5,0.2))
+               priorA = 0L,
+               priorA_mu = 0,
+               priorA_sigma = 0.2)
 {
   model = match.arg(model)
-  priorA = match.arg(priorA)
-
-  force(priorA_mu)
-  if(priorA_sigma <=0)
-    stop("priorA_sigma must be larger than 0")
-
-  priorA = switch(priorA, lognormal=1L, normal=2L, 0L)
 
   pgw = progress_width()
   theta_grid = seq(-6,6,.3)
   max_em_iterations = 800L
-  qtpredicate = eval(substitute(quote(predicate)))
-  env = caller_env()
 
   data = get_mml_data(dataSrc,qtpredicate,env,group)
 

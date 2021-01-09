@@ -9,7 +9,7 @@ test_that('1pl verb agg confirms to dexter',{
   f=fit_enorm(db)
   p=coef(f)
   
-  e = fit_marginal(db, fixed_param=p[1:2,])
+  e = fit_1pl(db, fixed_param=p[1:2,])
   expect_lt(mean(abs(p$beta-coef(e)$beta)),.02)
 
   expect_lt(mean(abs(p$SE_beta-coef(e)$SE_beta)[-(1:2)]),.01)
@@ -40,7 +40,7 @@ test_that('2pl with simdata and missing cats',{
   #dat[1:1000,seq(1,ncol(dat),2)] = NA_integer_
   #dat[1001:1500,seq(2,ncol(dat),2)] = NA_integer_
 
-  e=fit_marginal(dat,model='2PL',group=group,se=FALSE)
+  e=fit_2pl(dat,group=group,se=FALSE)
   
   expect_lt(max(abs(coef(e)$beta-p$beta)),.4)
   expect_lt(mean(abs(coef(e)$beta-p$beta)),.2)
@@ -64,7 +64,7 @@ test_that('2pl with fixed_parameters',{
 
   dat = sim_2pl(p,theta)
   
-  e = fit_marginal(dat, fixed_param=p[1:6,],model='2PL',se=FALSE)
+  e = fit_2pl(dat, fixed_param=p[1:6,],se=FALSE)
   
   pop=coef(e,what='population')
   expect_lt(abs(pop$mu-mean(theta)),.05)

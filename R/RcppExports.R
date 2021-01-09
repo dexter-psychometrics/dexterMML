@@ -61,10 +61,6 @@ estimate_poly2 <- function(a, A_start, b_start, ncat, pni, pcni, pi, px, theta, 
     .Call(`_dexterMML_estimate_poly2`, a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group, A_prior, A_mu, A_sigma, max_iter, pgw)
 }
 
-estimate_poly2_test <- function(a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group = 0L, A_prior = 0L, A_mu = 0, A_sigma = 0.5, max_iter = 200L, pgw = 80L) {
-    .Call(`_dexterMML_estimate_poly2_test`, a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group, A_prior, A_mu, A_sigma, max_iter, pgw)
-}
-
 test_ll_p2 <- function(a, theta, r, par, prior = 0L) {
     .Call(`_dexterMML_test_ll_p2`, a, theta, r, par, prior)
 }
