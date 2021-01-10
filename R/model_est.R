@@ -53,7 +53,7 @@ em_report = function(em)
 #'
 #' @param dataSrc a matrix, long format data.frame or a dexter database
 #' @param predicate logical predicate to filter dataSrc, has no effect when dataSrc is a matrix
-#' @param group if dataSrc is a matrix then a vector of length nrows, otherwise one or more person
+#' @param group if dataSrc is a matrix then a vector of length nrows, otherwise the names of one or more person
 #' properties together grouping people. See details.
 #' @param fixed_param data.frame with columns: item_id, item_score, beta and, if model is 2PL, also alpha.
 #' @param se should standard errors be determined. For large datasets with many items this can take some time. Set
@@ -132,7 +132,7 @@ fit_2pl = function(dataSrc, predicate=NULL, group = NULL,
   
   est(dataSrc, qtpredicate, env,group=group,model='2PL',
       fixed_param=fixed_param,se=se,
-      priorA=0L, priorA_mu=prior_alpha_mu, priorA_sigma=prior_alpha_sigma)
+      priorA=priorA, priorA_mu=prior_alpha_mu, priorA_sigma=prior_alpha_sigma)
 }
 
 
