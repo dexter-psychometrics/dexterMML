@@ -35,11 +35,6 @@ plausible_values.mml = function(dataSrc, parms, predicate=NULL, covariates=NULL,
   dat = data$dat
   group = data$group
   out = data$persons
-  group=covariates
-
-  max_score = max(dat,na.rm=TRUE)
-
-  pre = lapply(mat_pre(dat, max_score), drop)
 
   if(is.null(group))
   {
@@ -51,25 +46,14 @@ plausible_values.mml = function(dataSrc, parms, predicate=NULL, covariates=NULL,
     group = as.integer(group) -1L
     group_n = as.integer(table(group))
   }
+  
+  pre = abl_pre(dat, parms)
 
-  if(parms$model=='1PL')
-  {
-    A=rep(1,ncol(parms$em$b))
-    b=-parms$em$b/parms$em$a
-  } else
-  {
-    A=parms$em$A
-    b=parms$em$b
-  }
-
-  data_a = categorize(pre$pni, pre$pcni, pre$pi,
-                      parms$pre$icat, parms$pre$imax,max(parms$pre$ncat), pre$px)
-
-  starting_values = theta_2pl(data_a, A, b, parms$pre$ncat,
+  starting_values = theta_2pl(pre$a, pre$A, pre$b, pre$ncat,
                                       pre$pni, pre$pcni, pre$pi, pre$px,
-                                      WLE=TRUE, USE_A = TRUE)
+                                      WLE=TRUE, USE_A = (pre$model!='1PL'))
 
-  pv =  plausible_values_c(A, data_a, b, parms$pre$ncat,
+  pv =  plausible_values_c(pre$a, pre$A, pre$b, pre$ncat,
                          pre$pni, pre$pcni, pre$pi, pre$px, group, group_n,
                          as.integer(npv), starting_values,
                          n_prior_updates=70L, thin=70L,pgw = progress_width())

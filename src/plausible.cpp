@@ -136,7 +136,7 @@ arma::mat plausible_values_c(const arma::vec& A, const arma::imat& a, const arma
 			}
 		}		
 		sample_musig(popn, mu, sigma, sigma_old, mu_all, sigma_all);
-		rng.long_jump(max_thr+1);
+		rng.long_jump(max_thr+2);
 		prog.update(++tick);
 		iter++;
 	}
