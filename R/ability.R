@@ -8,6 +8,7 @@ abl_pre = function(dataSrc, pars)
   if(pars$model=='1PL')
   {
     pars$b = -pars$b/pars$a
+    pars$b[1,] = 0
     pars$A = rep(1,ncol(dataSrc))
   }
   
