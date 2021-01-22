@@ -72,7 +72,7 @@ struct ll_poly2
 			}
 
 			for(int k=0; k<ncat; k++)
-				ll -= r.at(t,k) * std::log(p[k]/s);
+				ll -= r.at(t,k) * (std::log(p[k])-std::log(s));
 		}
 		ll += prior_part_ll(A);
 		return ll;
@@ -171,7 +171,9 @@ struct ll_poly2
 				s6 -= a[k]*par[k]*p[k];
 				sr += r.at(t,k);
 			}
-			h.at(0,0) += sr * (s*s2+s*s3+s*s4-SQR(s5)-2*s5*s6-SQR(s6))/SQR(s);
+			//h.at(0,0) += sr * (s*s2+s*s3+s*s4-SQR(s5)-2*s5*s6-SQR(s6))/SQR(s);
+			//re-arrange to prevent overflow
+			h.at(0,0) += sr*((s2+s3+s4)/s-SQR(s5/s)-SQR(s6/s)-2*((s5/s)*(s6/s)));
 			//Ab
 			for(int k=1;k<ncat;k++)
 			{
@@ -191,9 +193,12 @@ struct ll_poly2
 			//bb
 			for(int k=1;k<ncat;k++)
 			{
-				h.at(k,k) -= (SQR(p[k]*a[k])/s - SQR(a[k])*p[k])*A2*sr/s;
+				//h.at(k,k) -= (SQR(p[k]*a[k])/s - SQR(a[k])*p[k])*A2*sr/s;
+				//re-arrange to prevent overflow
+				h.at(k,k) -= SQR(a[k])*p[k]*(p[k]/s-1)*A2*sr/s;
 				for(int j=k+1;j<ncat;j++)
 					h.at(k,j) -= A2*a[k]*a[j]*(p[k]*p[j]*sr)/SQR(s);
+					
 			}		
 		}	
 
@@ -209,6 +214,42 @@ struct ll_poly2
 	}
 };
 
+
+struct ll_poly2_b : ll_poly2
+{
+	double alpha;
+	ll_poly2_b(const double A, int* a_ptr, double* theta_ptr, arma::mat& r_, const int a_prior=0, const double a_mu=0, const double a_sigma=0.5) :
+		ll_poly2(a_ptr, theta_ptr, r_, a_prior, a_mu, a_sigma) 
+	{
+		alpha=A;
+	}
+	double operator()(const arma::vec& par) 
+	{
+		arma::vec p(par.n_elem+1);
+		p.tail(par.n_elem) = par;
+		p[0]=alpha;
+		return ll_poly2::operator()(p);
+	}
+	void df(const arma::vec& par, arma::vec& g)
+	{
+		arma::vec p(par.n_elem+1), gp(par.n_elem+1);
+		p.tail(par.n_elem) = par;
+		p[0]=alpha;
+		ll_poly2::df(p,gp);
+		g=gp.tail(g.n_elem);
+	}
+	void hess(const arma::vec& par, arma::mat& h, const bool negative=true)
+	{
+		arma::vec p(par.n_elem+1);
+		arma::mat hp(par.n_elem+1,par.n_elem+1);
+		p.tail(par.n_elem) = par;
+		p[0]=alpha;
+		ll_poly2::hess(p,hp,negative);
+		for(int i=0; i<par.n_elem; i++)
+			for(int j=0; j<par.n_elem; j++)
+				h.at(i,j)=hp.at(i+1,j+1);
+	}
+};
 
 #endif
 

@@ -53,11 +53,21 @@ Rcpp::List mat_pre(const arma::imat& dat, const int max_score)
 			}
 		}
 	}
+	ivec ip(sz);
+	int ii=0;
+	for(int i=0;i<nit;i++)
+		for(int p=0;p<np;p++)
+			if(dat.at(p,i) >=0)
+				ip[ii++]=p;
 
 	// cumulative pointers	
 	ivec pcni(np+1);
 	pcni[0] = 0;
 	std::partial_sum(pni.begin(),pni.end(),pcni.begin()+1);
+
+	ivec icnp(nit+1);
+	icnp[0] = 0;
+	std::partial_sum(inp.begin(),inp.end(),icnp.begin()+1);
 
 	ivec imax(nit,fill::zeros), isum(nit,fill::zeros), ncat(nit, fill::zeros);
 	for(int i=0;i<nit;i++)
@@ -76,8 +86,8 @@ Rcpp::List mat_pre(const arma::imat& dat, const int max_score)
 	}
 	
 	return Rcpp::List::create(
-		Named("pi") = pi, Named("px") = px, 
-		Named("inp") = inp, Named("pni") = pni, Named("pcni") = pcni,
+		Named("pi") = pi, Named("px") = px, Named("ip") = ip,
+		Named("inp") = inp, Named("icnp") = icnp, Named("pni") = pni, Named("pcni") = pcni,
 		Named("icat") = icat, Named("ncat") = ncat, Named("imax") = imax, Named("isum") = isum, Named("psum") = psum);
 }
 

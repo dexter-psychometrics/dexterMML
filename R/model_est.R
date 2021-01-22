@@ -46,6 +46,9 @@ em_report = function(em)
   }
 }
 
+cal_settings = list(
+  theta_grid = seq(-6,6,.3),
+  max_em_iterations = 800L)
 
 #' Fit a marginal model
 #'
@@ -145,8 +148,8 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
   model = match.arg(model)
 
   pgw = progress_width()
-  theta_grid = seq(-6,6,.3)
-  max_em_iterations = 800L
+  theta_grid = cal_settings$theta_grid
+  max_em_iterations = cal_settings$max_em_iterations
 
   data = get_mml_data(dataSrc,qtpredicate,env,group)
 
@@ -313,9 +316,13 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
 
     em = estimate_poly2(a, A, b, pre$ncat,
                           pre$pni, pre$pcni, pre$pi, pre$px,
-                          theta_grid, mu, sigma, group_n, group, fixed_items, ref_group,
+                          theta_grid, mu, sigma, group_n, group, fixed_items, 
+                          pre$ip, pre$inp, pre$icnp,
+                          ref_group,
                           A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,
                           max_iter=max_em_iterations,pgw=pgw)
+    
+    
 
     em_report(em)
     if(em$err != 0L && max(em$maxdif_b,em$maxdif_A)>.001) se=FALSE
@@ -492,11 +499,12 @@ plot.parms_mml = function(x,items=NULL,nbins=5,ci=.95,...)
     plot.args$main = gsub('$item_id',parms$item_id[i],plot.args$main,fixed=TRUE)
     do.call(plot,plot.args)
     
-    suppressWarnings({
+    if(x$conf_min<x$conf_max)
+    {
       arrows(x$m, x$conf_min, 
              x$m, x$conf_max, 
-             length=0.05, angle=90, code=3, col=plot.args$col)})
-    
+             length=0.05, angle=90, code=3, col=plot.args$col)
+    }
     points(x$m,x$obs,bg=x$outlier*2,pch=21)
     lines(x$m,x$obs)
   }
@@ -522,11 +530,10 @@ logLik.parms_mml = function(object,...)
                         pre$ref_group, max_iter=1L,pgw=-1)$LL
     } else
     {
-      ll = estimate_poly2(e$em$a, e$em$A, e$em$b, pre$ncat,
+     
+      ll = loglikelihood_2pl(e$em$a, e$em$A, e$em$b, pre$ncat,
                           pre$pni, pre$pcni, pre$pi, pre$px,
-                          nodes, e$em$mu, e$em$sd, pre$group_n, pre$group, pre$fixed_items, 
-                          pre$ref_group, e$prior$A_prior, e$prior$A_mu, e$prior$A_sigma,
-                          max_iter=1L,pgw=-1L)$LL
+                          nodes, e$em$mu, e$em$sd, pre$group)
     }
   }
   c("log likelihood"=ll)

@@ -5,13 +5,13 @@
 abl_pre = function(dataSrc, pars)
 {
   pars = simple_pars(pars, colnames(dataSrc))
-  if(pars$model=='1PL')
+  # this is all still kludgy
+  if(pars$model=='1PL' && !inherits(pars,'data.frame'))
   {
     pars$b = -pars$b/pars$a
     pars$b[1,] = 0
     pars$A = rep(1,ncol(dataSrc))
   }
-  
   
   max_score = max(dataSrc, na.rm=TRUE)
   pre = lapply(mat_pre(dataSrc, max_score), drop)

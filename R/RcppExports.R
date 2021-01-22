@@ -57,8 +57,12 @@ sim_2plc <- function(a, A, b, ncat, theta) {
     .Call(`_dexterMML_sim_2plc`, a, A, b, ncat, theta)
 }
 
-estimate_poly2 <- function(a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group = 0L, A_prior = 0L, A_mu = 0, A_sigma = 0.5, max_iter = 200L, pgw = 80L) {
-    .Call(`_dexterMML_estimate_poly2`, a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group, A_prior, A_mu, A_sigma, max_iter, pgw)
+loglikelihood_2pl <- function(a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, pgroup) {
+    .Call(`_dexterMML_loglikelihood_2pl`, a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, pgroup)
+}
+
+estimate_poly2 <- function(a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ip, inp, icnp, ref_group = 0L, A_prior = 0L, A_mu = 0, A_sigma = 0.5, max_iter = 200L, pgw = 80L) {
+    .Call(`_dexterMML_estimate_poly2`, a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ip, inp, icnp, ref_group, A_prior, A_mu, A_sigma, max_iter, pgw)
 }
 
 test_ll_p2 <- function(a, theta, r, par, prior = 0L) {

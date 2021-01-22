@@ -253,9 +253,31 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// loglikelihood_2pl
+double loglikelihood_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, const arma::vec& theta, const arma::vec& mu, const arma::vec& sigma, const arma::ivec& pgroup);
+RcppExport SEXP _dexterMML_loglikelihood_2pl(SEXP aSEXP, SEXP ASEXP, SEXP bSEXP, SEXP ncatSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP thetaSEXP, SEXP muSEXP, SEXP sigmaSEXP, SEXP pgroupSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::imat& >::type a(aSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type A(ASEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type b(bSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type ncat(ncatSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pni(pniSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pcni(pcniSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pi(piSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type px(pxSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type sigma(sigmaSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pgroup(pgroupSEXP);
+    rcpp_result_gen = Rcpp::wrap(loglikelihood_2pl(a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, pgroup));
+    return rcpp_result_gen;
+END_RCPP
+}
 // estimate_poly2
-Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::mat& b_start, const arma::ivec& ncat, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, arma::vec& theta, const arma::vec& mu_start, const arma::vec& sigma_start, const arma::ivec& gn, const arma::ivec& pgroup, const arma::ivec& item_fixed, const int ref_group, const int A_prior, const double A_mu, const double A_sigma, const int max_iter, const int pgw);
-RcppExport SEXP _dexterMML_estimate_poly2(SEXP aSEXP, SEXP A_startSEXP, SEXP b_startSEXP, SEXP ncatSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP thetaSEXP, SEXP mu_startSEXP, SEXP sigma_startSEXP, SEXP gnSEXP, SEXP pgroupSEXP, SEXP item_fixedSEXP, SEXP ref_groupSEXP, SEXP A_priorSEXP, SEXP A_muSEXP, SEXP A_sigmaSEXP, SEXP max_iterSEXP, SEXP pgwSEXP) {
+Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::mat& b_start, const arma::ivec& ncat, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, arma::vec& theta, const arma::vec& mu_start, const arma::vec& sigma_start, const arma::ivec& gn, const arma::ivec& pgroup, const arma::ivec& item_fixed, const arma::ivec ip, const arma::ivec& inp, const arma::ivec& icnp, const int ref_group, const int A_prior, const double A_mu, const double A_sigma, const int max_iter, const int pgw);
+RcppExport SEXP _dexterMML_estimate_poly2(SEXP aSEXP, SEXP A_startSEXP, SEXP b_startSEXP, SEXP ncatSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP thetaSEXP, SEXP mu_startSEXP, SEXP sigma_startSEXP, SEXP gnSEXP, SEXP pgroupSEXP, SEXP item_fixedSEXP, SEXP ipSEXP, SEXP inpSEXP, SEXP icnpSEXP, SEXP ref_groupSEXP, SEXP A_priorSEXP, SEXP A_muSEXP, SEXP A_sigmaSEXP, SEXP max_iterSEXP, SEXP pgwSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -273,13 +295,16 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::ivec& >::type gn(gnSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type pgroup(pgroupSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type item_fixed(item_fixedSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec >::type ip(ipSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type inp(inpSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type icnp(icnpSEXP);
     Rcpp::traits::input_parameter< const int >::type ref_group(ref_groupSEXP);
     Rcpp::traits::input_parameter< const int >::type A_prior(A_priorSEXP);
     Rcpp::traits::input_parameter< const double >::type A_mu(A_muSEXP);
     Rcpp::traits::input_parameter< const double >::type A_sigma(A_sigmaSEXP);
     Rcpp::traits::input_parameter< const int >::type max_iter(max_iterSEXP);
     Rcpp::traits::input_parameter< const int >::type pgw(pgwSEXP);
-    rcpp_result_gen = Rcpp::wrap(estimate_poly2(a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group, A_prior, A_mu, A_sigma, max_iter, pgw));
+    rcpp_result_gen = Rcpp::wrap(estimate_poly2(a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ip, inp, icnp, ref_group, A_prior, A_mu, A_sigma, max_iter, pgw));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -389,7 +414,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_Oakes_nrm", (DL_FUNC) &_dexterMML_Oakes_nrm, 18},
     {"_dexterMML_plausible_values_c", (DL_FUNC) &_dexterMML_plausible_values_c, 15},
     {"_dexterMML_sim_2plc", (DL_FUNC) &_dexterMML_sim_2plc, 5},
-    {"_dexterMML_estimate_poly2", (DL_FUNC) &_dexterMML_estimate_poly2, 20},
+    {"_dexterMML_loglikelihood_2pl", (DL_FUNC) &_dexterMML_loglikelihood_2pl, 12},
+    {"_dexterMML_estimate_poly2", (DL_FUNC) &_dexterMML_estimate_poly2, 23},
     {"_dexterMML_test_ll_p2", (DL_FUNC) &_dexterMML_test_ll_p2, 5},
     {"_dexterMML_test_gradient_p2", (DL_FUNC) &_dexterMML_test_gradient_p2, 5},
     {"_dexterMML_test_hess_p2", (DL_FUNC) &_dexterMML_test_hess_p2, 5},
