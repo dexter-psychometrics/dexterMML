@@ -1,14 +1,14 @@
 
 #include <RcppArmadillo.h>
 #include "minimize.h"
-#include "poly2pl_item.h"
+#include "pl2_item.h"
 
 using namespace arma;
 
 // [[Rcpp::export]]
 void test_nlm(arma::ivec& a, arma::vec theta, arma::mat& r, const arma::vec& par_in)
 {
-	ll_poly2 f(a.memptr(), theta.memptr(), r); 
+	ll_pl2 f(a.memptr(), theta.memptr(), r); 
 	const double gtol=1e-10;
 	int iter=0,err=0;
 	double fret;

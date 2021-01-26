@@ -49,20 +49,12 @@ Oakes_nrm <- function(a, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pg
     .Call(`_dexterMML_Oakes_nrm`, a, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, ref_group, pgw)
 }
 
-plausible_values_c <- function(A, a, b, ncat, pni, pcni, pi, px, pop, popn, npv, starting_values, n_prior_updates = 10L, thin = 10L, pgw = 80L) {
-    .Call(`_dexterMML_plausible_values_c`, A, a, b, ncat, pni, pcni, pi, px, pop, popn, npv, starting_values, n_prior_updates, thin, pgw)
-}
-
-sim_2plc <- function(a, A, b, ncat, theta) {
-    .Call(`_dexterMML_sim_2plc`, a, A, b, ncat, theta)
-}
-
 loglikelihood_2pl <- function(a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, pgroup) {
     .Call(`_dexterMML_loglikelihood_2pl`, a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, pgroup)
 }
 
-estimate_poly2 <- function(a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ip, inp, icnp, ref_group = 0L, A_prior = 0L, A_mu = 0, A_sigma = 0.5, max_iter = 200L, pgw = 80L) {
-    .Call(`_dexterMML_estimate_poly2`, a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ip, inp, icnp, ref_group, A_prior, A_mu, A_sigma, max_iter, pgw)
+estimate_pl2 <- function(a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ip, inp, icnp, ref_group = 0L, A_prior = 0L, A_mu = 0, A_sigma = 0.5, use_m2 = 150L, max_iter = 200L, pgw = 80L) {
+    .Call(`_dexterMML_estimate_pl2`, a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ip, inp, icnp, ref_group, A_prior, A_mu, A_sigma, use_m2, max_iter, pgw)
 }
 
 test_ll_p2 <- function(a, theta, r, par, prior = 0L) {
@@ -77,8 +69,28 @@ test_hess_p2 <- function(a, theta, r, par, prior = 0L) {
     .Call(`_dexterMML_test_hess_p2`, a, theta, r, par, prior)
 }
 
-Oakes_poly2 <- function(a, A, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, ref_group = 0L, A_prior = 0L, A_mu = 0, A_sigma = 0.5, pgw = 80L) {
-    .Call(`_dexterMML_Oakes_poly2`, a, A, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, ref_group, A_prior, A_mu, A_sigma, pgw)
+test_ll_v2 <- function(a, A, b, ncat, theta, ip, pi, pcni, px, pgroup, inp, icnp, mu, sigma, item, pars) {
+    .Call(`_dexterMML_test_ll_v2`, a, A, b, ncat, theta, ip, pi, pcni, px, pgroup, inp, icnp, mu, sigma, item, pars)
+}
+
+test_gr_v2 <- function(a, A, b, ncat, theta, ip, pi, pcni, px, pgroup, inp, icnp, mu, sigma, item, pars) {
+    .Call(`_dexterMML_test_gr_v2`, a, A, b, ncat, theta, ip, pi, pcni, px, pgroup, inp, icnp, mu, sigma, item, pars)
+}
+
+test_hess_v2 <- function(a, A, b, ncat, theta, ip, pi, pcni, px, pgroup, inp, icnp, mu, sigma, item, pars) {
+    .Call(`_dexterMML_test_hess_v2`, a, A, b, ncat, theta, ip, pi, pcni, px, pgroup, inp, icnp, mu, sigma, item, pars)
+}
+
+Oakes_pl2 <- function(a, A, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, ref_group = 0L, A_prior = 0L, A_mu = 0, A_sigma = 0.5, pgw = 80L) {
+    .Call(`_dexterMML_Oakes_pl2`, a, A, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, ref_group, A_prior, A_mu, A_sigma, pgw)
+}
+
+plausible_values_c <- function(A, a, b, ncat, pni, pcni, pi, px, pop, popn, npv, starting_values, n_prior_updates = 10L, thin = 10L, pgw = 80L) {
+    .Call(`_dexterMML_plausible_values_c`, A, a, b, ncat, pni, pcni, pi, px, pop, popn, npv, starting_values, n_prior_updates, thin, pgw)
+}
+
+sim_2plc <- function(a, A, b, ncat, theta) {
+    .Call(`_dexterMML_sim_2plc`, a, A, b, ncat, theta)
 }
 
 test_nlm <- function(a, theta, r, par_in) {

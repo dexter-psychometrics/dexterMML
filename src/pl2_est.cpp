@@ -1,12 +1,12 @@
 #include <RcppArmadillo.h>
 #include "minimize.h"
-#include "poly2pl_item.h"
+#include "pl2_item.h"
 #include "shared.h"
 
 using namespace arma;
 using Rcpp::Named;
 
-void estep_poly2(const imat& a, const vec& A, const mat& b, const ivec& ncat, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
+void estep_pl2(const imat& a, const vec& A, const mat& b, const ivec& ncat, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
 				const vec& theta, field<mat>& r, vec& thetabar, vec& sumtheta, vec& sumsig2, const vec& mu, const vec& sigma, const ivec& pgroup, long double& ll)
 {
 	const int nit = ncat.n_elem, nt = theta.n_elem, np = pni.n_elem, ng = mu.n_elem;
@@ -20,7 +20,7 @@ void estep_poly2(const imat& a, const vec& A, const mat& b, const ivec& ncat, co
 	
 	for(int i=0; i<nit; i++)
 	{
-		itrace(i) = poly2_trace(theta, a.col(i), A[i], b.col(i), ncat[i]);
+		itrace(i) = pl2_trace(theta, a.col(i), A[i], b.col(i), ncat[i]);
 		r(i).zeros();
 	}
 	
@@ -73,7 +73,7 @@ double loglikelihood_2pl(const arma::imat& a, const arma::vec& A, const arma::ma
 	field<mat> itrace(nit);
 	
 	for(int i=0; i<nit; i++)
-		itrace(i) = poly2_trace(theta, a.col(i), A[i], b.col(i), ncat[i]);
+		itrace(i) = pl2_trace(theta, a.col(i), A[i], b.col(i), ncat[i]);
 
 	long double ll=0;
 
@@ -94,138 +94,6 @@ double loglikelihood_2pl(const arma::imat& a, const arma::vec& A, const arma::ma
 	}
 	return (double)ll;
 }
-
-
-
-
-//more direct objective function
-
-
-struct ll2_poly
-{
-	ivec x,ai;
-	mat posterior;
-	int np;
-	vec theta;
-	vec bi;	
-
-	ll2_poly(const imat& a, const vec& A, const mat& b, const vec& theta_, const ivec& ncat, 
-			const ivec& ip, const ivec& pi, const ivec& pcni, const ivec& px, 
-			const ivec& pgroup, const ivec& inp, const ivec& icnp,
-			const vec& mu, const vec& sigma, const int item)
-	{
-		const int nit = b.n_cols, nt=theta_.n_elem, ng = mu.n_elem;;
-		np = inp[item];
-		field<mat> itrace(nit);
-		theta = theta_;
-		for(int i=0; i<nit; i++)
-		{
-			itrace(i) = poly2_trace(theta, a.col(i), A[i], b.col(i), ncat[i]);
-		}
-		posterior = mat(nt,np);
-		x = ivec(np);
-		mat posterior0(nt,ng);
-		for(int g=0; g<ng; g++)
-			posterior0.col(g) = gaussian_pts(mu[g],sigma[g],theta);
-		
-		for(int ii=icnp[item],pp=0; ii < icnp[item+1]; ii++,pp++)
-		{
-			const int p=ip[ii];
-			posterior.col(pp) = posterior0.col(pgroup[p]);			
-			for(int indx = pcni[p]; indx<pcni[p+1]; indx++)
-			{
-				if(pi[indx]!=item)
-					posterior.col(pp) %= itrace(pi[indx]).col(px[indx]);
-				else
-					x[pp] = px[indx];
-			}
-		}
-		ai = a.col(item).head(ncat[item]);
-		bi = b.col(item);
-	}
-	double operator()(const arma::vec& pars)
-	{
-		double ll=0;
-		vec bpars = pars;
-		bpars[0]=0;
-		double A=pars[0];
-		
-		mat itrace = poly2_trace(theta, ai, A, bpars, ai.n_elem);
-		for(int p=0; p<np;p++)
-			ll -= std::log(accu(posterior.col(p) % itrace.col(x[p])));
-		return ll;
-	}
-	// can be used to estimate b's the traditional way
-	mat r(const arma::vec& pars)
-	{
-		vec bpars = pars;
-		bpars[0]=0;
-		double A=pars[0];
-		vec pst(theta.n_elem);
-		mat itrace = poly2_trace(theta, ai, A, bpars, ai.n_elem);
-		mat ipst(theta.n_elem,pars.n_elem,fill::zeros);
-		for(int p=0; p<np;p++)
-		{
-			pst = posterior.col(p) % itrace.col(x[p]);
-			ipst.col(x[p]) += pst/accu(pst);
-		}	
-		return ipst;
-	}
-};
-
-struct ll2_astep : ll2_poly
-{
-	using ll2_poly::ll2_poly;
-	double operator()(const double A)
-	{
-		vec par = bi;
-		par[0]=A;
-		return ll2_poly::operator()(par);
-	}
-};
-
-//a_prior vergeten we nog even
-vec ab_step(imat& a, const vec& A, const mat& b, vec& theta, const ivec& ncat, const ivec& ip, const ivec& pi, const ivec& pcni, const ivec& px, 
-			const ivec& pgroup,
-			const ivec& inp, const ivec& icnp, const vec& mu, const vec& sigma, const int item)
-{
-	
-	const double tol = 1e-10;
-	ll2_astep f(a, A, b, theta, ncat, ip, pi, pcni, px, pgroup, inp, icnp, mu, sigma,item);
-	Brent brent;
-	
-	double alpha = A[item];
-	
-	brent.bracket(alpha-0.5, alpha+0.5, f);
-	
-	brent.minimize(f);
-
-	alpha = brent.xmin;
-	
-	vec pars = b.col(item).head(ncat[item]);
-	pars[0] = alpha;
-	
-	mat r = f.r(pars);
-	ll_poly2_b fb(alpha, a.colptr(item), theta.memptr(), r);
-	
-	vec bpars = pars.tail(pars.n_elem-1);
-	int itr=0,err=0;
-	double ll_itm=0;			
-			
-	if(ncat[item]==2)
-	{
-		D1min(bpars, tol, itr, ll_itm, fb, err);
-	}
-	else
-	{
-		nlm(bpars, tol, itr, ll_itm, fb, err);
-	}
-	pars.tail(pars.n_elem-1)=bpars;
-	return pars;
-}
-
-
-
 
 
 // stop estimation because of decreasing likelihood
@@ -269,7 +137,7 @@ void est_stop(imat& a, const ivec& ncat, const ivec& pni, const ivec& pcni, cons
 		//check if anything is won
 		//compute likelihood
 		long double ll_new;
-		estep_poly2(a, A, b, ncat, pni, pcni, pi, px, 
+		estep_pl2(a, A, b, ncat, pni, pcni, pi, px, 
 					theta, r, thetabar, sum_theta, sum_sigma2, mu, sigma, pgroup, ll_new);
 		double prior_part=0;
 				
@@ -277,7 +145,7 @@ void est_stop(imat& a, const ivec& ncat, const ivec& pni, const ivec& pcni, cons
 			for(int i=0;i<nit;i++)
 				if(item_fixed[i] != 1)
 				{
-					ll_poly2 f(a.colptr(i), theta.memptr(), r(i), A_prior, A_mu, A_sigma);
+					ll_pl2 f(a.colptr(i), theta.memptr(), r(i), A_prior, A_mu, A_sigma);
 					prior_part -= f.prior_part_ll(A[i]);
 				}
 				
@@ -297,17 +165,45 @@ void est_stop(imat& a, const ivec& ncat, const ivec& pni, const ivec& pcni, cons
 	}
 }
 
-
+template <class T>
+vec m_step_2pl(T &f, const double A, const vec& b, const int ncat, const double tol, int& min_error)
+{
+	vec pars = b.head(ncat);
+	pars[0] = A;
+	int itr=0,err=0;
+	double ll_itm=0;
+			
+	nlm(pars, tol, itr, ll_itm, f, err);	
+			
+	if(f.A_prior!=1 && (std::abs(A) < .05 || max(abs(pars)) > 50))
+	{
+		// 2pl can be poorly identified with local minima
+		// on opposite sides of A=0, attempt to break out with a restart of nlm
+		int err2=0;
+		itr=0;
+		double ll_itm2=0;
+		vec pars2 = -b.head(ncat)/5;
+		pars2[0] = -2*A;
+		nlm(pars2, tol, itr, ll_itm2, f, err2);	
+		if(err2==0 && ll_itm2<ll_itm)
+		{
+			min_error=err2;
+			return pars2;
+		}			
+	}
+	min_error=err;
+	return pars;	
+}
 
 
 // [[Rcpp::export]]
-Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::mat& b_start, const arma::ivec& ncat,
+Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat& b_start, const arma::ivec& ncat,
 						const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 						arma::vec& theta, const arma::vec& mu_start, const arma::vec& sigma_start, const arma::ivec& gn, const arma::ivec& pgroup, 
 						const arma::ivec& item_fixed,
 						const arma::ivec ip, const arma::ivec& inp, const arma::ivec& icnp,
 						const int ref_group=0, const int A_prior=0, const double A_mu=0, const double A_sigma=0.5, 
-						const int max_iter=200, const int pgw=80)
+						const int use_m2 = 150, const int max_iter=200, const int pgw=80)
 {
 	const int nit = a.n_cols, nt = theta.n_elem, np = pni.n_elem, ng=gn.n_elem;
 	
@@ -316,7 +212,7 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 	mat b = b_start;
 	vec A = A_start;
 
-	field<mat> r(nit);
+	field<mat> r(nit), itrace(nit);
 	for(int i=0; i<nit; i++)
 		r(i) = mat(nt,ncat[i]);
 	
@@ -336,9 +232,11 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 	mat store_A(nit,2,fill::zeros), store_mu(ng,2,fill::zeros), store_sigma(ng,2,fill::zeros);
 	int store_i=0;
 	
+	mat tmp1(2,max_iter,fill::zeros),tmp2(2,max_iter,fill::zeros);
+	
 	for(; iter<max_iter; iter++)
 	{
-		estep_poly2(a, A, b, ncat, pni, pcni, pi, px, 
+		estep_pl2(a, A, b, ncat, pni, pcni, pi, px, 
 					theta, r, thetabar, sum_theta, sum_sigma2, mu, sigma, pgroup, ll);
 		
 		h_ll[iter] = ll + prior_part;
@@ -364,44 +262,13 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 #pragma omp parallel for reduction(max: maxdif_A, maxdif_b) reduction(+:min_error, prior_part)
 		for(int i=0; i<nit; i++)
 		{	
-			if(item_fixed[i] == 1)
+			if(item_fixed[i] == 1 || inp[i] < use_m2)
 				continue;
-			if(inp[i] < 150 && A[i]>0)
-			{
-				vec pars = ab_step(a, store_A.col(1-store_i), store_b.slice(1-store_i), theta, ncat, ip, pi, pcni, px, pgroup, inp,icnp, mu, sigma, i);
-				maxdif_A = std::max(maxdif_A, std::abs(A[i] - pars[0]));
-				A[i] = pars[0];
-				for(int k=1;k<ncat[i];k++)
-				{
-					maxdif_b = std::max(maxdif_b, std::abs(b.at(k,i) - pars[k]));
-					b.at(k,i) = pars[k];
-				}	
-				continue;
-			} 
-			ll_poly2 f(a.colptr(i), theta.memptr(), r(i), A_prior, A_mu, A_sigma);
-			vec pars = b.col(i).head(ncat[i]);
-			pars[0] = A[i];
-			int itr=0,err=0;
-			double ll_itm=0;
-			
-			nlm(pars, tol, itr, ll_itm, f, err);	
-			if(A_prior!=1 && (std::abs(A[i]) < .05 || max(abs(pars)) > 50))
-			{
-				// 2pl can be poorly identified with local minima
-				// on opposite sides of A=0, attempt to break out with a restart of nlm
-				int err2=0;
-				itr=0;
-				double ll_itm2=0;
-				vec pars2 = -b.col(i).head(ncat[i])/5;
-				pars2[0] = -2*A[i];
-				nlm(pars2, tol, itr, ll_itm2, f, err2);	
-				if(err2==0 && ll_itm2<ll_itm)
-				{
-					pars=pars2;
-					err=err2;
-				}			
-			}
+			int err=0;	
+			ll_pl2 f(a.colptr(i), theta.memptr(), r(i), A_prior, A_mu, A_sigma);
 
+			vec pars = m_step_2pl(f, A[i], b.col(i), ncat[i], tol, err);
+			
 			min_error += err;
 			if(err==0)
 			{
@@ -415,18 +282,7 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 				prior_part -= f.prior_part_ll(A[i]);
 			}
 		}
-					
-		if(min_error>0)
-		{
-			stop += 1;
-			break;
-		}
-		if(min(abs(A)) < 1e-4)
-		{
-			stop += 8;
-			break;
-		}
-
+		
 		for(int g=0;g<ng;g++)
 		{		
 			if(g==ref_group)
@@ -439,13 +295,55 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 				mu[g] = sum_theta[g]/gn[g];		
 				sigma[g] = std::sqrt(sum_sigma2[g]/gn[g] - mu[g] * mu[g]);
 			}
+		}		
+		for(int i=0; i<nit; i++)
+			itrace(i) = pl2_trace(theta, a.col(i), A[i], b.col(i), ncat[i]);
+
+#pragma omp parallel for reduction(max: maxdif_A, maxdif_b) reduction(+:min_error, prior_part)
+		for(int i=0; i<nit; i++)
+		{	
+			if(item_fixed[i] == 1 || inp[i] >= 150)
+				continue;	
+			
+			ll_pl2_v2 f(itrace, theta, ip, pi, pcni, px, 
+							pgroup, inp, icnp, mu, sigma, i, a.col(i),
+							A_prior, A_mu, A_sigma);
+			int err=0;
+			vec pars = m_step_2pl(f, A[i], b.col(i), ncat[i], tol, err);
+			
+			min_error += err;
+			if(err==0)
+			{
+				maxdif_A = std::max(maxdif_A, std::abs(A[i] - pars[0]));
+				A[i] = pars[0];
+				for(int k=1;k<ncat[i];k++)
+				{
+					maxdif_b = std::max(maxdif_b, std::abs(b.at(k,i) - pars[k]));
+					b.at(k,i) = pars[k];
+				}		
+				prior_part -= f.prior_part_ll(A[i]);
+			}
 		}
+		for(int i=0; i<nit; i++)
+			if(inp[i] < 150)
+				itrace(i) = pl2_trace(theta, a.col(i), A[i], b.col(i), ncat[i]);
+		
+		if(min_error>0)
+		{
+			stop += 1;
+			break;
+		}
+		if(min(abs(A)) < 1e-4)
+		{
+			stop += 8;
+			break;
+		}		
 			
 		prog.update(std::max(maxdif_b, maxdif_A), iter);
 				
 		if(maxdif_b < .0001 && maxdif_A < .0001)
 			break;
-
+		
 	}
 	if(iter>=max_iter-1)
 		stop += 4;
@@ -455,6 +353,7 @@ Rcpp::List estimate_poly2(arma::imat& a, const arma::vec& A_start, const arma::m
 	return Rcpp::List::create(Named("A")=A, Named("b")=b, Named("thetabar") = thetabar, Named("mu") = mu, Named("sd") = sigma, 
 									Named("r")=r, Named("LL") = (double)ll, Named("niter")=iter, Named("prior_part") = (double)prior_part,
 									Named("err")=stop, Named("maxdif_A")=maxdif_A,Named("maxdif_b")=maxdif_b,
-									Named("ll_history") = h_ll); 
+									Named("ll_history") = h_ll,
+									Named("store_A")=store_A, Named("store_b")=store_b); 
 }
 

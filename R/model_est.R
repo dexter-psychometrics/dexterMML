@@ -1,5 +1,4 @@
 
-### to do: test hessian poly2 with prior, +/- correct????
 
 #' DexterMML: MML addition to dexter
 #'
@@ -314,13 +313,13 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
     mu = rep(0, length(group_n))
     sigma = rep(1, length(group_n))
 
-    em = estimate_poly2(a, A, b, pre$ncat,
+    em = estimate_pl2(a, A, b, pre$ncat,
                           pre$pni, pre$pcni, pre$pi, pre$px,
                           theta_grid, mu, sigma, group_n, group, fixed_items, 
                           pre$ip, pre$inp, pre$icnp,
                           ref_group,
                           A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,
-                          max_iter=max_em_iterations,pgw=pgw)
+                          use_m2=100L,max_iter=max_em_iterations,pgw=pgw)
     
     
 
@@ -344,7 +343,7 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
         design$groups[,w] = 0L
       }
 
-      res = Oakes_poly2(a, em$A, em$b, pre$ncat, em$r,
+      res = Oakes_pl2(a, em$A, em$b, pre$ncat, em$r,
                       pre$pni, pre$pcni, pre$pi, pre$px,
                       theta_grid, em$mu, em$sd, group_n, group,
                       design$items, design$groups, fixed_items,ref_group,
@@ -499,12 +498,11 @@ plot.parms_mml = function(x,items=NULL,nbins=5,ci=.95,...)
     plot.args$main = gsub('$item_id',parms$item_id[i],plot.args$main,fixed=TRUE)
     do.call(plot,plot.args)
     
-    if(x$conf_min<x$conf_max)
-    {
-      arrows(x$m, x$conf_min, 
-             x$m, x$conf_max, 
+    arw = filter(x,.data$conf_min<.data$conf_max)
+    arrows(arw$m, arw$conf_min, 
+             arw$m, arw$conf_max, 
              length=0.05, angle=90, code=3, col=plot.args$col)
-    }
+
     points(x$m,x$obs,bg=x$outlier*2,pch=21)
     lines(x$m,x$obs)
   }

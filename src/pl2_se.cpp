@@ -1,16 +1,18 @@
 
 #include <RcppArmadillo.h>
 #include "minimize.h"
-#include "poly2pl_item.h"
+#include "pl2_item.h"
 #include "shared.h"
 
 using namespace arma;
 using Rcpp::Named;
 
 
+// TO DO: use ll_v2 for small nbr respondents
+
 // loglikelihood for groups based on matrix of perturbed mu and sigma values
 // in order to compute empirical gradients or hessian
-mat ll_group_poly2(const imat& a, const vec& A, const mat& b,  const ivec& ncat, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
+mat ll_group_pl2(const imat& a, const vec& A, const mat& b,  const ivec& ncat, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
 				const vec& theta, const mat& mu, const mat& sigma, const ivec& pgroup)
 {
 	const int nit = ncat.n_elem, nt = theta.n_elem, np = pni.n_elem, nptb = mu.n_rows, ng=mu.n_cols;
@@ -25,7 +27,7 @@ mat ll_group_poly2(const imat& a, const vec& A, const mat& b,  const ivec& ncat,
 	field<mat> itrace(nit);
 	
 	for(int i=0; i<nit; i++)
-		itrace(i) = poly2_trace(theta, a.col(i), A[i], b.col(i), ncat[i]);
+		itrace(i) = pl2_trace(theta, a.col(i), A[i], b.col(i), ncat[i]);
 
 	
 #pragma omp parallel
@@ -53,7 +55,7 @@ mat ll_group_poly2(const imat& a, const vec& A, const mat& b,  const ivec& ncat,
 // estep where not to be update items and groups are skipped according to the design matrix
 // this is both faster and prevents rounding errors in the jacobian for 'almost 0' chances
 
-void se_estep_poly2(const imat& a, const vec& A, const mat& b, const ivec& ncat, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
+void se_estep_pl2(const imat& a, const vec& A, const mat& b, const ivec& ncat, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
 				const vec& theta, field<mat>& r, vec& sumtheta, vec& sumsig2, const vec& mu, const vec& sigma, const ivec& pgroup,
 				const ivec& update_i, const ivec& update_g)
 {
@@ -68,7 +70,7 @@ void se_estep_poly2(const imat& a, const vec& A, const mat& b, const ivec& ncat,
 	
 	for(int i=0; i<nit; i++)
 	{
-		itrace(i) = poly2_trace(theta, a.col(i), A[i], b.col(i), ncat[i]);
+		itrace(i) = pl2_trace(theta, a.col(i), A[i], b.col(i), ncat[i]);
 		r(i).zeros();
 	}
 	
@@ -109,7 +111,7 @@ void se_estep_poly2(const imat& a, const vec& A, const mat& b, const ivec& ncat,
 
 
 
-mat J_poly2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, const arma::ivec& ncat,
+mat J_pl2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, const arma::ivec& ncat,
 						const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 						arma::vec& theta, const arma::vec& mu_fixed, const arma::vec& sigma_fixed, const arma::ivec& gn, const arma::ivec& pgroup, 
 						const arma::imat dsg_ii,const arma::imat dsg_gi, const arma::ivec& item_fixed, const int npar, const int ref_group,
@@ -159,13 +161,13 @@ mat J_poly2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, co
 				else
 					b.at(k,i,d) += signed_delta[d];
 				
-				se_estep_poly2(a, A.col(d), b.slice(d), ncat, pni, pcni, pi, px, 
+				se_estep_pl2(a, A.col(d), b.slice(d), ncat, pni, pcni, pi, px, 
 					theta, r, sum_theta, sum_sigma2, mu.col(d), sigma.col(d), pgroup, dsg_ii.col(i), dsg_gi.col(i));
 
 #pragma omp parallel for
 				for(int j=0; j<nit; j++) if(dsg_ii.at(j,i) == 1)
 				{				
-					ll_poly2 f(a.colptr(j), theta.memptr(), r(j),A_prior, A_mu, A_sigma);
+					ll_pl2 f(a.colptr(j), theta.memptr(), r(j),A_prior, A_mu, A_sigma);
 					vec pars = b.slice(d).col(j).head(ncat[i]);
 					pars[0] = A.at(j,d);
 
@@ -226,13 +228,13 @@ mat J_poly2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, co
 				else
 					sigma.at(g,d) += signed_delta[d];
 				
-				se_estep_poly2(a, A.col(d), b.slice(d), ncat, pni, pcni, pi, px, 
+				se_estep_pl2(a, A.col(d), b.slice(d), ncat, pni, pcni, pi, px, 
 					theta, r, sum_theta, sum_sigma2, mu.col(d), sigma.col(d), pgroup, dsg_ig.col(g), gdummy);
 
 #pragma omp parallel for
 				for(int j=0; j<nit; j++) if(dsg_gi.at(g,j) == 1)
 				{				
-					ll_poly2 f(a.colptr(j), theta.memptr(), r(j), A_prior, A_mu, A_sigma);
+					ll_pl2 f(a.colptr(j), theta.memptr(), r(j), A_prior, A_mu, A_sigma);
 					vec pars = b.slice(d).col(j).head(ncat[j]);
 					pars[0] = A.at(j,d);
 					int itr=0,err;
@@ -267,7 +269,7 @@ mat J_poly2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, co
 
 
 // [[Rcpp::export]]
-Rcpp::List Oakes_poly2(arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, arma::field<arma::mat>& r, 
+Rcpp::List Oakes_pl2(arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, arma::field<arma::mat>& r, 
 				const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 				arma::vec& theta, const arma::vec& mu, const arma::vec& sigma, const arma::ivec& gn, const arma::ivec& pgroup,
 				const arma::imat& dsg_ii, const arma::imat& dsg_gi,	const arma::ivec& item_fixed, const int ref_group=0, 
@@ -286,7 +288,7 @@ Rcpp::List Oakes_poly2(arma::imat& a, const arma::vec& A, const arma::mat& b, co
 	progress prog(max_tick, pgw);	
 	
 	//Jacobian
-	mat J = J_poly2(a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, npar, ref_group,A_prior, A_mu, A_sigma, prog);
+	mat J = J_pl2(a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, npar, ref_group,A_prior, A_mu, A_sigma, prog);
 	
 	// observed hessian
 	const int max_cat = ncat.max();
@@ -297,7 +299,7 @@ Rcpp::List Oakes_poly2(arma::imat& a, const arma::vec& A, const arma::mat& b, co
 
 	for(int i=0; i<nit; i++) if(item_fixed[i]==0)
 	{				
-		ll_poly2 f(a.colptr(i), theta.memptr(), r(i), A_prior, A_mu, A_sigma);
+		ll_pl2 f(a.colptr(i), theta.memptr(), r(i), A_prior, A_mu, A_sigma);
 		vec pars = b.col(i).head(ncat[i]);
 		pars[0] = A[i];
 		mat h(ncat[i],ncat[i]);
@@ -324,7 +326,7 @@ Rcpp::List Oakes_poly2(arma::imat& a, const arma::vec& A, const arma::mat& b, co
 	}
 
 	// dit gaat in 1 keer voor alle groepen
-	mat ll = ll_group_poly2(a, A, b, ncat, pni, pcni, pi, px, theta, mu_ptb, sigma_ptb, pgroup);
+	mat ll = ll_group_pl2(a, A, b, ncat, pni, pcni, pi, px, theta, mu_ptb, sigma_ptb, pgroup);
 
 	for(int g=0; g<ng;g++) if(g!=ref_group)
 	{
