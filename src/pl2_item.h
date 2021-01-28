@@ -5,6 +5,7 @@
 #include "shared.h"
 
 arma::mat pl2_trace(const arma::vec& theta, const arma::ivec& a, const double A,  const arma::vec& b, const int ncat);
+void pl2_trace(const arma::vec& theta, const arma::ivec& a, const double A,  const arma::vec& b, const int ncat, arma::mat& out);
 
 struct ll_pl2_base
 {

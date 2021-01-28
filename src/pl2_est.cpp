@@ -6,23 +6,18 @@
 using namespace arma;
 using Rcpp::Named;
 
-void estep_pl2(const imat& a, const vec& A, const mat& b, const ivec& ncat, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
+void estep_pl2(field<mat>& itrace, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
 				const vec& theta, field<mat>& r, vec& thetabar, vec& sumtheta, vec& sumsig2, const vec& mu, const vec& sigma, const ivec& pgroup, long double& ll)
 {
-	const int nit = ncat.n_elem, nt = theta.n_elem, np = pni.n_elem, ng = mu.n_elem;
-	
-	
+	const int nt = theta.n_elem, np = pni.n_elem, ng = mu.n_elem, nit=r.n_elem;
+		
 	mat posterior0(nt,ng);
 	for(int g=0; g<ng; g++)
 		posterior0.col(g) = gaussian_pts(mu[g],sigma[g],theta);
 
-	field<mat> itrace(nit);
-	
 	for(int i=0; i<nit; i++)
-	{
-		itrace(i) = pl2_trace(theta, a.col(i), A[i], b.col(i), ncat[i]);
 		r(i).zeros();
-	}
+
 	
 	mat sigma2(nt, ng, fill::zeros);
 	sumtheta.zeros();
@@ -97,13 +92,12 @@ double loglikelihood_2pl(const arma::imat& a, const arma::vec& A, const arma::ma
 
 
 // stop estimation because of decreasing likelihood
-// quite rare
+// exceedingly rare now that we treat items with small nbr of obs differently
 void est_stop(imat& a, const ivec& ncat, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
 		 const ivec& pgroup, vec& theta, const arma::ivec& item_fixed, const vec& h_ll, const int iter, const int ref_group, 
 		 const int A_prior, const double A_mu, const double A_sigma, const long double old_ll, const int store_i,
-		 /* in & out */
 		 vec& A, mat& store_A, mat& b, cube& store_b, vec& mu, mat& store_mu, vec& sigma, mat& store_sigma,
-		 field<mat>& r, vec& thetabar, vec& sum_theta, vec& sum_sigma2, long double ll)
+		 long double ll)
 {
 	const int nit = a.n_cols;
 	if(iter>3)
@@ -136,16 +130,15 @@ void est_stop(imat& a, const ivec& ncat, const ivec& pni, const ivec& pcni, cons
 		}
 		//check if anything is won
 		//compute likelihood
-		long double ll_new;
-		estep_pl2(a, A, b, ncat, pni, pcni, pi, px, 
-					theta, r, thetabar, sum_theta, sum_sigma2, mu, sigma, pgroup, ll_new);
+		double ll_new = loglikelihood_2pl(a, A, b, ncat, pni, pcni, pi, px, 
+											theta, mu, sigma, pgroup);
 		double prior_part=0;
 				
 		if(A_prior>0)
 			for(int i=0;i<nit;i++)
 				if(item_fixed[i] != 1)
 				{
-					ll_pl2 f(a.colptr(i), theta.memptr(), r(i), A_prior, A_mu, A_sigma);
+					ll_pl2_base f(A_prior, A_mu, A_sigma);
 					prior_part -= f.prior_part_ll(A[i]);
 				}
 				
@@ -165,6 +158,7 @@ void est_stop(imat& a, const ivec& ncat, const ivec& pni, const ivec& pcni, cons
 	}
 }
 
+
 template <class T>
 vec m_step_2pl(T &f, const double A, const vec& b, const int ncat, const double tol, int& min_error)
 {
@@ -175,7 +169,7 @@ vec m_step_2pl(T &f, const double A, const vec& b, const int ncat, const double 
 			
 	nlm(pars, tol, itr, ll_itm, f, err);	
 			
-	if(f.A_prior!=1 && (std::abs(A) < .05 || max(abs(pars)) > 50))
+	if(f.A_prior!=1 && (std::abs(A) < .05 || max(abs(pars.tail(ncat-1))) > 50))
 	{
 		// 2pl can be poorly identified with local minima
 		// on opposite sides of A=0, attempt to break out with a restart of nlm
@@ -214,8 +208,10 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 
 	field<mat> r(nit), itrace(nit);
 	for(int i=0; i<nit; i++)
+	{
+		itrace(i) = pl2_trace(theta, a.col(i), A[i], b.col(i), ncat[i]);
 		r(i) = mat(nt,ncat[i]);
-	
+	}
 	vec thetabar(np,fill::zeros);
 	
 	vec sigma = sigma_start, mu=mu_start;
@@ -236,7 +232,7 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 	
 	for(; iter<max_iter; iter++)
 	{
-		estep_pl2(a, A, b, ncat, pni, pcni, pi, px, 
+		estep_pl2(itrace, pni, pcni, pi, px, 
 					theta, r, thetabar, sum_theta, sum_sigma2, mu, sigma, pgroup, ll);
 		
 		h_ll[iter] = ll + prior_part;
@@ -245,9 +241,7 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 		{
 			est_stop(a, ncat, pni, pcni, pi, px, pgroup, theta, item_fixed, h_ll, iter, ref_group, 
 					 A_prior, A_mu, A_sigma, old_ll, store_i,
-					/* in & out */
-					A, store_A, b, store_b, mu, store_mu, sigma, store_sigma,
-					r,  thetabar,  sum_theta,  sum_sigma2, ll);
+					A, store_A, b, store_b, mu, store_mu, sigma, store_sigma, ll);
 			stop += 2;
 			break;
 		}
@@ -297,12 +291,12 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 			}
 		}		
 		for(int i=0; i<nit; i++)
-			itrace(i) = pl2_trace(theta, a.col(i), A[i], b.col(i), ncat[i]);
+			pl2_trace(theta, a.col(i), A[i], b.col(i), ncat[i], itrace(i));
 
 #pragma omp parallel for reduction(max: maxdif_A, maxdif_b) reduction(+:min_error, prior_part)
 		for(int i=0; i<nit; i++)
 		{	
-			if(item_fixed[i] == 1 || inp[i] >= 150)
+			if(item_fixed[i] == 1 || inp[i] >= use_m2)
 				continue;	
 			
 			ll_pl2_v2 f(itrace, theta, ip, pi, pcni, px, 
@@ -325,8 +319,8 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 			}
 		}
 		for(int i=0; i<nit; i++)
-			if(inp[i] < 150)
-				itrace(i) = pl2_trace(theta, a.col(i), A[i], b.col(i), ncat[i]);
+			if(inp[i] < use_m2 && item_fixed[i] != 1)
+				pl2_trace(theta, a.col(i), A[i], b.col(i), ncat[i],itrace(i));
 		
 		if(min_error>0)
 		{

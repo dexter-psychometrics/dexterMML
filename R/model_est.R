@@ -319,7 +319,7 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
                           pre$ip, pre$inp, pre$icnp,
                           ref_group,
                           A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,
-                          use_m2=100L,max_iter=max_em_iterations,pgw=pgw)
+                          use_m2=150L,max_iter=max_em_iterations,pgw=pgw)
     
     
 
@@ -346,7 +346,8 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
       res = Oakes_pl2(a, em$A, em$b, pre$ncat, em$r,
                       pre$pni, pre$pcni, pre$pi, pre$px,
                       theta_grid, em$mu, em$sd, group_n, group,
-                      design$items, design$groups, fixed_items,ref_group,
+                      design$items, design$groups, fixed_items,
+                      pre$ip,pre$inp,pre$icnp,ref_group,
                       A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,pgw=pgw)
 
       SE = sqrt(-diag(solve(res$H)))

@@ -2,10 +2,10 @@
 #include "pl2_item.h"
 using namespace arma;
 
-mat pl2_trace(const vec& theta, const ivec& a, const double A, const vec& b, const int ncat)
+//in place
+void pl2_trace(const vec& theta, const ivec& a, const double A, const vec& b, const int ncat, mat& out)
 {
 	const int nt = theta.n_elem;
-	mat out(nt,ncat);	
 	vec p(ncat);
 	p[0] = 1;
 	
@@ -21,10 +21,15 @@ mat pl2_trace(const vec& theta, const ivec& a, const double A, const vec& b, con
 		for(int k=0; k<ncat; k++)
 			out.at(t,k) = p[k]/s;
 	}
+}
+
+mat pl2_trace(const vec& theta, const ivec& a, const double A, const vec& b, const int ncat)
+{
+	mat out(theta.n_elem,ncat);	
+	pl2_trace(theta, a, A, b, ncat, out);
 
 	return out;
 }
-
 
 // [[Rcpp::export]]
 double test_ll_p2(arma::ivec& a, arma::vec theta, arma::mat& r, const arma::vec& par, const int prior=0)
