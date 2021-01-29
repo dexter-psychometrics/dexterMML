@@ -7,7 +7,7 @@
 using namespace Rcpp;
 
 // theta_2pl
-arma::vec theta_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, const arma::ivec& pni, const arma::ivec& pcni, arma::ivec& pi, const arma::ivec& px, const bool WLE, const bool USE_A);
+Rcpp::List theta_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, const arma::ivec& pni, const arma::ivec& pcni, arma::ivec& pi, const arma::ivec& px, const bool WLE, const bool USE_A);
 RcppExport SEXP _dexterMML_theta_2pl(SEXP aSEXP, SEXP ASEXP, SEXP bSEXP, SEXP ncatSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP WLESEXP, SEXP USE_ASEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

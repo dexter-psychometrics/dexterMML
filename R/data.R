@@ -1,4 +1,20 @@
 
+# combine several char vectors to make one id, making sure no funny business ensues
+combine_ids = function(v, sep='_')
+{
+  if(!inherits(v,'data.frame') && !inherits(v,'list'))
+    return(as.character(v))
+  
+  v = lapply(v, as.character)
+  
+  if(length(v)==1)
+    return(v[[1]])
+  
+  l = sapply(v[-length(v)],function(vec){max(nchar(vec))})
+  fmt = paste0(paste0("%-",l,"s",collapse=sep),sep,'%s')
+  v$fmt = fmt
+  do.call(sprintf, v)
+}
 
 # prepare data from possibly different sources
 # to do: also accept mst db
@@ -44,16 +60,7 @@ get_mml_data = function(dataSrc, qtpredicate, env, group)
         arrange(as.integer(.data$person_id))
 
       persons=g
-
-      if(length(group)== 1) group = g[[group]]
-      else
-      {
-        nc = c(sapply(group[length(group)-1], function(x) max(nchar(g[[x]]))),0L)
-        fmt = paste0("%-",nc,"s",collapse='_')
-        g = as.list(g[,group])
-        g$fmt = fmt
-        group = do.call(sprintf, g)
-      }
+      group = combine_ids(g[,group])
     } else
     {
       persons = tibble(person_id=rownames(dat))

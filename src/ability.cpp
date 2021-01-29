@@ -1,6 +1,7 @@
 #include <RcppArmadillo.h>
 #include "shared.h"
 using namespace arma;
+using Rcpp::Named;
 
 
 //to do: check categories match
@@ -84,7 +85,7 @@ double get_theta(const double s, const vec& A, const imat& a, const mat& b, cons
 	
 	const int max_iter = 200;
 	const double acc = 1e-8; // this might be a little too small but it seems to work
-	
+	err = 0;
 	
 	for(int iter=0; iter<max_iter; iter++)
 	{		
@@ -106,7 +107,7 @@ double get_theta(const double s, const vec& A, const imat& a, const mat& b, cons
 };
 
 template< bool WLE, bool USE_A>
-vec templ_theta_2pl(const imat& a, const vec& A, const mat& b, const ivec& ncat,
+Rcpp::List templ_theta_2pl(const imat& a, const vec& A, const mat& b, const ivec& ncat,
 			const ivec& pni, const ivec& pcni, ivec& pi, const ivec& px)
 {
 	const int np = pni.n_elem, nit = A.n_elem;
@@ -116,7 +117,8 @@ vec templ_theta_2pl(const imat& a, const vec& A, const mat& b, const ivec& ncat,
 	for(int i=0; i<nit; i++)
 		for(int k=1;k<ncat[i];k++)
 			aA.at(k,i) = a.at(k,i)* A[i];
-			
+	
+	vec rr(np,fill::zeros);
 #pragma omp parallel for reduction(+:errors)
 	for(int p=0; p<np;p++)
 	{
@@ -138,15 +140,18 @@ vec templ_theta_2pl(const imat& a, const vec& A, const mat& b, const ivec& ncat,
 		else
 			theta[p] = get_theta<WLE, USE_A>(ws, A, a, b, items, ncat,err);
 		errors += err;
+		rr[p]=err;
 	}
-	if(errors>0)
-		Rcpp::stop("WLE estimates do not converge");
-	return theta;
+	//if(errors>0)
+	//	Rcpp::stop("WLE estimates do not converge");
+	//return theta;
+	bool success = errors==0;
+	return Rcpp::List::create(Named("theta")=theta, Named("success") = success, Named("convergence")=rr);
 };	
 
 
 // [[Rcpp::export]]
-arma::vec theta_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat,
+Rcpp::List theta_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat,
 					const arma::ivec& pni, const arma::ivec& pcni, arma::ivec& pi, const arma::ivec& px,
 					const bool WLE=false, const bool USE_A=true)
 {

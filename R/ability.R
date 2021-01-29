@@ -78,9 +78,14 @@ ability.mml = function(dataSrc, parms, predicate=NULL, method=c('MLE','WLE'), un
   if(pre$model=='1PL')
     unweight=TRUE
   
-  theta = theta_2pl(pre$a, pre$A, pre$b, pre$ncat,
+  res = theta_2pl(pre$a, pre$A, pre$b, pre$ncat,
                         pre$pni, pre$pcni, pre$pi, pre$px,
                         WLE=(method=='WLE'), USE_A = (!unweight))
+  if(!res$success)
+  {
+    warning("ability estimates for some students did not converge.",call.=FALSE)
+    res$theta[res$convergence!=0L] = NA_real_
+  }
 
-  tibble(person_id=pre$pid, theta=drop(theta))
+  tibble(person_id=pre$pid, theta=drop(res$theta))
 }

@@ -153,6 +153,9 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
   data = get_mml_data(dataSrc,qtpredicate,env,group)
 
   dat = data$dat
+  if(nrow(dat)<ncol(dat))
+    stop("You need at least as many persons as items in your dataset to estimate an IRT model",call.=FALSE)
+  
   group = data$group
 
   ## Pre and groups
@@ -164,13 +167,13 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
   {
     cat('Items with maximum score 0:\n')
     print(colnames(dat)[pre$imax < 1])
-    stop('Some items have a maximum score of 0, model cannot be calibrated')
+    stop('Some items have a maximum score of 0, model cannot be calibrated',call.=FALSE)
   }
   if(any(pre$icat[1,]==0))
   {
     cat('Items without a 0 score:\n')
     print(colnames(dat)[pre$icat[1,]==0])
-    stop('Some items have no 0 score category, model cannot be calibrated')
+    stop('Some items have no 0 score category, model cannot be calibrated',call.=FALSE)
   }
 
   if(is.null(group))
@@ -188,6 +191,15 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
     group = as.integer(group) -1L
     group_n = as.integer(table(group))
     ref_group = which.max(group_n) -1L
+    if(any(group_n<10L))
+    {
+      # an arbitrary number
+      # 10 is ridiculously small but at least reasonably safe against divide by 0
+      
+      stop("Group ", paste(group_id[group_n],collapse=', '), " has only ", 
+           paste(group_n[group_n<10],collapse=', '), " people. You need at least 10 but preferably many more ",
+           "people per group.",call.=FALSE)
+    }
   }
 
   # estimation

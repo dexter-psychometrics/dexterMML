@@ -49,9 +49,10 @@ plausible_values.mml = function(dataSrc, parms, predicate=NULL, covariates=NULL,
   
   pre = abl_pre(dat, parms)
 
+  # if WLE not entirely converged, no so much of a problem
   starting_values = theta_2pl(pre$a, pre$A, pre$b, pre$ncat,
                                       pre$pni, pre$pcni, pre$pi, pre$px,
-                                      WLE=TRUE, USE_A = (pre$model!='1PL'))
+                                      WLE=TRUE, USE_A = (pre$model!='1PL'))$theta
 
   pv =  plausible_values_c(pre$a, pre$A, pre$b, pre$ncat,
                          pre$pni, pre$pcni, pre$pi, pre$px, group, group_n,
