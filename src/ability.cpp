@@ -3,8 +3,54 @@
 using namespace arma;
 using Rcpp::Named;
 
+template<bool WLE, bool USE_A>
+double SE_2pl(const double theta, const vec& A, const imat& a, const mat& b, const ivec& items, const ivec& ncat)
+{
+	const int nit = items.n_elem;
+	double I=0,J=0;
+	if(USE_A)
+	{
+		for(int ix=0; ix<nit; ix++)
+		{
+			int i = items[ix];
+			double S=1,Sa=0, Sa2=0, Sa3=0;
+			for(int k=1; k<ncat[i]; k++)
+			{
+				double aA = A[i]*a.at(k,i);
+				double p = std::exp(aA*(theta-b.at(k,i)));
+				S += p;
+				Sa += p*aA;
+				Sa2 += p*SQR(aA);
+				Sa3 += p*CUB(aA);
+			}
+			I += (S*Sa2-SQR(Sa))/SQR(S);
+			J -= (-SQR(S)*Sa3+3*S*Sa*Sa2-2*CUB(Sa))/CUB(S);
+		}		
+	}
+	else
+	{
+		for(int ix=0; ix<nit; ix++)
+		{
+			int i = items[ix];
+			double SpA=1,SpA_a=0,SpA_a2=0,SpA_a3=0;
+			for(int k=1; k<ncat[i]; k++)
+			{
+				double pA = std::exp(A[i]*a.at(k,i)*(theta-b.at(k,i)));
+				SpA += pA;
+				SpA_a += a.at(k,i)*pA;
+				SpA_a2 += SQR(a.at(k,i))*pA;
+				SpA_a3 += CUB(a.at(k,i))*pA;
+			}
+			I += (SpA*A[i]*SpA_a2 - SQR(SpA_a)*A[i])/SQR(SpA);
+			J -= SQR(A[i])*(-SQR(SpA)*SpA_a3 + 3*SpA*SpA_a*SpA_a2 - 2*CUB(SpA_a))/CUB(SpA);
+		} 		
+	}	
+	if(WLE)
+		return std::sqrt((I+SQR(J/(2*I)))/SQR(I));
+	else
+		return 1/std::sqrt(I);
+}
 
-//to do: check categories match
 
 template<bool WLE, bool USE_A>
 double E_2pl(const double theta, const vec& A, const imat& a, const mat& b, const ivec& items, const ivec& ncat)
@@ -142,13 +188,32 @@ Rcpp::List templ_theta_2pl(const imat& a, const vec& A, const mat& b, const ivec
 		errors += err;
 		rr[p]=err;
 	}
-	//if(errors>0)
-	//	Rcpp::stop("WLE estimates do not converge");
-	//return theta;
+
 	bool success = errors==0;
 	return Rcpp::List::create(Named("theta")=theta, Named("success") = success, Named("convergence")=rr);
 };	
 
+
+template< bool WLE, bool USE_A>
+vec templ_se_2pl(const imat& a, const vec& A, const mat& b, const ivec& ncat,
+			const ivec& pni, const ivec& pcni, ivec& pi, const vec& theta)
+{
+	const int np = pni.n_elem, nit = A.n_elem;
+	vec se(np);
+	mat aA(a.n_rows,nit,fill::zeros);
+	for(int i=0; i<nit; i++)
+		for(int k=1;k<ncat[i];k++)
+			aA.at(k,i) = a.at(k,i)* A[i];
+	
+#pragma omp parallel for
+	for(int p=0; p<np;p++)
+	{
+		const ivec items(pi.memptr()+pcni[p], pni[p], false, true);
+		if(!WLE && !std::isfinite(theta[p])) se[p] = datum::inf;
+		else se[p] = SE_2pl<WLE,USE_A>(theta[p], A, a, b, items, ncat);
+	}
+	return se;
+};	
 
 // [[Rcpp::export]]
 Rcpp::List theta_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat,
@@ -161,6 +226,21 @@ Rcpp::List theta_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b
 	//if(!WLE && !USE_A)
 	return templ_theta_2pl<false, false>(a, A, b, ncat, pni, pcni, pi, px);
 }
+
+// [[Rcpp::export]]
+arma::vec se_theta_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat,
+					const arma::ivec& pni, const arma::ivec& pcni, arma::ivec& pi, const arma::vec& theta,
+					const bool WLE=false, const bool USE_A=true)
+{
+	if(USE_A) return templ_se_2pl<true, true>(a, A, b, ncat, pni, pcni, pi, theta);
+	if(!WLE && USE_A) return templ_se_2pl<false, true>(a, A, b, ncat, pni, pcni, pi, theta);
+	if(WLE && !USE_A) return templ_se_2pl<true, false>(a, A, b, ncat, pni, pcni, pi, theta);
+	//if(!WLE && !USE_A)
+	return templ_se_2pl<false, false>(a, A, b, ncat, pni, pcni, pi, theta);
+}
+
+
+
 // [[Rcpp::export]]
 arma::vec E_score(const arma::vec& theta, const arma::vec& A, const arma::imat& a, const arma::mat& b, const arma::ivec& items, const arma::ivec& ncat)
 {

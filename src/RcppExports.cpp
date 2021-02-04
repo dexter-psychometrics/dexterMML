@@ -26,6 +26,26 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// se_theta_2pl
+arma::vec se_theta_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, const arma::ivec& pni, const arma::ivec& pcni, arma::ivec& pi, const arma::vec& theta, const bool WLE, const bool USE_A);
+RcppExport SEXP _dexterMML_se_theta_2pl(SEXP aSEXP, SEXP ASEXP, SEXP bSEXP, SEXP ncatSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP thetaSEXP, SEXP WLESEXP, SEXP USE_ASEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::imat& >::type a(aSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type A(ASEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type b(bSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type ncat(ncatSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pni(pniSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type pcni(pcniSEXP);
+    Rcpp::traits::input_parameter< arma::ivec& >::type pi(piSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const bool >::type WLE(WLESEXP);
+    Rcpp::traits::input_parameter< const bool >::type USE_A(USE_ASEXP);
+    rcpp_result_gen = Rcpp::wrap(se_theta_2pl(a, A, b, ncat, pni, pcni, pi, theta, WLE, USE_A));
+    return rcpp_result_gen;
+END_RCPP
+}
 // E_score
 arma::vec E_score(const arma::vec& theta, const arma::vec& A, const arma::imat& a, const arma::mat& b, const arma::ivec& items, const arma::ivec& ncat);
 RcppExport SEXP _dexterMML_E_score(SEXP thetaSEXP, SEXP ASEXP, SEXP aSEXP, SEXP bSEXP, SEXP itemsSEXP, SEXP ncatSEXP) {
@@ -483,6 +503,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_theta_2pl", (DL_FUNC) &_dexterMML_theta_2pl, 10},
+    {"_dexterMML_se_theta_2pl", (DL_FUNC) &_dexterMML_se_theta_2pl, 10},
     {"_dexterMML_E_score", (DL_FUNC) &_dexterMML_E_score, 6},
     {"_dexterMML_mat_pre", (DL_FUNC) &_dexterMML_mat_pre, 2},
     {"_dexterMML_categorize", (DL_FUNC) &_dexterMML_categorize, 7},

@@ -5,6 +5,10 @@ theta_2pl <- function(a, A, b, ncat, pni, pcni, pi, px, WLE = FALSE, USE_A = TRU
     .Call(`_dexterMML_theta_2pl`, a, A, b, ncat, pni, pcni, pi, px, WLE, USE_A)
 }
 
+se_theta_2pl <- function(a, A, b, ncat, pni, pcni, pi, theta, WLE = FALSE, USE_A = TRUE) {
+    .Call(`_dexterMML_se_theta_2pl`, a, A, b, ncat, pni, pcni, pi, theta, WLE, USE_A)
+}
+
 E_score <- function(theta, A, a, b, items, ncat) {
     .Call(`_dexterMML_E_score`, theta, A, a, b, items, ncat)
 }

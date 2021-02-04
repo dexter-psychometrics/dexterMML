@@ -14,10 +14,11 @@ test_that('1pl verb agg confirms to dexter',{
 
   expect_lt(mean(abs(p$SE_beta-coef(e)$SE_beta)[-(1:2)]),.01)
   
-  a.cml=ability(db,f,method='WLE')
+  a.cml=ability(db,f,method='WLE',standard_errors=TRUE)
   a.mml=ability.mml(db,e,method='WLE')
   
   expect_lt(mean(abs(a.cml$theta-a.mml$theta)),.01)
+  expect_lt(mean(abs(a.cml$se-a.mml$se)),.001)
   close_project(db)
 })
 
