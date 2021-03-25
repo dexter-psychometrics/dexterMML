@@ -53,12 +53,24 @@ Oakes_nrm <- function(a, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pg
     .Call(`_dexterMML_Oakes_nrm`, a, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, ref_group, pgw)
 }
 
+num_hessian_2pl <- function(a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, pgroup, ddelta = 1e-5) {
+    .Call(`_dexterMML_num_hessian_2pl`, a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, pgroup, ddelta)
+}
+
 loglikelihood_2pl <- function(a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, pgroup) {
     .Call(`_dexterMML_loglikelihood_2pl`, a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, pgroup)
 }
 
 estimate_pl2 <- function(a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ip, inp, icnp, ref_group = 0L, A_prior = 0L, A_mu = 0, A_sigma = 0.5, use_m2 = 150L, max_iter = 200L, pgw = 80L) {
     .Call(`_dexterMML_estimate_pl2`, a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ip, inp, icnp, ref_group, A_prior, A_mu, A_sigma, use_m2, max_iter, pgw)
+}
+
+full_hessian_2pl <- function(a, A, b, ncat, theta, item_fixed, dat, pni, pcni, pi, px, pgroup, gn, ip, inp, icnp, mu, sigma, ref_group, dsg_ii) {
+    .Call(`_dexterMML_full_hessian_2pl`, a, A, b, ncat, theta, item_fixed, dat, pni, pcni, pi, px, pgroup, gn, ip, inp, icnp, mu, sigma, ref_group, dsg_ii)
+}
+
+gradient_2pl <- function(a, A, b, ncat, pcni, pi, px, theta, mu, sigma, pgroup, ip, inp, icnp) {
+    .Call(`_dexterMML_gradient_2pl`, a, A, b, ncat, pcni, pi, px, theta, mu, sigma, pgroup, ip, inp, icnp)
 }
 
 test_ll_p2 <- function(a, theta, r, par, prior = 0L) {

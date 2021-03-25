@@ -178,7 +178,7 @@ mat J_pl2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, cons
 					}					
 
 					for(int kj=1;kj<ncat[j];kj++)
-						b.at(kj,j,d) = pars[kj-1];
+						b.at(kj,j,d) = pars[kj];
 					A.at(j,d) = pars[0];
 				}
 				for(int g=0;g<ng;g++) if(dsg_gi.at(g,i) == 1)
@@ -256,7 +256,7 @@ mat J_pl2(arma::imat& a, const arma::vec A_fixed, const arma::mat& b_fixed, cons
 					}					
 						
 					for(int kj=1;kj<ncat[j];kj++)
-						b.at(kj,j,d) = pars[kj-1];
+						b.at(kj,j,d) = pars[kj];
 					A.at(j,d) = pars[0];
 				}
 			}

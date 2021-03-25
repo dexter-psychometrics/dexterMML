@@ -310,7 +310,7 @@ struct ll_pl2_v2 : ll_pl2_base
 		
 		arma::vec ptr(nt);		
 		arma::mat itr = pl2_trace(theta, a, A, b, npar);
-		arma::vec C = arma::sum(itr,1);
+		//arma::vec C = arma::sum(itr,1);
 		arma::mat atb(nt,npar,arma::fill::zeros);
 		for(int k=1; k<npar;k++)
 			atb.col(k) = a[k] * (theta-b[k]); 

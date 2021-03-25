@@ -10,6 +10,9 @@ inline int SQR(const int v){ return v*v; };
 inline double CUB(const double v){ return v*v*v; };
 inline long double CUB(const long double v){ return v*v*v; };
 inline int CUB(const int v){ return v*v*v; };
+inline double QRT(const double v){ return v*v*v*v; };
+inline long double QRT(const long double v){ return v*v*v*v; };
+inline int QRT(const int v){ return v*v*v*v; };
 
 inline int kron(const int a, const int b){return a==b ? 1 : 0; };
 
@@ -31,6 +34,56 @@ initializer( omp_priv = mat_init(omp_orig) )
 
 #pragma omp declare reduction( + : arma::vec : omp_out += omp_in ) \
 initializer( omp_priv = vec_init(omp_orig) )
+
+
+
+// very minimalist drop in long double matrix based on armadillo mat interface 
+// can be extended somewhat if necessary
+// zero init by default
+class ldmat 
+{
+private:
+	long double* ptr;
+	int nc,nr,sz;
+public:
+	int n_elem() const { return sz; }
+	int n_cols() const { return nc; }
+	int n_rows() const { return nr; }
+	
+	long double& operator()(const int i, const int j)
+	{
+		const int ix = j*nr+i;
+		if(sz <= ix)
+			throw std::out_of_range("long double matrix");
+		return ptr[ix];
+	}	
+	inline long double& at(const int i, const int j)
+	{
+		return ptr[j*nr+i];
+	}
+	long double* colptr(const int j)
+	{
+		return ptr + (j*nr);
+	}
+	void fill(const long double fill_value)
+	{
+		for(int i=0;i<sz;i++)
+			ptr[i] = fill_value;
+	}
+	void zeros()
+	{
+		fill(.0L);
+	}
+	ldmat(const int nrows, const int ncols, const long double fill_value = .0L)
+	{
+		nc = ncols;
+		nr = nrows;
+		sz = nc*nr;
+		ptr = new long double[sz]; 
+		fill(fill_value);
+	}
+}; 
+
 
 struct progress
 {

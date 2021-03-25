@@ -162,7 +162,7 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
   max_score = max(dat,na.rm=TRUE)
 
   pre = lapply(mat_pre(dat, max_score), drop)
-
+  hess=NULL
   if(any(pre$imax < 1))
   {
     cat('Items with maximum score 0:\n')
@@ -355,14 +355,21 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
         design$groups[,w] = 0L
       }
 
-      res = Oakes_pl2(a, em$A, em$b, pre$ncat, em$r,
-                      pre$pni, pre$pcni, pre$pi, pre$px,
-                      theta_grid, em$mu, em$sd, group_n, group,
-                      design$items, design$groups, fixed_items,
-                      pre$ip,pre$inp,pre$icnp,ref_group,
-                      A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,pgw=pgw)
-
-      SE = sqrt(-diag(solve(res$H)))
+      hess = full_hessian_2pl(a, em$A, em$b, pre$ncat, theta_grid, fixed_items,
+                              dat, pre$pni, pre$pcni, pre$pi, pre$px, group, group_n,
+                              pre$ip,pre$inp, pre$icnp,
+                              em$mu, em$sd, ref_group,design$items)
+      
+      # res = Oakes_pl2(a, em$A, em$b, pre$ncat, em$r,
+      #                 pre$pni, pre$pcni, pre$pi, pre$px,
+      #                 theta_grid, em$mu, em$sd, group_n, group,
+      #                 design$items, design$groups, fixed_items,
+      #                 pre$ip,pre$inp,pre$icnp,ref_group,
+      #                 A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,pgw=pgw)
+      # 
+      # SE = sqrt(-diag(solve(res$H)))
+      hess[lower.tri(hess)] = t(hess)[lower.tri(hess)]
+      SE = sqrt(-diag(solve(hess)))
       items$SE_alpha = NA_real_
       items$SE_beta = NA_real_
       i=1; px=1
@@ -401,7 +408,10 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
   out$model=model
   out$em$a=a
   if(model=='2PL')
+  {
     out$prior=list(A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma)
+    out$hess=hess
+  }
   class(out) = append('parms_mml',class(out))
   out
 }
