@@ -405,14 +405,19 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 					for(int k=1; k<ncat[i]; k++)
 					{
 						bmu0(g).slice(x1).col(k) = kron(k,x1) * a.at(x1,i) * (mu[g]-theta) \
-													- (mu[g]-theta) % nconst_a.col(i)/nconst.col(i) \
+													- (mu[g]-theta) % (a.at(k,i) * itrace(i).col(k))\
 													- a.at(x1,i) * kron(k,x1) * m1 \
 													+ m1 * nconst_a.col(i)/nconst.col(i);
-													
+						/*							
 						bsig0(g).slice(x1).col(k) = -(kron(k,x1) * a.at(x1,i) * square(mu[g]-theta) \
 													- square(mu[g]-theta) % nconst_a.col(i)/nconst.col(i) \
 													- a.at(x1,i) * kron(k,x1) * m1 \
 													+ m1 * nconst_a.col(i)/nconst.col(i));
+						*/						
+						bsig0(g).slice(x1).col(k) = -(kron(k,x1) * a.at(x1,i) * square(mu[g]-theta) \
+													- square(mu[g]-theta) % (a.at(k,i) * itrace(i).col(k)) \
+													- a.at(x1,i) * kron(k,x1) * m1 \
+													+ m1 * a.at(k,i) * itrace(i).col(k));
 					}
 
 				}
@@ -422,7 +427,7 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 				amu1.col(x1) = a.at(x1,i) * (theta - b.at(x1,i)) + (nconst_ab.col(i) - theta % nconst_a.col(i))/nconst.col(i);
 				for(int k=1; k<ncat[i]; k++)
 				{
-					bmu1.slice(x1).col(k) = -kron(k,x1) * a.at(x1,i) + nconst_a.col(i)/nconst.col(i);
+					bmu1.slice(x1).col(k) = -kron(k,x1) * a.at(x1,i) + a.at(k,i) * itrace(i).col(k);
 				}				
 			}
 			
