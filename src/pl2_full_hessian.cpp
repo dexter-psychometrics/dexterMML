@@ -364,56 +364,94 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 		}
 		
 		// off diagonal
-		cube amu0(nt,max_cat,ng), amu1(nt,max_cat,ng);
-		mat amu2(nt,ng);
-		vec damu(ng, fill::zeros);
-		mat dbmu(ng,max_cat, fill::zeros);
+		field<cube> bmu0(ng), bsig0(ng);
+		for(int g=0; g<ng; g++)
+		{
+			bmu0(g) = cube(nt,max_cat,max_cat);
+			bsig0(g) = cube(nt,max_cat,max_cat);
+		}
+		cube amu0(nt,max_cat,ng), asig0(nt,max_cat,ng), bmu1(nt,max_cat,max_cat);
+		mat amu1(nt,max_cat);
+		mat amu2(nt,ng),asig2(nt,ng);
+		vec damu(ng),dasig(ng);
+		mat dbmu(ng,max_cat);
+		mat dbsig(ng,max_cat);
 		for(int i=0; i<nit; i++) if(item_fixed[i]==0)
 		{
 			damu.zeros();
+			dasig.zeros();
+			dbmu.zeros();
+			dbsig.zeros();
 			for(int g=0; g<ng; g++) if(g != ref_group && dsg_gi.at(g,i) == 1)
 			{
 				// this is computed before, would be less wastefull to save somewhere
 				double dnm = 2*sigma2[g];
-				double m0 = accu(exp(-square(theta-mu[g])/dnm));
-				double m1 = accu((mu[g]-theta) % exp(-square(theta-mu[g])/dnm))/m0;	
-				
+				double m1 = accu((mu[g]-theta) % exp(-square(theta-mu[g])/dnm));	
 				amu2.col(g) = -mu[g] + theta + m1; //not dependent on item
+				asig2.col(g) = square(mu[g]-theta) - m1;
 				for(int x1=0; x1<ncat[i]; x1++)
 				{
-					//amu0.slice(g).col(x1) = (mu[g] - theta - m1) % ((b.at(x1,i) - theta) * a.at(x1,i) - (nconst_ab.col(i)-theta % nconst_a.col(i))/nconst.col(i) );
-					// zelfde
-					//amu0.slice(g).col(x1) = (mu[g] - theta)%(b.at(x1,i) - theta)*a.at(x1,i) - (mu[g] - theta)%(nconst_ab.col(i)-theta%nconst_a.col(i))/nconst.col(i) - (b.at(x1,i) - theta)*a.at(x1,i)*m1 + m1*(nconst_ab.col(i)-theta%nconst_a.col(i))/nconst.col(i);
-					// the first part does not corrwlate at all with true hessian
 				
-					amu0.slice(g).col(x1) = m0 * ( a.at(x1,i) * (mu[g]-theta) % (b.at(x1,i)-theta) \
-													- (mu[g]-theta) % (nconst_ab.col(i) - theta % nconst_a.col(i))/nconst.col(i)) \
-													- a.at(x1,i) * (b.at(x1,i)-theta) * accu((mu[g]-theta) % exp(-square(mu[g]-theta)/(2*sigma2[g]))) \
-													+ accu((mu[g]-theta) % exp(-square(mu[g]-theta)/(2*sigma2[g]))) * (nconst_ab.col(i) - theta % nconst_a.col(i))/nconst.col(i);
+					amu0.slice(g).col(x1) =  a.at(x1,i) * (mu[g]-theta) % (b.at(x1,i)-theta) \
+													- (mu[g]-theta) % (nconst_ab.col(i) - theta % nconst_a.col(i))/nconst.col(i) \
+													- a.at(x1,i) * (b.at(x1,i)-theta) * m1 \
+													+ m1 * (nconst_ab.col(i) - theta % nconst_a.col(i))/nconst.col(i);
 											
-					amu1.slice(g).col(x1) = m0 * (a.at(x1,i) * (theta - b.at(x1,i)) + (nconst_ab.col(i) - theta % nconst_a.col(i))/nconst.col(i));
-				
-					//amu0.slice(g).col(x1) = (mu[g] - theta - m1) % ((b.at(x1,i) - theta) * a.at(x1,i) - (nconst_ab.col(i)-theta % nconst_a.col(i))/nconst.col(i) );
-					//amu1.slice(g).col(x1) = (theta-b.at(x1,i))*a.at(x1,i) + (nconst_ab.col(i)-theta % nconst_a.col(i)) / nconst.col(i); // not dependent on pop
+					asig0.slice(g).col(x1) = -( a.at(x1,i) * square(mu[g]-theta) % (b.at(x1,i)-theta) \
+													- square(mu[g]-theta) % (nconst_ab.col(i) - theta % nconst_a.col(i))/nconst.col(i) \
+													- a.at(x1,i) * (b.at(x1,i)-theta) * m1 \
+													+ m1 * (nconst_ab.col(i) - theta % nconst_a.col(i))/nconst.col(i));
 					
+					for(int k=1; k<ncat[i]; k++)
+					{
+						bmu0(g).slice(x1).col(k) = kron(k,x1) * a.at(x1,i) * (mu[g]-theta) \
+													- (mu[g]-theta) % nconst_a.col(i)/nconst.col(i) \
+													- a.at(x1,i) * kron(k,x1) * m1 \
+													+ m1 * nconst_a.col(i)/nconst.col(i);
+													
+						bsig0(g).slice(x1).col(k) = -(kron(k,x1) * a.at(x1,i) * square(mu[g]-theta) \
+													- square(mu[g]-theta) % nconst_a.col(i)/nconst.col(i) \
+													- a.at(x1,i) * kron(k,x1) * m1 \
+													+ m1 * nconst_a.col(i)/nconst.col(i));
+					}
 
-					
-					
 				}
 			}
-			for(int ii=icnp[i]; ii < icnp[i+1]; ii++) // this could be together with items
+			for(int x1=0; x1<ncat[i]; x1++)
+			{
+				amu1.col(x1) = a.at(x1,i) * (theta - b.at(x1,i)) + (nconst_ab.col(i) - theta % nconst_a.col(i))/nconst.col(i);
+				for(int k=1; k<ncat[i]; k++)
+				{
+					bmu1.slice(x1).col(k) = -kron(k,x1) * a.at(x1,i) + nconst_a.col(i)/nconst.col(i);
+				}				
+			}
+			
+			
+			for(int ii=icnp[i]; ii < icnp[i+1]; ii++) 
 			{
 				const int p=ip[ii];	
 				const int g = pgroup[p];
 				if(g!=ref_group)
 				{
 					const int x1 = dat.at(p,i);	
-					damu[g] +=  accu(amu0.slice(g).col(x1) % posterior.col(p))/sum_posterior[p] - (accu(amu1.slice(g).col(x1) % posterior.col(p)) * accu(amu2.col(g) % posterior.col(p)))/SQR(sum_posterior[p]);
+					damu[g] +=  accu(amu0.slice(g).col(x1) % posterior.col(p))/sum_posterior[p] - (accu(amu1.col(x1) % posterior.col(p)) * accu(amu2.col(g) % posterior.col(p)))/SQR(sum_posterior[p]);
+					dasig[g] += accu(asig0.slice(g).col(x1) % posterior.col(p))/sum_posterior[p] - (accu(amu1.col(x1) % posterior.col(p)) * accu(asig2.col(g) % posterior.col(p)))/SQR(sum_posterior[p]);
+					for(int k=1; k<ncat[i]; k++)
+					{
+						dbmu.at(g,k) +=  accu(bmu0(g).slice(x1).col(k) % posterior.col(p))/sum_posterior[p]  - (accu(bmu1.slice(x1).col(k) % posterior.col(p)) * accu(amu2.col(g) % posterior.col(p)))/SQR(sum_posterior[p]);
+						dbsig.at(g,k) +=  accu(bsig0(g).slice(x1).col(k) % posterior.col(p))/sum_posterior[p]  - (accu(bmu1.slice(x1).col(k) % posterior.col(p)) * accu(asig2.col(g) % posterior.col(p)))/SQR(sum_posterior[p]);
+					}
 				}
 			}
 			for(int g=0; g<ng; g++) if(g != ref_group && dsg_gi.at(g,i) == 1)
 			{
 				hess.at(cncat[i],g_indx[g]) = damu[g]/sigma2[g];
+				hess.at(cncat[i],g_indx[g]+1) = dasig[g]/CUB(sigma[g]);
+				for(int k=1; k<ncat[i]; k++)
+				{
+					hess.at(cncat[i]+k, g_indx[g]) = A[i] * dbmu.at(g,k)/sigma2[g];
+					hess.at(cncat[i]+k, g_indx[g]+1) = A[i] * dbsig.at(g,k)/CUB(sigma[g]);
+				}
 			}
 		}
 
