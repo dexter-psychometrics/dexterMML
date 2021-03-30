@@ -7,6 +7,8 @@ using namespace arma;
 using Rcpp::Named;
 
 
+// to do: 2pl v2 hessian is incorrect
+
 
 mat full_posterior_2pl(field<mat>& itrace, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
 						const vec& theta, const vec& mu, const vec& sigma, const ivec& pgroup)
@@ -60,13 +62,14 @@ void pl2_icc(const vec& theta, const ivec& a, const double A, const vec& b, cons
 	
 	for(int t=0; t<nt; t++)
 	{
-		double s=1,sa=0,sab=0;		
+		double s=1,sa=0,sab=0,sabt=0;		
 		for(int k=1; k<ncat; k++)
 		{
 			p[k] = std::exp(A*a[k]*(theta[t]-b[k])); 
 			s += p[k];
 			sa += p[k]*a[k];
 			sab += p[k]*a[k]*b[k];
+			sabt += p[k]*a[k]*(b[k]-theta[t]);
 		}
 
 		for(int k=0; k<ncat; k++)
@@ -78,12 +81,13 @@ void pl2_icc(const vec& theta, const ivec& a, const double A, const vec& b, cons
 }
 
 
+
 // [[Rcpp::export]]
 arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, const arma::vec& theta, const arma::ivec& item_fixed,
 						const arma::imat& dat, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, const arma::ivec& pgroup, const arma::ivec& gn,
 						const arma::ivec& ip, const arma::ivec& inp, const arma::ivec& icnp,
 						const arma::vec& mu, const arma::vec& sigma, const int ref_group,
-						const arma::imat dsg_ii)
+						const arma::imat dsg_ii, const arma::imat& dsg_gi)
 {
 	const int ng = mu.n_elem, nit=a.n_cols, max_cat=ncat.max(), nt=theta.n_elem, np=pni.n_elem;
 	
@@ -92,7 +96,21 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 	for(int i=0; i<nit; i++) 
 		if(item_fixed[i]==0)
 			npar += ncat[i];	
-			
+	
+	ivec cncat(nit +1);
+	cncat[0] = 0;
+	std::partial_sum(ncat.begin(),ncat.end(),cncat.begin()+1);
+	
+	ivec g_indx(ng);
+	g_indx[0]= cncat[nit];
+	for(int g=1; g<ng; g++)
+	{		
+		g_indx[g] = g_indx[g-1];
+		if(g-1 != ref_group)
+			g_indx[g] += 2;
+	}
+
+	
 	const vec theta2 = square(theta), sigma2 = square(sigma);
 	
 	field<mat> itrace(nit), itrace2(nit);
@@ -247,7 +265,7 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 						
 					}
 					
-					// AA ~ r .99 rechte lijn
+					// AA ~ r 1
 					AA += AA_part[1]/sum_posterior[p] - (AA_part[2]*AA_part[0])/SQR(sum_posterior[p]); 
 					//Ab ~ r. 1
 					for(int l=1;l<ncat[j];l++) 
@@ -255,7 +273,7 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 					for(int k=1; k<ncat[i]; k++)
 						bA[k] += bA_part.at(0,k)/sum_posterior[p] - (bA_part.at(1,k) * bA_part.at(2,k))/SQR(sum_posterior[p]);
 
-					//bb ~r .99, vermeignvulding met ca 1.1 off
+					//bb ~r 1
 					for(int k=1; k<ncat[i]; k++)
 					{
 						for(int l=1;l<ncat[j]; l++)
@@ -296,22 +314,25 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 			
 			double dnm = 2*sigma2[g];
 			double m0 = accu(exp(-square(theta-mu[g])/dnm));
-			double m1 = accu((mu-theta) % exp(-square(theta-mu[g])/dnm))/m0;			
-			double m2 = accu((square((mu[g] - theta)/sigma) - 1.0) % exp(-square(theta-mu[g])/dnm))/m0;
+			double m1 = accu((mu[g]-theta) % exp(-square(theta-mu[g])/dnm))/m0;			
+			double m2 = accu((square((mu[g] - theta)/sigma[g]) - 1.0) % exp(-square(theta-mu[g])/dnm))/m0;
 			
 			th_mu2.col(g) = square(theta-mu[g]);
 			
 			muc0.col(g) = -m2 - 1 + th_mu2.col(g)/sigma2[g] - 2*m1*(mu[g] - theta)/sigma2[g] + 2*SQR(m1)/sigma2[g];
 			muc1.col(g) = theta-mu[g] + m1; 
 			
-			double c0 = accu(th_mu2.col(g) % exp(-th_mu2.col(g)/(2*sigma2[g]))) / (m0 * sigma[g]);//missch foutje
-			double c1 = accu((-3 + th_mu2.col(g)/sigma2[g]) * th_mu2.col(g) * exp(-th_mu2.col(g)/(2*sigma2[g]))) / m0;
+			double c0 = accu(th_mu2.col(g) % exp(-th_mu2.col(g)/(2*sigma2[g]))) / (m0*sigma2[g]); // herschrijven naar ss0
 			
-			sigc0.col(g) = -3*th_mu2.col(g) - c1 + square(th_mu2.col(g)/sigma[g]) - 2*th_mu2.col(g) * c0 + 2*SQR(c0);
-			sigc1.col(g) = th_mu2.col(g) - c0;
-			
-			double ms0 = accu((2 - th_mu2.col(g)/sigma2[g]) % (mu - theta) % exp(-th_mu2.col(g)/(2*sigma2[g])))/m0;
-			double ms1 = accu((mu - theta) % exp(-th_mu2.col(g)/(2*sigma2[g])))/m0;
+			double ss0 = accu(th_mu2.col(g) % exp(-th_mu2.col(g)/(2*sigma2[g])));
+			double ss1 = accu((-3 + th_mu2.col(g)/sigma2[g]) % th_mu2.col(g) % exp(-th_mu2.col(g)/(2*sigma2[g])));
+
+			// klopt
+			sigc0.col(g) = -3*th_mu2.col(g) - ss1/m0 + square(th_mu2.col(g))/sigma2[g] - 2*th_mu2.col(g)*ss0/(m0*sigma2[g]) + 2*SQR(ss0)/(sigma2[g]*SQR(m0));
+			sigc1.col(g) = (th_mu2.col(g) - ss0/m0);  // wordt ook gebruikt in msc
+
+			double ms0 = accu((2 - th_mu2.col(g)/sigma2[g]) % (mu[g] - theta) % exp(-th_mu2.col(g)/(2*sigma2[g])))/m0;
+			double ms1 = accu((mu[g] - theta) % exp(-th_mu2.col(g)/(2*sigma2[g])))/m0;
 			
 			msc0.col(g) = theta + ms1-mu[g];
 			msc1.col(g) = (2*mu[g] - 2*theta - ms0 - pow((mu[g] - theta),3)/sigma2[g] + th_mu2.col(g)*ms1/sigma2[g] + (mu[g] - theta)*c0/sigma[g] - 2*ms1*c0/sigma[g]);
@@ -324,10 +345,10 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 			if(g!=ref_group)
 			{
 				dmu[g] +=  accu(muc0.col(g) % posterior.col(p)) / sum_posterior[p];				
-				dmu[g] -= SQR(accu(muc1.col(g) * posterior.col(p))/(sigma[g]*sum_posterior[p]));
+				dmu[g] -= SQR(accu(muc1.col(g) % posterior.col(p))/(sigma[g]*sum_posterior[p]));
 				
-				dsig[g] += accu(sigc0.col(g) % posterior.col(p))/sum_posterior[p];
-				dsig[g] -= SQR(accu(sigc1.col(g)  % posterior.col(p))/sum_posterior[p]);
+				dsig[g] += accu(sigc0.col(g) % posterior.col(p))/sum_posterior[p] \
+							- SQR(accu(sigc1.col(g)  % posterior.col(p))/(sigma[g]*sum_posterior[p]));
 				
 				dmusig[g] += accu(msc1.col(g) % posterior.col(p))/sum_posterior[p];
 				dmusig[g] -= (accu(sigc1.col(g) % posterior.col(p)) * accu(msc0.col(g) % posterior.col(p)))/SQR(sigma[g]*sum_posterior[p]);	
@@ -343,27 +364,72 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 		}
 		
 		// off diagonal
-		// pop*pop is missing data since sadly no-one can be in two populations simultaneously
-		/*
-		for(int g=0; g<ng; g++) if(g != ref_group)
+		cube amu0(nt,max_cat,ng), amu1(nt,max_cat,ng);
+		mat amu2(nt,ng);
+		vec damu(ng, fill::zeros);
+		mat dbmu(ng,max_cat, fill::zeros);
+		for(int i=0; i<nit; i++) if(item_fixed[i]==0)
 		{
-			int qr=0;
-			for(int i=0; i<nit; i++) if(item_fixed[i]==0)
+			damu.zeros();
+			for(int g=0; g<ng; g++) if(g != ref_group && dsg_gi.at(g,i) == 1)
 			{
-				if(dsg_gi.at(g,i) == 1)
-				{
-					
+				// this is computed before, would be less wastefull to save somewhere
+				double dnm = 2*sigma2[g];
+				double m0 = accu(exp(-square(theta-mu[g])/dnm));
+				double m1 = accu((mu[g]-theta) % exp(-square(theta-mu[g])/dnm))/m0;	
 				
+				amu2.col(g) = -mu[g] + theta + m1; //not dependent on item
+				for(int x1=0; x1<ncat[i]; x1++)
+				{
+					//amu0.slice(g).col(x1) = (mu[g] - theta - m1) % ((b.at(x1,i) - theta) * a.at(x1,i) - (nconst_ab.col(i)-theta % nconst_a.col(i))/nconst.col(i) );
+					// zelfde
+					//amu0.slice(g).col(x1) = (mu[g] - theta)%(b.at(x1,i) - theta)*a.at(x1,i) - (mu[g] - theta)%(nconst_ab.col(i)-theta%nconst_a.col(i))/nconst.col(i) - (b.at(x1,i) - theta)*a.at(x1,i)*m1 + m1*(nconst_ab.col(i)-theta%nconst_a.col(i))/nconst.col(i);
+					// the first part does not corrwlate at all with true hessian
+				
+					amu0.slice(g).col(x1) = m0 * ( a.at(x1,i) * (mu[g]-theta) % (b.at(x1,i)-theta) \
+													- (mu[g]-theta) % (nconst_ab.col(i) - theta % nconst_a.col(i))/nconst.col(i)) \
+													- a.at(x1,i) * (b.at(x1,i)-theta) * accu((mu[g]-theta) % exp(-square(mu[g]-theta)/(2*sigma2[g]))) \
+													+ accu((mu[g]-theta) % exp(-square(mu[g]-theta)/(2*sigma2[g]))) * (nconst_ab.col(i) - theta % nconst_a.col(i))/nconst.col(i);
+											
+					amu1.slice(g).col(x1) = m0 * (a.at(x1,i) * (theta - b.at(x1,i)) + (nconst_ab.col(i) - theta % nconst_a.col(i))/nconst.col(i));
+				
+					//amu0.slice(g).col(x1) = (mu[g] - theta - m1) % ((b.at(x1,i) - theta) * a.at(x1,i) - (nconst_ab.col(i)-theta % nconst_a.col(i))/nconst.col(i) );
+					//amu1.slice(g).col(x1) = (theta-b.at(x1,i))*a.at(x1,i) + (nconst_ab.col(i)-theta % nconst_a.col(i)) / nconst.col(i); // not dependent on pop
+					
+
+					
+					
 				}
-				qr += ncat[i];
+			}
+			for(int ii=icnp[i]; ii < icnp[i+1]; ii++) // this could be together with items
+			{
+				const int p=ip[ii];	
+				const int g = pgroup[p];
+				if(g!=ref_group)
+				{
+					const int x1 = dat.at(p,i);	
+					damu[g] +=  accu(amu0.slice(g).col(x1) % posterior.col(p))/sum_posterior[p] - (accu(amu1.slice(g).col(x1) % posterior.col(p)) * accu(amu2.col(g) % posterior.col(p)))/SQR(sum_posterior[p]);
+				}
+			}
+			for(int g=0; g<ng; g++) if(g != ref_group && dsg_gi.at(g,i) == 1)
+			{
+				hess.at(cncat[i],g_indx[g]) = damu[g]/sigma2[g];
 			}
 		}
-		*/
+
+
+
+
 		
 	}
 
 	return hess;
 }
+
+
+
+
+
 
 // [[Rcpp::export]]
 arma::vec gradient_2pl(arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat,

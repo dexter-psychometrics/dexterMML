@@ -358,7 +358,7 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
       hess = full_hessian_2pl(a, em$A, em$b, pre$ncat, theta_grid, fixed_items,
                               dat, pre$pni, pre$pcni, pre$pi, pre$px, group, group_n,
                               pre$ip,pre$inp, pre$icnp,
-                              em$mu, em$sd, ref_group,design$items)
+                              em$mu, em$sd, ref_group,design$items,design$groups)
       
       # res = Oakes_pl2(a, em$A, em$b, pre$ncat, em$r,
       #                 pre$pni, pre$pcni, pre$pi, pre$px,
