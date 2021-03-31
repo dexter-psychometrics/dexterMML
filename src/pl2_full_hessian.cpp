@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <RcppArmadillo.h>
 #include "minimize.h"
 #include "shared.h"
@@ -48,7 +49,31 @@ void persons_ii(const int item1, const int item2, const imat& dat,
 	}		
 }
 
+void persons_ii2(const int item1, const int item2, const ivec& ix,
+				const ivec& inp, const ivec& icnp, const ivec& ip,
+				ivec& persons, ivec& x1, ivec& x2, int& np)
+{
+	np=0;
+	int pp1=icnp[item1];
+	int pp2=icnp[item2];
+	while (pp1 < icnp[item1+1] && pp2 <icnp[item2+1])
+	{
+		if( ip[pp1] == ip[pp2])
+		{
+			//add output
+			x1[np] = ix[pp1];
+			x2[np] = ix[pp2];
+			persons[np++] = ip[pp1];
+			pp1++;
+			pp2++;
+		}
+		else if(ip[pp1] < ip[pp2])
+			pp1++;
+		else
+			pp2++;
+	}	
 
+}
 
 
 void pl2_icc(const vec& theta, const ivec& a, const double A, const vec& b, const int ncat, 
@@ -84,7 +109,7 @@ void pl2_icc(const vec& theta, const ivec& a, const double A, const vec& b, cons
 
 // [[Rcpp::export]]
 arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, const arma::vec& theta, const arma::ivec& item_fixed,
-						const arma::imat& dat, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, const arma::ivec& pgroup, const arma::ivec& gn,
+						const arma::ivec& ix, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, const arma::ivec& pgroup, const arma::ivec& gn,
 						const arma::ivec& ip, const arma::ivec& inp, const arma::ivec& icnp,
 						const arma::vec& mu, const arma::vec& sigma, const int ref_group,
 						const arma::imat dsg_ii, const arma::imat& dsg_gi)
@@ -138,17 +163,18 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 	int pr=0;
 
 	// declare parallel
-	ivec persons_ij(np);
+	ivec persons_ij(np), x1_i(np), x2_j(np);
+	/*
 	for(int p=0; p<np;p++)	// complete design for testing
 		persons_ij[p]=p;
-	
+	*/
 	std::vector<long double> AA_part(3), Ab(max_cat), bA(max_cat); 
 	mat Ab_part(3,max_cat), bA_part(3,max_cat), bb(max_cat,max_cat);
 	cube bb_part(max_cat,max_cat,3);
 	
 	
 
-	int np_ij=np;// complete design for testing
+	int np_ij; //=np;// complete design for testing
 
 
 	for(int i=0; i<nit; i++) if(item_fixed[i]==0)
@@ -163,10 +189,10 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 		
 		for(int ii=icnp[i]; ii < icnp[i+1]; ii++)
 		{
-			const int p=ip[ii];
-			
-			const int x=dat.at(p,i);
+			const int p=ip[ii];			
+			const int x=ix[ii]; 
 			int x1=x;
+			
 			double dnm = sum_posterior[p];
 			double part1 = arma::accu((arma::square(atb.col(x)) + 2*D%atb.col(x) + 2*arma::square(D) - E) % posterior.col(p));
 			double part2 = SQR(arma::accu((atb.col(x) + D) % posterior.col(p)))/dnm;
@@ -185,7 +211,6 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 					
 					hess.at(pr+k,pr+l) += SQR(A[i]) * (bb2/sum_posterior[p] - (bb0 * bb1)/SQR(sum_posterior[p]));
 				}
-
 				//ab
 				
 				// this one seems correct but is still the weakest in precision compared with num hess
@@ -199,23 +224,21 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 									) % posterior.col(p));
 				
 				
-				hess.at(pr,pr+k) -= A[i] * (Ab0*Ab1/SQR(sum_posterior[p]) -  (Ab2+Ab0)/sum_posterior[p]); // unsure about Ab0 ins he sum
+				hess.at(pr,pr+k) -= A[i] * (Ab0*Ab1/SQR(sum_posterior[p]) -  (Ab2+Ab0)/sum_posterior[p]); // unsure about Ab0 in the sum
 	
 
 			}
 		}		
 		hess.at(pr,pr) = -AA;
 		
-		
-
 		// -------------------------------  off diagonal ----------------------------- //
 		int qr = pr + ncat[i];
 		for(int j=i+1; j<nit; j++) if(item_fixed[i]==0)
 		{
 			if(dsg_ii.at(j,i) == 1)
 			{
-				//persons_ii(i,j, dat, inp, icnp, ip, persons_ij, np_ij);
-
+				persons_ii2(i,j, ix, inp, icnp, ip, persons_ij, x1_i, x2_j, np_ij);
+				
 				AA = 0;
 				bb.zeros();
 				std::fill(Ab.begin(), Ab.end(), .0L);
@@ -223,7 +246,7 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 				for(int pp=0;pp<np_ij; pp++)
 				{
 					const int p=persons_ij[pp];
-					const int x1=dat.at(p,i), x2=dat.at(p,j);
+					const int x1 = x1_i[pp], x2 = x2_j[pp]; 
 					
 					std::fill(AA_part.begin(), AA_part.end(), .0L);
 					Ab_part.zeros();
@@ -302,6 +325,7 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 	// pop
 	if(ng>1 || ref_group != 0)
 	{
+		
 		//blockdiagonal
 		// running sums
 		vec dmu(ng,fill::zeros), dsig(ng,fill::zeros), dmusig(ng,fill::zeros);
@@ -382,6 +406,9 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 			dasig.zeros();
 			dbmu.zeros();
 			dbsig.zeros();
+			
+			//if(i==4){ printf("before g loop\n");fflush(stdout);}
+			
 			for(int g=0; g<ng; g++) if(g != ref_group && dsg_gi.at(g,i) == 1)
 			{
 				// this is computed before, would be less wastefull to save somewhere
@@ -391,7 +418,7 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 				asig2.col(g) = square(mu[g]-theta) - m1;
 				for(int x1=0; x1<ncat[i]; x1++)
 				{
-				
+					//if(i==4){ printf("g: %i, x: %i\n",g,x1);fflush(stdout);}
 					amu0.slice(g).col(x1) =  a.at(x1,i) * (mu[g]-theta) % (b.at(x1,i)-theta) \
 													- (mu[g]-theta) % (nconst_ab.col(i) - theta % nconst_a.col(i))/nconst.col(i) \
 													- a.at(x1,i) * (b.at(x1,i)-theta) * m1 \
@@ -404,16 +431,12 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 					
 					for(int k=1; k<ncat[i]; k++)
 					{
+						//if(i==4){ printf("g: %i, k: %i\n",g,k);fflush(stdout);}
 						bmu0(g).slice(x1).col(k) = kron(k,x1) * a.at(x1,i) * (mu[g]-theta) \
 													- (mu[g]-theta) % (a.at(k,i) * itrace(i).col(k))\
 													- a.at(x1,i) * kron(k,x1) * m1 \
-													+ m1 * nconst_a.col(i)/nconst.col(i);
-						/*							
-						bsig0(g).slice(x1).col(k) = -(kron(k,x1) * a.at(x1,i) * square(mu[g]-theta) \
-													- square(mu[g]-theta) % nconst_a.col(i)/nconst.col(i) \
-													- a.at(x1,i) * kron(k,x1) * m1 \
-													+ m1 * nconst_a.col(i)/nconst.col(i));
-						*/						
+													+ m1 * a.at(k,i) * itrace(i).col(k);
+					
 						bsig0(g).slice(x1).col(k) = -(kron(k,x1) * a.at(x1,i) * square(mu[g]-theta) \
 													- square(mu[g]-theta) % (a.at(k,i) * itrace(i).col(k)) \
 													- a.at(x1,i) * kron(k,x1) * m1 \
@@ -438,7 +461,7 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 				const int g = pgroup[p];
 				if(g!=ref_group)
 				{
-					const int x1 = dat.at(p,i);	
+					const int x1 = ix[ii];	
 					damu[g] +=  accu(amu0.slice(g).col(x1) % posterior.col(p))/sum_posterior[p] - (accu(amu1.col(x1) % posterior.col(p)) * accu(amu2.col(g) % posterior.col(p)))/SQR(sum_posterior[p]);
 					dasig[g] += accu(asig0.slice(g).col(x1) % posterior.col(p))/sum_posterior[p] - (accu(amu1.col(x1) % posterior.col(p)) * accu(asig2.col(g) % posterior.col(p)))/SQR(sum_posterior[p]);
 					for(int k=1; k<ncat[i]; k++)

@@ -75,19 +75,21 @@ BEGIN_RCPP
 END_RCPP
 }
 // categorize
-arma::imat categorize(const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::imat& icat, const arma::ivec& imax, const int max_cat, arma::ivec& px);
-RcppExport SEXP _dexterMML_categorize(SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP icatSEXP, SEXP imaxSEXP, SEXP max_catSEXP, SEXP pxSEXP) {
+arma::imat categorize(const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& icnp, const arma::ivec& pi, const arma::imat& icat, const arma::ivec& imax, const int max_cat, arma::ivec& px, arma::ivec& ix);
+RcppExport SEXP _dexterMML_categorize(SEXP pniSEXP, SEXP pcniSEXP, SEXP icnpSEXP, SEXP piSEXP, SEXP icatSEXP, SEXP imaxSEXP, SEXP max_catSEXP, SEXP pxSEXP, SEXP ixSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::ivec& >::type pni(pniSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type pcni(pcniSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type icnp(icnpSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type pi(piSEXP);
     Rcpp::traits::input_parameter< const arma::imat& >::type icat(icatSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type imax(imaxSEXP);
     Rcpp::traits::input_parameter< const int >::type max_cat(max_catSEXP);
     Rcpp::traits::input_parameter< arma::ivec& >::type px(pxSEXP);
-    rcpp_result_gen = Rcpp::wrap(categorize(pni, pcni, pi, icat, imax, max_cat, px));
+    Rcpp::traits::input_parameter< arma::ivec& >::type ix(ixSEXP);
+    rcpp_result_gen = Rcpp::wrap(categorize(pni, pcni, icnp, pi, icat, imax, max_cat, px, ix));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -313,8 +315,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // full_hessian_2pl
-arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, const arma::vec& theta, const arma::ivec& item_fixed, const arma::imat& dat, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, const arma::ivec& pgroup, const arma::ivec& gn, const arma::ivec& ip, const arma::ivec& inp, const arma::ivec& icnp, const arma::vec& mu, const arma::vec& sigma, const int ref_group, const arma::imat dsg_ii, const arma::imat& dsg_gi);
-RcppExport SEXP _dexterMML_full_hessian_2pl(SEXP aSEXP, SEXP ASEXP, SEXP bSEXP, SEXP ncatSEXP, SEXP thetaSEXP, SEXP item_fixedSEXP, SEXP datSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP pgroupSEXP, SEXP gnSEXP, SEXP ipSEXP, SEXP inpSEXP, SEXP icnpSEXP, SEXP muSEXP, SEXP sigmaSEXP, SEXP ref_groupSEXP, SEXP dsg_iiSEXP, SEXP dsg_giSEXP) {
+arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, const arma::vec& theta, const arma::ivec& item_fixed, const arma::ivec& ix, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, const arma::ivec& pgroup, const arma::ivec& gn, const arma::ivec& ip, const arma::ivec& inp, const arma::ivec& icnp, const arma::vec& mu, const arma::vec& sigma, const int ref_group, const arma::imat dsg_ii, const arma::imat& dsg_gi);
+RcppExport SEXP _dexterMML_full_hessian_2pl(SEXP aSEXP, SEXP ASEXP, SEXP bSEXP, SEXP ncatSEXP, SEXP thetaSEXP, SEXP item_fixedSEXP, SEXP ixSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP pgroupSEXP, SEXP gnSEXP, SEXP ipSEXP, SEXP inpSEXP, SEXP icnpSEXP, SEXP muSEXP, SEXP sigmaSEXP, SEXP ref_groupSEXP, SEXP dsg_iiSEXP, SEXP dsg_giSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -324,7 +326,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::ivec& >::type ncat(ncatSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type item_fixed(item_fixedSEXP);
-    Rcpp::traits::input_parameter< const arma::imat& >::type dat(datSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type ix(ixSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type pni(pniSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type pcni(pcniSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type pi(piSEXP);
@@ -339,7 +341,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const int >::type ref_group(ref_groupSEXP);
     Rcpp::traits::input_parameter< const arma::imat >::type dsg_ii(dsg_iiSEXP);
     Rcpp::traits::input_parameter< const arma::imat& >::type dsg_gi(dsg_giSEXP);
-    rcpp_result_gen = Rcpp::wrap(full_hessian_2pl(a, A, b, ncat, theta, item_fixed, dat, pni, pcni, pi, px, pgroup, gn, ip, inp, icnp, mu, sigma, ref_group, dsg_ii, dsg_gi));
+    rcpp_result_gen = Rcpp::wrap(full_hessian_2pl(a, A, b, ncat, theta, item_fixed, ix, pni, pcni, pi, px, pgroup, gn, ip, inp, icnp, mu, sigma, ref_group, dsg_ii, dsg_gi));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -584,7 +586,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_se_theta_2pl", (DL_FUNC) &_dexterMML_se_theta_2pl, 10},
     {"_dexterMML_E_score", (DL_FUNC) &_dexterMML_E_score, 6},
     {"_dexterMML_mat_pre", (DL_FUNC) &_dexterMML_mat_pre, 2},
-    {"_dexterMML_categorize", (DL_FUNC) &_dexterMML_categorize, 7},
+    {"_dexterMML_categorize", (DL_FUNC) &_dexterMML_categorize, 9},
     {"_dexterMML_plot_data", (DL_FUNC) &_dexterMML_plot_data, 7},
     {"_dexterMML_design_matrices", (DL_FUNC) &_dexterMML_design_matrices, 6},
     {"_dexterMML_check_connected_c", (DL_FUNC) &_dexterMML_check_connected_c, 3},

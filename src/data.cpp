@@ -1,5 +1,6 @@
-#include <RcppArmadillo.h>
 #include <stack>
+#include <unordered_map>
+#include <RcppArmadillo.h>
 
 using namespace arma;
 using Rcpp::Named;
@@ -53,13 +54,15 @@ Rcpp::List mat_pre(const arma::imat& dat, const int max_score)
 			}
 		}
 	}
-	ivec ip(sz);
+	ivec ip(sz), ix(sz);
 	int ii=0;
 	for(int i=0;i<nit;i++)
 		for(int p=0;p<np;p++)
 			if(dat.at(p,i) >=0)
+			{
+				ix[ii] = dat.at(p,i);
 				ip[ii++]=p;
-
+			}
 	// cumulative pointers	
 	ivec pcni(np+1);
 	pcni[0] = 0;
@@ -86,36 +89,42 @@ Rcpp::List mat_pre(const arma::imat& dat, const int max_score)
 	}
 	
 	return Rcpp::List::create(
-		Named("pi") = pi, Named("px") = px, Named("ip") = ip,
+		Named("pi") = pi, Named("px") = px, Named("ip") = ip, Named("ix") = ix,
 		Named("inp") = inp, Named("icnp") = icnp, Named("pni") = pni, Named("pcni") = pcni,
 		Named("icat") = icat, Named("ncat") = ncat, Named("imax") = imax, Named("isum") = isum, Named("psum") = psum);
 }
 
 
-
+// to do:: change ix
 // px changed in place if necessary
 // returns matrix a
 // [[Rcpp::export]]
 arma::imat categorize(const arma::ivec& pni,
 						const arma::ivec& pcni,
+						const arma::ivec& icnp,
 						const arma::ivec& pi,				
 						const arma::imat& icat, const arma::ivec& imax,
 						const int max_cat,
-						arma::ivec& px)
+						arma::ivec& px,
+						arma::ivec& ix)
 {
 	
 	const int nit = icat.n_cols, np = pni.n_elem;
 	imat a(max_cat, nit, fill::zeros);
 	imat ai(icat.n_rows, icat.n_cols,fill::zeros);
-		
-	bool recode = false;
+	
+	arma::ivec recode_items(nit);
+	int nir=0;
 	for(int i=0; i<nit; i++)
 	{
 		int k=0;
 		for(int j=0; j<=imax[i]; j++)
 		{
 			if(icat.at(j,i) == 0) 
-				recode = true;
+			{
+				if(nir==0 || recode_items[nir-1] != i)
+					recode_items[nir++] = i;
+			}
 			else
 			{
 				a.at(k,i) = j;
@@ -125,7 +134,7 @@ arma::imat categorize(const arma::ivec& pni,
 		}			
 	}
 	
-	if(recode)
+	if(nir > 0)
 	{	
 #pragma omp parallel for	
 		for(int p=0; p<np; p++)
@@ -133,10 +142,23 @@ arma::imat categorize(const arma::ivec& pni,
 			for(int j=pcni[p]; j<pcni[p+1]; j++)
 				px[j] = ai.at(px[j],pi[j]);
 		}
+		
+#pragma omp parallel for	
+		for(int ii=0; ii<nir; ii++)
+		{
+			const int i = recode_items[ii];
+			for(int j=icnp[i]; j<icnp[i+1]; j++)
+			{
+				ix[j] = ai.at(ix[j],i);
+			}
+		}
+		
 	}	
 	return a;
 }
 
+
+//to do: not necessary anymore now that we have ix
 // [[Rcpp::export]]
 Rcpp::DataFrame plot_data(const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, const arma::ivec& inp, const arma::vec& theta, 
 							const arma::imat& a, const int item)

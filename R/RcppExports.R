@@ -17,8 +17,8 @@ mat_pre <- function(dat, max_score) {
     .Call(`_dexterMML_mat_pre`, dat, max_score)
 }
 
-categorize <- function(pni, pcni, pi, icat, imax, max_cat, px) {
-    .Call(`_dexterMML_categorize`, pni, pcni, pi, icat, imax, max_cat, px)
+categorize <- function(pni, pcni, icnp, pi, icat, imax, max_cat, px, ix) {
+    .Call(`_dexterMML_categorize`, pni, pcni, icnp, pi, icat, imax, max_cat, px, ix)
 }
 
 plot_data <- function(pcni, pi, px, inp, theta, a, item) {
@@ -65,8 +65,8 @@ estimate_pl2 <- function(a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu
     .Call(`_dexterMML_estimate_pl2`, a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ip, inp, icnp, ref_group, A_prior, A_mu, A_sigma, use_m2, max_iter, pgw)
 }
 
-full_hessian_2pl <- function(a, A, b, ncat, theta, item_fixed, dat, pni, pcni, pi, px, pgroup, gn, ip, inp, icnp, mu, sigma, ref_group, dsg_ii, dsg_gi) {
-    .Call(`_dexterMML_full_hessian_2pl`, a, A, b, ncat, theta, item_fixed, dat, pni, pcni, pi, px, pgroup, gn, ip, inp, icnp, mu, sigma, ref_group, dsg_ii, dsg_gi)
+full_hessian_2pl <- function(a, A, b, ncat, theta, item_fixed, ix, pni, pcni, pi, px, pgroup, gn, ip, inp, icnp, mu, sigma, ref_group, dsg_ii, dsg_gi) {
+    .Call(`_dexterMML_full_hessian_2pl`, a, A, b, ncat, theta, item_fixed, ix, pni, pcni, pi, px, pgroup, gn, ip, inp, icnp, mu, sigma, ref_group, dsg_ii, dsg_gi)
 }
 
 gradient_2pl <- function(a, A, b, ncat, pcni, pi, px, theta, mu, sigma, pgroup, ip, inp, icnp) {

@@ -22,8 +22,8 @@ abl_pre = function(dataSrc, pars)
     stop("mismatch between parameters and data")
   }
  
-  data_a = categorize(pre$pni, pre$pcni, pre$pi,
-                      pars$icat, pars$imax, max(pars$ncat), pre$px)
+  data_a = categorize(pre$pni, pre$pcni, pre$icnp, pre$pi,
+                      pars$icat, pars$imax, max(pars$ncat), pre$px, pre$ix)
   
   #have to test this, it might be wrong
   mismatch = sapply(1:ncol(dataSrc), function(i)

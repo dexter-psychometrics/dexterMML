@@ -206,8 +206,8 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
   design = design_matrices(pre$pni, pre$pcni, pre$pi, group, ncol(dat), length(group_n))
   
   # this changes the respons vectors px and ix in pre
-  a = categorize(pre$pni, pre$pcni, pre$pi,
-                       pre$icat, pre$imax,max(pre$ncat), pre$px)
+  a = categorize(pre$pni, pre$pcni, pre$icnp, pre$pi,
+                       pre$icat, pre$imax,max(pre$ncat), pre$px, pre$ix)
 
   if(se && pgw>0) cat("(1/2) Parameter estimation\n")
 
@@ -356,7 +356,7 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
       }
       print(system.time({
       hess = full_hessian_2pl(a, em$A, em$b, pre$ncat, theta_grid, fixed_items,
-                              dat, pre$pni, pre$pcni, pre$pi, pre$px, group, group_n,
+                              pre$ix, pre$pni, pre$pcni, pre$pi, pre$px, group, group_n,
                               pre$ip,pre$inp, pre$icnp,
                               em$mu, em$sd, ref_group,design$items,design$groups)
       }))
