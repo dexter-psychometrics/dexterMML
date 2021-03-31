@@ -27,6 +27,11 @@ mat full_posterior_2pl(field<mat>& itrace, const ivec& pni, const ivec& pcni, co
 		
 		for(int indx = pcni[p]; indx<pcni[p+1]; indx++)
 			posterior.col(p) %= itrace(pi[indx]).col(px[indx]);
+		long double s=0;
+		for(int t=0;t<nt;t++)
+			s+= posterior.at(t,p);
+		posterior.col(p) /= s;
+		
 	}
 	return posterior;
 }
@@ -151,23 +156,12 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 		
 	mat hess(npar, npar, fill::zeros);
 	mat posterior = full_posterior_2pl(itrace, pni, pcni, pi, px, theta, mu, sigma, pgroup);
-	vec sum_posterior = trans(sum(posterior,0));
-	/*
-	for(int p=0; p<np;p++)
-	{
-		posterior.col(p) = posterior.col(p)/sum_posterior[p];
-		
-	}
-	sum_posterior.ones();
-	*/
+
 	int pr=0;
 
 	// declare parallel
 	ivec persons_ij(np), x1_i(np), x2_j(np);
-	/*
-	for(int p=0; p<np;p++)	// complete design for testing
-		persons_ij[p]=p;
-	*/
+
 	std::vector<long double> AA_part(3), Ab(max_cat), bA(max_cat); 
 	mat Ab_part(3,max_cat), bA_part(3,max_cat), bb(max_cat,max_cat);
 	cube bb_part(max_cat,max_cat,3);
@@ -193,11 +187,10 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 			const int x=ix[ii]; 
 			int x1=x;
 			
-			double dnm = sum_posterior[p];
 			double part1 = arma::accu((arma::square(atb.col(x)) + 2*D%atb.col(x) + 2*arma::square(D) - E) % posterior.col(p));
-			double part2 = SQR(arma::accu((atb.col(x) + D) % posterior.col(p)))/dnm;
+			double part2 = SQR(arma::accu((atb.col(x) + D) % posterior.col(p)));
 	
-			AA -= (part1-part2)/dnm;	
+			AA -= (part1-part2);	
 			
 			for(int k=1;k<ncat[i];k++)
 			{
@@ -209,7 +202,7 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 															- kron(k, l)*SQR(a.at(k,i))*itrace(i).col(k) \
 															- kron(k, x1)*a.at(x1,i)*a.at(l,i)*itrace(i).col(l) + 2*a.at(k,i)*a.at(l,i)*itrace(i).col(l)%itrace(i).col(k)));
 					
-					hess.at(pr+k,pr+l) += SQR(A[i]) * (bb2/sum_posterior[p] - (bb0 * bb1)/SQR(sum_posterior[p]));
+					hess.at(pr+k,pr+l) += SQR(A[i]) * (bb2 - bb0 * bb1);
 				}
 				//ab
 				
@@ -224,7 +217,7 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 									) % posterior.col(p));
 				
 				
-				hess.at(pr,pr+k) -= A[i] * (Ab0*Ab1/SQR(sum_posterior[p]) -  (Ab2+Ab0)/sum_posterior[p]); // unsure about Ab0 in the sum
+				hess.at(pr,pr+k) -= A[i] * (Ab0*Ab1 -  (Ab2+Ab0)); // unsure about Ab0 in the sum
 	
 
 			}
@@ -289,19 +282,19 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 					}
 					
 					// AA ~ r 1
-					AA += AA_part[1]/sum_posterior[p] - (AA_part[2]*AA_part[0])/SQR(sum_posterior[p]); 
+					AA += AA_part[1] - AA_part[2]*AA_part[0]; 
 					//Ab ~ r. 1
 					for(int l=1;l<ncat[j];l++) 
-						Ab[l] += Ab_part.at(0,l)/sum_posterior[p] - (Ab_part.at(1,l) * Ab_part.at(2,l))/SQR(sum_posterior[p]); 
+						Ab[l] += Ab_part.at(0,l) - Ab_part.at(1,l) * Ab_part.at(2,l); 
 					for(int k=1; k<ncat[i]; k++)
-						bA[k] += bA_part.at(0,k)/sum_posterior[p] - (bA_part.at(1,k) * bA_part.at(2,k))/SQR(sum_posterior[p]);
+						bA[k] += bA_part.at(0,k)- bA_part.at(1,k) * bA_part.at(2,k);
 
 					//bb ~r 1
 					for(int k=1; k<ncat[i]; k++)
 					{
 						for(int l=1;l<ncat[j]; l++)
 						{
-							bb.at(k,l) += bb_part.at(k,l,1)/sum_posterior[p] - (bb_part.at(k,l,2) * bb_part.at(k,l,0))/SQR(sum_posterior[p]);
+							bb.at(k,l) += bb_part.at(k,l,1) - bb_part.at(k,l,2) * bb_part.at(k,l,0);
 						}
 					}
 
@@ -368,14 +361,14 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 			const int g = pgroup[p];
 			if(g!=ref_group)
 			{
-				dmu[g] +=  accu(muc0.col(g) % posterior.col(p)) / sum_posterior[p];				
-				dmu[g] -= SQR(accu(muc1.col(g) % posterior.col(p))/(sigma[g]*sum_posterior[p]));
+				dmu[g] +=  accu(muc0.col(g) % posterior.col(p));			
+				dmu[g] -= SQR(accu(muc1.col(g) % posterior.col(p))/sigma[g]);
 				
-				dsig[g] += accu(sigc0.col(g) % posterior.col(p))/sum_posterior[p] \
-							- SQR(accu(sigc1.col(g)  % posterior.col(p))/(sigma[g]*sum_posterior[p]));
+				dsig[g] += accu(sigc0.col(g) % posterior.col(p)) \
+							- SQR(accu(sigc1.col(g)  % posterior.col(p))/sigma[g]);
 				
-				dmusig[g] += accu(msc1.col(g) % posterior.col(p))/sum_posterior[p];
-				dmusig[g] -= (accu(sigc1.col(g) % posterior.col(p)) * accu(msc0.col(g) % posterior.col(p)))/SQR(sigma[g]*sum_posterior[p]);	
+				dmusig[g] += accu(msc1.col(g) % posterior.col(p));
+				dmusig[g] -= (accu(sigc1.col(g) % posterior.col(p)) * accu(msc0.col(g) % posterior.col(p)))/sigma2[g];	
 			}
 		}
 		//fill
@@ -462,12 +455,12 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 				if(g!=ref_group)
 				{
 					const int x1 = ix[ii];	
-					damu[g] +=  accu(amu0.slice(g).col(x1) % posterior.col(p))/sum_posterior[p] - (accu(amu1.col(x1) % posterior.col(p)) * accu(amu2.col(g) % posterior.col(p)))/SQR(sum_posterior[p]);
-					dasig[g] += accu(asig0.slice(g).col(x1) % posterior.col(p))/sum_posterior[p] - (accu(amu1.col(x1) % posterior.col(p)) * accu(asig2.col(g) % posterior.col(p)))/SQR(sum_posterior[p]);
+					damu[g] +=  accu(amu0.slice(g).col(x1) % posterior.col(p)) - (accu(amu1.col(x1) % posterior.col(p)) * accu(amu2.col(g) % posterior.col(p)));
+					dasig[g] += accu(asig0.slice(g).col(x1) % posterior.col(p)) - (accu(amu1.col(x1) % posterior.col(p)) * accu(asig2.col(g) % posterior.col(p)));
 					for(int k=1; k<ncat[i]; k++)
 					{
-						dbmu.at(g,k) +=  accu(bmu0(g).slice(x1).col(k) % posterior.col(p))/sum_posterior[p]  - (accu(bmu1.slice(x1).col(k) % posterior.col(p)) * accu(amu2.col(g) % posterior.col(p)))/SQR(sum_posterior[p]);
-						dbsig.at(g,k) +=  accu(bsig0(g).slice(x1).col(k) % posterior.col(p))/sum_posterior[p]  - (accu(bmu1.slice(x1).col(k) % posterior.col(p)) * accu(asig2.col(g) % posterior.col(p)))/SQR(sum_posterior[p]);
+						dbmu.at(g,k) +=  accu(bmu0(g).slice(x1).col(k) % posterior.col(p)) - (accu(bmu1.slice(x1).col(k) % posterior.col(p)) * accu(amu2.col(g) % posterior.col(p)));
+						dbsig.at(g,k) +=  accu(bsig0(g).slice(x1).col(k) % posterior.col(p)) - (accu(bmu1.slice(x1).col(k) % posterior.col(p)) * accu(asig2.col(g) % posterior.col(p)));
 					}
 				}
 			}
