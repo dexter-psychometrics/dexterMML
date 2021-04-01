@@ -360,15 +360,7 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
                               pre$ip,pre$inp, pre$icnp,
                               em$mu, em$sd, ref_group,design$items,design$groups)
       }))
-      
-      # res = Oakes_pl2(a, em$A, em$b, pre$ncat, em$r,
-      #                 pre$pni, pre$pcni, pre$pi, pre$px,
-      #                 theta_grid, em$mu, em$sd, group_n, group,
-      #                 design$items, design$groups, fixed_items,
-      #                 pre$ip,pre$inp,pre$icnp,ref_group,
-      #                 A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,pgw=pgw)
-      # 
-      # SE = sqrt(-diag(solve(res$H)))
+
       hess[lower.tri(hess)] = t(hess)[lower.tri(hess)]
       SE = sqrt(-diag(solve(hess)))
       items$SE_alpha = NA_real_

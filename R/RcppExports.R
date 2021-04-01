@@ -73,6 +73,10 @@ gradient_2pl <- function(a, A, b, ncat, pcni, pi, px, theta, mu, sigma, pgroup, 
     .Call(`_dexterMML_gradient_2pl`, a, A, b, ncat, pcni, pi, px, theta, mu, sigma, pgroup, ip, inp, icnp)
 }
 
+full_hessian_2pl_optm <- function(a, A, b, ncat, theta, item_fixed, ix, pni, pcni, pi, px, pgroup, gn, ip, inp, icnp, mu, sigma, ref_group, dsg_ii, dsg_gi) {
+    .Call(`_dexterMML_full_hessian_2pl_optm`, a, A, b, ncat, theta, item_fixed, ix, pni, pcni, pi, px, pgroup, gn, ip, inp, icnp, mu, sigma, ref_group, dsg_ii, dsg_gi)
+}
+
 test_ll_p2 <- function(a, theta, r, par, prior = 0L) {
     .Call(`_dexterMML_test_ll_p2`, a, theta, r, par, prior)
 }
@@ -95,10 +99,6 @@ test_gr_v2 <- function(a, A, b, ncat, theta, ip, pi, pcni, px, pgroup, inp, icnp
 
 test_hess_v2 <- function(a, A, b, ncat, theta, ip, pi, pcni, px, pgroup, inp, icnp, mu, sigma, item, pars) {
     .Call(`_dexterMML_test_hess_v2`, a, A, b, ncat, theta, ip, pi, pcni, px, pgroup, inp, icnp, mu, sigma, item, pars)
-}
-
-Oakes_pl2 <- function(a, A, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, ip, inp, icnp, ref_group = 0L, A_prior = 0L, A_mu = 0, A_sigma = 0.5, pgw = 80L) {
-    .Call(`_dexterMML_Oakes_pl2`, a, A, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, ip, inp, icnp, ref_group, A_prior, A_mu, A_sigma, pgw)
 }
 
 plausible_values_c <- function(A, a, b, ncat, pni, pcni, pi, px, pop, popn, npv, starting_values, n_prior_updates = 10L, thin = 10L, pgw = 80L) {
