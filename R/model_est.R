@@ -354,14 +354,12 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
         design$items[,w] = 0L
         design$groups[,w] = 0L
       }
-      print(system.time({
+
       hess = full_hessian_2pl(a, em$A, em$b, pre$ncat, theta_grid, fixed_items,
                               pre$ix, pre$pni, pre$pcni, pre$pi, pre$px, group, group_n,
                               pre$ip,pre$inp, pre$icnp,
-                              em$mu, em$sd, ref_group,design$items,design$groups)
-      }))
+                              em$mu, em$sd, ref_group,design$items,design$groups,pgw)
 
-      hess[lower.tri(hess)] = t(hess)[lower.tri(hess)]
       SE = sqrt(-diag(solve(hess)))
       items$SE_alpha = NA_real_
       items$SE_beta = NA_real_
