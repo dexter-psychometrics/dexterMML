@@ -9,7 +9,7 @@ using Rcpp::Named;
 
 
 // to do: 2pl v2 hessian is incorrect
-// to do: prior on A
+// to do: see where long doubles are needed
 
 mat full_posterior_2pl(field<mat>& itrace, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
 						const vec& theta, const vec& mu, const vec& sigma, const ivec& pgroup)
@@ -133,7 +133,8 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 						const arma::ivec& ix, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, const arma::ivec& pgroup, const arma::ivec& gn,
 						const arma::ivec& ip, const arma::ivec& inp, const arma::ivec& icnp,
 						const arma::vec& mu, const arma::vec& sigma, const int ref_group,
-						const arma::imat dsg_ii, const arma::imat& dsg_gi, const int prog_width=80)
+						const arma::imat dsg_ii, const arma::imat& dsg_gi, 
+						const int A_prior=0, const double A_mu=0, const double A_sigma=0.5, const int prog_width=80)
 {
 	const int ng = mu.n_elem, nit=a.n_cols, max_cat=ncat.max(), nt=theta.n_elem, np=pni.n_elem;
 	
@@ -163,10 +164,10 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 	field<mat> itrace(nit);
 	field<cube> itrace2(nit);
 	mat nconst(nt,nit), nconst_a(nt,nit), nconst_ab(nt,nit);
-
+	
+	// pe compute necessary traces
 	for(int i=0; i<nit; i++)
-	{
-		// pe compute necessary traces
+	{		
 		itrace(i) = mat(nt,ncat[i]);		
 		pl2_icc(theta, a.col(i), A[i], b.col(i), ncat[i], itrace(i), nconst.colptr(i), nconst_a.colptr(i), nconst_ab.colptr(i));
 		itrace2(i) = cube(nt,ncat[i],ncat[i]);
@@ -181,7 +182,6 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 		}
 	}
 	
-
 	mat hess(npar, npar, fill::zeros);
 	mat posterior = full_posterior_2pl(itrace, pni, pcni, pi, px, theta, mu, sigma, pgroup);
 
@@ -196,9 +196,7 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 		}									
 	}
 	
-	
-	
-	
+		
 #pragma omp parallel
 	{
 		const bool _is_main_thread = omp_get_thread_num() == 0;
@@ -413,6 +411,7 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 #pragma omp for
 			for(int i=0; i<nit; i++) if(item_fixed[i]==0)
 			{
+				if(progr.interrupted) continue;				
 				damu.zeros();
 				dasig.zeros();
 				dbmu.zeros();
@@ -491,6 +490,21 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 			}
 		}
 	}
+	if(progr.interrupted) Rcpp::stop("user interruption");
+	//prior part
+	if(A_prior==1)
+	{
+		const double asig2 = SQR(A_sigma);
+		for(int i=0; i<nit; i++) if(item_fixed[i]==0)
+			hess.at(cncat[i],cncat[i]) -= (A_mu-asig2 - std::log(A[i]) + 1)/(SQR(A[i])*asig2); 
+	}
+	else if(A_prior==2)
+	{
+		const double a_part = 1/SQR(A_sigma);
+		for(int i=0; i<nit; i++) if(item_fixed[i]==0)
+			hess.at(cncat[i],cncat[i]) -= a_part; 
+	}
+	//lower tri
 	for(int i=0;i<npar;i++)
 		for(int j=i+1; j<npar;j++)
 			hess.at(j,i) = hess.at(i,j);

@@ -36,13 +36,6 @@ initializer( omp_priv = mat_init(omp_orig) )
 initializer( omp_priv = vec_init(omp_orig) )
 
 
-
-// very minimalist drop in long double matrix based on armadillo mat interface 
-// can be extended somewhat if necessary
-// zero init by default
-
-
-
 static void chkIntFn(void *dummy) {
   R_CheckUserInterrupt();
 }
@@ -116,7 +109,7 @@ struct progress_prl : progress
 	}
 	
 	bool checkInterrupt() {
-		return (R_ToplevelExec(chkIntFn, NULL) == FALSE);
+		return (R_ToplevelExec(chkIntFn, NULL) == 0);
 	}
 	
 	void update(const int add, const bool main_thread)

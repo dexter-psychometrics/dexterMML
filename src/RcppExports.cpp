@@ -339,8 +339,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // full_hessian_2pl
-arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, const arma::vec& theta, const arma::ivec& item_fixed, const arma::ivec& ix, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, const arma::ivec& pgroup, const arma::ivec& gn, const arma::ivec& ip, const arma::ivec& inp, const arma::ivec& icnp, const arma::vec& mu, const arma::vec& sigma, const int ref_group, const arma::imat dsg_ii, const arma::imat& dsg_gi, const int prog_width);
-RcppExport SEXP _dexterMML_full_hessian_2pl(SEXP aSEXP, SEXP ASEXP, SEXP bSEXP, SEXP ncatSEXP, SEXP thetaSEXP, SEXP item_fixedSEXP, SEXP ixSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP pgroupSEXP, SEXP gnSEXP, SEXP ipSEXP, SEXP inpSEXP, SEXP icnpSEXP, SEXP muSEXP, SEXP sigmaSEXP, SEXP ref_groupSEXP, SEXP dsg_iiSEXP, SEXP dsg_giSEXP, SEXP prog_widthSEXP) {
+arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, const arma::vec& theta, const arma::ivec& item_fixed, const arma::ivec& ix, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, const arma::ivec& pgroup, const arma::ivec& gn, const arma::ivec& ip, const arma::ivec& inp, const arma::ivec& icnp, const arma::vec& mu, const arma::vec& sigma, const int ref_group, const arma::imat dsg_ii, const arma::imat& dsg_gi, const int A_prior, const double A_mu, const double A_sigma, const int prog_width);
+RcppExport SEXP _dexterMML_full_hessian_2pl(SEXP aSEXP, SEXP ASEXP, SEXP bSEXP, SEXP ncatSEXP, SEXP thetaSEXP, SEXP item_fixedSEXP, SEXP ixSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP pgroupSEXP, SEXP gnSEXP, SEXP ipSEXP, SEXP inpSEXP, SEXP icnpSEXP, SEXP muSEXP, SEXP sigmaSEXP, SEXP ref_groupSEXP, SEXP dsg_iiSEXP, SEXP dsg_giSEXP, SEXP A_priorSEXP, SEXP A_muSEXP, SEXP A_sigmaSEXP, SEXP prog_widthSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -365,8 +365,11 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const int >::type ref_group(ref_groupSEXP);
     Rcpp::traits::input_parameter< const arma::imat >::type dsg_ii(dsg_iiSEXP);
     Rcpp::traits::input_parameter< const arma::imat& >::type dsg_gi(dsg_giSEXP);
+    Rcpp::traits::input_parameter< const int >::type A_prior(A_priorSEXP);
+    Rcpp::traits::input_parameter< const double >::type A_mu(A_muSEXP);
+    Rcpp::traits::input_parameter< const double >::type A_sigma(A_sigmaSEXP);
     Rcpp::traits::input_parameter< const int >::type prog_width(prog_widthSEXP);
-    rcpp_result_gen = Rcpp::wrap(full_hessian_2pl(a, A, b, ncat, theta, item_fixed, ix, pni, pcni, pi, px, pgroup, gn, ip, inp, icnp, mu, sigma, ref_group, dsg_ii, dsg_gi, prog_width));
+    rcpp_result_gen = Rcpp::wrap(full_hessian_2pl(a, A, b, ncat, theta, item_fixed, ix, pni, pcni, pi, px, pgroup, gn, ip, inp, icnp, mu, sigma, ref_group, dsg_ii, dsg_gi, A_prior, A_mu, A_sigma, prog_width));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -565,7 +568,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_loglikelihood_2pl", (DL_FUNC) &_dexterMML_loglikelihood_2pl, 12},
     {"_dexterMML_estimate_pl2", (DL_FUNC) &_dexterMML_estimate_pl2, 24},
     {"_dexterMML_gradient_2pl", (DL_FUNC) &_dexterMML_gradient_2pl, 14},
-    {"_dexterMML_full_hessian_2pl", (DL_FUNC) &_dexterMML_full_hessian_2pl, 22},
+    {"_dexterMML_full_hessian_2pl", (DL_FUNC) &_dexterMML_full_hessian_2pl, 25},
     {"_dexterMML_test_ll_p2", (DL_FUNC) &_dexterMML_test_ll_p2, 5},
     {"_dexterMML_test_gradient_p2", (DL_FUNC) &_dexterMML_test_gradient_p2, 5},
     {"_dexterMML_test_hess_p2", (DL_FUNC) &_dexterMML_test_hess_p2, 5},
