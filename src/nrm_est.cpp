@@ -59,7 +59,44 @@ void estep_nrm(imat& a, mat& b, const mat& exp_at, const ivec& ncat, const ivec&
 		sumsig2[g] = accu(sigma2.col(g) % square(theta));
 }
 
+// [[Rcpp::export]]
+long double loglikelihood_nrm(const arma::imat& a, const arma::mat& b, const arma::ivec& ncat, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
+				const arma::vec& theta, const arma::vec& mu, const arma::vec& sigma, const arma::ivec& pgroup)
+{
+	const int nit = ncat.n_elem, nt = theta.n_elem, np = pcni.n_elem-1, ng = mu.n_elem;
+	const int max_a = a.max();
+	mat exp_at(max_a+1, nt, fill::ones);
+	for(int t=0; t< nt; t++)
+		for(int k=1; k<=max_a;k++)
+			exp_at.at(k,t) = std::exp(k*theta[t]);
+	
+	mat posterior0(nt,ng);
+	for(int g=0; g<ng; g++)
+		posterior0.col(g) = gaussian_pts(mu[g],sigma[g],theta);
 
+	field<mat> itrace(nit);
+	
+	for(int i=0; i<nit; i++)
+		itrace(i) = nrm_trace(theta, a.col(i), b.col(i), ncat[i], exp_at);
+	
+	long double ll=0;
+
+#pragma omp parallel
+	{
+		vec posterior(nt);
+#pragma omp for reduction(+: ll)
+		for(int p=0; p<np;p++)
+		{
+			posterior = posterior0.col(pgroup[p]);
+			
+			for(int indx = pcni[p]; indx<pcni[p+1]; indx++)
+				posterior %= itrace(pi[indx]).col(px[indx]);
+
+			ll += std::log(accu(posterior)); 		
+		}
+	}
+	return ll;
+}
 
 
 // if fixed parameters, set ref_group to a negative nbr

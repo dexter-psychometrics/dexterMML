@@ -54,6 +54,8 @@ void estep_pl2(field<mat>& itrace, const ivec& pni, const ivec& pcni, const ivec
 		sumsig2[g] = accu(sigma2.col(g) % square(theta));
 }
 
+
+// without the item prior part
 // [[Rcpp::export]]
 long double loglikelihood_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, 
 				const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
@@ -99,9 +101,10 @@ void est_stop(imat& a, const ivec& ncat, const ivec& pni, const ivec& pcni, cons
 		 const ivec& pgroup, vec& theta, const arma::ivec& item_fixed, const vec& h_ll, const int iter, const int ref_group, 
 		 const int A_prior, const double A_mu, const double A_sigma, const long double old_ll, const int store_i,
 		 vec& A, mat& store_A, mat& b, cube& store_b, vec& mu, mat& store_mu, vec& sigma, mat& store_sigma,
-		 long double ll)
+		 long double& ll)
 {
 	const int nit = a.n_cols;
+	ll_pl2_base bs(A_prior, A_mu, A_sigma); 
 	if(iter>3)
 	{
 		//quadratic approximation based on likelihood
@@ -139,10 +142,8 @@ void est_stop(imat& a, const ivec& ncat, const ivec& pni, const ivec& pcni, cons
 		if(A_prior>0)
 			for(int i=0;i<nit;i++)
 				if(item_fixed[i] != 1)
-				{
-					ll_pl2_base f(A_prior, A_mu, A_sigma);
-					prior_part -= f.prior_part_ll(A[i]);
-				}
+					prior_part -= bs.prior_part_ll(A[i]);
+
 				
 		if(ll_new + prior_part < old_ll)
 		{

@@ -92,6 +92,7 @@ void pl2_icc(const vec& theta, const ivec& a, const double A, const vec& b, cons
 	}
 }
 
+// as yet without the item prior part
 // [[Rcpp::export]]
 arma::vec gradient_2pl(arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat,
 						const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 

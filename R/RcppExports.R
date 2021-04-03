@@ -33,6 +33,10 @@ check_connected_c <- function(item, group, item_fixed) {
     .Call(`_dexterMML_check_connected_c`, item, group, item_fixed)
 }
 
+loglikelihood_nrm <- function(a, b, ncat, pcni, pi, px, theta, mu, sigma, pgroup) {
+    .Call(`_dexterMML_loglikelihood_nrm`, a, b, ncat, pcni, pi, px, theta, mu, sigma, pgroup)
+}
+
 estimate_nrm <- function(a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group = 0L, max_iter = 200L, pgw = 80L) {
     .Call(`_dexterMML_estimate_nrm`, a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group, max_iter, pgw)
 }
@@ -53,8 +57,12 @@ Oakes_nrm <- function(a, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pg
     .Call(`_dexterMML_Oakes_nrm`, a, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, ref_group, pgw)
 }
 
-num_hessian_2pl <- function(a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, pgroup, ddelta = 1e-5) {
-    .Call(`_dexterMML_num_hessian_2pl`, a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, pgroup, ddelta)
+num_hessian_2pl <- function(a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, pgroup, A_prior = 0L, A_mu = 0, A_sigma = 0.5, ddelta = 1e-5) {
+    .Call(`_dexterMML_num_hessian_2pl`, a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, pgroup, A_prior, A_mu, A_sigma, ddelta)
+}
+
+num_hessian_nrm <- function(a, b, ncat, pcni, pi, px, theta, mu, sigma, pgroup, ddelta = 1e-5) {
+    .Call(`_dexterMML_num_hessian_nrm`, a, b, ncat, pcni, pi, px, theta, mu, sigma, pgroup, ddelta)
 }
 
 loglikelihood_2pl <- function(a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, pgroup) {
