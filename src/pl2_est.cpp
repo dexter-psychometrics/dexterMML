@@ -15,7 +15,7 @@ long double loglikelihood_2pl(const arma::imat& a, const arma::vec& A, const arm
 				const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 				const arma::vec& theta, const arma::vec& mu, const arma::vec& sigma, const arma::ivec& pgroup)
 {
-	const int nit = ncat.n_elem, nt = theta.n_elem;
+	const int nit = ncat.n_elem, nt = theta.n_elem, ng=mu.n_elem;
 	
 	mat posterior0(nt,ng);
 	for(int g=0; g<ng; g++)
