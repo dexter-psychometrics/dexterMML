@@ -19,26 +19,25 @@ arma::mat full_hessian_nrm(const arma::imat& a, const arma::mat& b, const arma::
 	
 	progress_prl progr((nit+ng-1)*(nit+ng)/2, prog_width);
 	
-	ivec ncat1 = ncat-1;
-	int npar = 2*ng;
-	if(ref_group >= 0) npar--;
-	for(int i=0; i<nit; i++) 
+	// pre-specify where to save for parallel process
+	ivec i_indx(nit+1);
+	i_indx[0]=0;
+	for(int i=0; i<nit; i++)
+	{
+		i_indx[i+1] = i_indx[i];
 		if(item_fixed[i]==0)
-			npar += ncat1[i];	
-	
-	ivec cncat1(nit +1);
-	cncat1[0] = 0;
-	std::partial_sum(ncat1.begin(),ncat1.end(),cncat1.begin()+1);
-	
-	ivec g_indx(ng);	
-	g_indx[0]= cncat1[nit];
-	for(int g=1; g<ng; g++)
-	{		
-		g_indx[g] = g_indx[g-1]+1;
-		if(g-1 != ref_group)
-			g_indx[g]++;
+			i_indx[i+1] += ncat[i]-1;
 	}
-
+	ivec g_indx(ng+1);	
+	g_indx[0]= i_indx[nit];
+	for(int g=0; g<ng; g++)
+	{		
+		g_indx[g+1] = g_indx[g]+1;
+		if(g != ref_group)
+			g_indx[g+1]++;
+	}
+	const int npar = g_indx[ng];
+	
 	const vec sigma2 = square(sigma);
 	
 	const int max_a = a.max();
@@ -86,7 +85,7 @@ arma::mat full_hessian_nrm(const arma::imat& a, const arma::mat& b, const arma::
 			if(progr.interrupted) continue;
 
 			// block diagonal
-			const int pr = cncat1[i];
+			const int pr = i_indx[i];
 			
 			for(int ii=icnp[i]; ii < icnp[i+1]; ii++)
 			{
@@ -111,7 +110,7 @@ arma::mat full_hessian_nrm(const arma::imat& a, const arma::mat& b, const arma::
 
 			for(int j=i+1; j<nit; j++) if(item_fixed[i]==0)
 			{
-				const int qr=cncat1[j];
+				const int qr=i_indx[j];
 				if(dsg_ii.at(j,i) == 1)
 				{
 					persons_ii(i,j, ix, inp, icnp, ip, persons_ij, x1_i, x2_j, np_ij);
@@ -292,14 +291,14 @@ arma::mat full_hessian_nrm(const arma::imat& a, const arma::mat& b, const arma::
 					if(g==ref_group)
 					{
 						for(int k=1; k<ncat[i]; k++)
-							hess.at(cncat1[i]+k-1, g_indx[g]) = -dbsig.at(g,k)/CUB(sigma[g]);
+							hess.at(i_indx[i]+k-1, g_indx[g]) = -dbsig.at(g,k)/CUB(sigma[g]);
 					}
 					else
 					{
 						for(int k=1; k<ncat[i]; k++)
 						{
-							hess.at(cncat1[i]+k-1, g_indx[g]) = -dbmu.at(g,k)/sigma2[g];
-							hess.at(cncat1[i]+k-1, g_indx[g]+1) = -dbsig.at(g,k)/CUB(sigma[g]);
+							hess.at(i_indx[i]+k-1, g_indx[g]) = -dbmu.at(g,k)/sigma2[g];
+							hess.at(i_indx[i]+k-1, g_indx[g]+1) = -dbsig.at(g,k)/CUB(sigma[g]);
 						}
 					}
 				}

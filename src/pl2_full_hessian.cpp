@@ -59,24 +59,24 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 	
 	progress_prl progr((nit+ng-1)*(nit+ng)/2, prog_width);
 	
-	int npar = 2*ng;
-	if(ref_group >= 0) npar -= 2;
-	for(int i=0; i<nit; i++) 
+	// pre-specify where to save for parallel process
+	ivec i_indx(nit+1);
+	i_indx[0]=0;
+	for(int i=0; i<nit; i++)
+	{
+		i_indx[i+1] = i_indx[i];
 		if(item_fixed[i]==0)
-			npar += ncat[i];	
-	
-	ivec cncat(nit +1);
-	cncat[0] = 0;
-	std::partial_sum(ncat.begin(),ncat.end(),cncat.begin()+1);
-	
-	ivec g_indx(ng);	
-	g_indx[0]= cncat[nit];
-	for(int g=1; g<ng; g++)
-	{		
-		g_indx[g] = g_indx[g-1];
-		if(g-1 != ref_group)
-			g_indx[g] += 2;
+			i_indx[i+1] += ncat[i];
 	}
+	ivec g_indx(ng+1);	
+	g_indx[0]= i_indx[nit];
+	for(int g=0; g<ng; g++)
+	{		
+		g_indx[g+1] = g_indx[g];
+		if(g != ref_group)
+			g_indx[g+1] +=2;
+	}
+	const int npar = g_indx[ng];
 
 	const vec sigma2 = square(sigma);
 	
@@ -135,7 +135,7 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 			if(progr.interrupted) continue;
 			
 			// block diagonal
-			const int pr = cncat[i];
+			const int pr = i_indx[i];
 			long double AA = 0;
 			arma::mat atb(nt,ncat[i],arma::fill::zeros);
 			for(int k=1; k<ncat[i];k++)
@@ -180,7 +180,7 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 
 			for(int j=i+1; j<nit; j++) if(item_fixed[i]==0)
 			{
-				const int qr=cncat[j];
+				const int qr=i_indx[j];
 				if(dsg_ii.at(j,i) == 1)
 				{
 					persons_ii(i,j, ix, inp, icnp, ip, persons_ij, x1_i, x2_j, np_ij);
@@ -397,12 +397,12 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 				}
 				for(int g=0; g<ng; g++) if(g != ref_group && dsg_gi.at(g,i) == 1)
 				{
-					hess.at(cncat[i],g_indx[g]) = damu[g]/sigma2[g];
-					hess.at(cncat[i],g_indx[g]+1) = dasig[g]/CUB(sigma[g]);
+					hess.at(i_indx[i],g_indx[g]) = damu[g]/sigma2[g];
+					hess.at(i_indx[i],g_indx[g]+1) = dasig[g]/CUB(sigma[g]);
 					for(int k=1; k<ncat[i]; k++)
 					{
-						hess.at(cncat[i]+k, g_indx[g]) = A[i] * dbmu.at(g,k)/sigma2[g];
-						hess.at(cncat[i]+k, g_indx[g]+1) = A[i] * dbsig.at(g,k)/CUB(sigma[g]);
+						hess.at(i_indx[i]+k, g_indx[g]) = A[i] * dbmu.at(g,k)/sigma2[g];
+						hess.at(i_indx[i]+k, g_indx[g]+1) = A[i] * dbsig.at(g,k)/CUB(sigma[g]);
 					}
 				}
 				progr.update(ng-1, _is_main_thread);
@@ -415,13 +415,13 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 	{
 		const double asig2 = SQR(A_sigma);
 		for(int i=0; i<nit; i++) if(item_fixed[i]==0)
-			hess.at(cncat[i],cncat[i]) -= (A_mu-asig2 - std::log(A[i]) + 1)/(SQR(A[i])*asig2); 
+			hess.at(i_indx[i],i_indx[i]) -= (A_mu-asig2 - std::log(A[i]) + 1)/(SQR(A[i])*asig2); 
 	}
 	else if(A_prior==2)
 	{
 		const double a_part = 1/SQR(A_sigma);
 		for(int i=0; i<nit; i++) if(item_fixed[i]==0)
-			hess.at(cncat[i],cncat[i]) -= a_part; 
+			hess.at(i_indx[i],i_indx[i]) -= a_part; 
 	}
 	//lower tri
 	for(int i=0;i<npar;i++)
