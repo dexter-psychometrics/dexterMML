@@ -20,6 +20,7 @@ makeD = function (a, first, last)
   }
   return(D)
 }
+# 1pl vs 2pl (input): plot(as.double(f1$em$b[-1,]),-as.double(f2$em$b[-1,]*f2$em$a[-1,]))
 
 # the dexter/oplm parametrisation, without renormalisation
 to_dexter = function(a,logb,ncat,item_id, H=NULL, fixed_items=NULL, ref_group=-1)

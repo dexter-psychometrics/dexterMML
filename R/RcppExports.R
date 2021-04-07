@@ -41,6 +41,10 @@ estimate_nrm <- function(a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, s
     .Call(`_dexterMML_estimate_nrm`, a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group, max_iter, pgw)
 }
 
+full_hessian_nrm <- function(a, b, ncat, theta, item_fixed, ix, pni, pcni, pi, px, pgroup, gn, ip, inp, icnp, mu, sigma, ref_group, dsg_ii, dsg_gi, prog_width = 80L) {
+    .Call(`_dexterMML_full_hessian_nrm`, a, b, ncat, theta, item_fixed, ix, pni, pcni, pi, px, pgroup, gn, ip, inp, icnp, mu, sigma, ref_group, dsg_ii, dsg_gi, prog_width)
+}
+
 test_ll_nrm <- function(a, theta, r, par) {
     .Call(`_dexterMML_test_ll_nrm`, a, theta, r, par)
 }
@@ -51,10 +55,6 @@ test_gradient_nrm <- function(a, theta, r, par) {
 
 test_hess_nrm <- function(a, theta, r, par) {
     .Call(`_dexterMML_test_hess_nrm`, a, theta, r, par)
-}
-
-Oakes_nrm <- function(a, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, ref_group = 0L, pgw = 80L) {
-    .Call(`_dexterMML_Oakes_nrm`, a, b, ncat, r, pni, pcni, pi, px, theta, mu, sigma, gn, pgroup, dsg_ii, dsg_gi, item_fixed, ref_group, pgw)
 }
 
 num_hessian_2pl <- function(a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, pgroup, A_prior = 0L, A_mu = 0, A_sigma = 0.5, ddelta = 1e-5) {

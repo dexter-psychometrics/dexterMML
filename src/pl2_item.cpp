@@ -64,7 +64,7 @@ double test_ll_v2(const arma::imat& a, const arma::vec& A, const arma::mat& b, c
 			const arma::ivec& pgroup, const arma::ivec& inp, const arma::ivec& icnp,
 			const arma::vec& mu, const arma::vec& sigma, const int item, const arma::vec& pars)
 {
-	const int nit = ncat.n_elem, nt = theta.n_elem, ng = mu.n_elem;
+	const int nit = ncat.n_elem;
 	
 	field<mat> itrace(nit);
 	
@@ -84,7 +84,7 @@ arma::vec test_gr_v2(const arma::imat& a, const arma::vec& A, const arma::mat& b
 			const arma::ivec& pgroup, const arma::ivec& inp, const arma::ivec& icnp,
 			const arma::vec& mu, const arma::vec& sigma, const int item, const arma::vec& pars)
 {
-	const int nit = ncat.n_elem, nt = theta.n_elem, ng = mu.n_elem;
+	const int nit = ncat.n_elem;
 	
 	field<mat> itrace(nit);
 	
@@ -106,7 +106,7 @@ arma::mat test_hess_v2(const arma::imat& a, const arma::vec& A, const arma::mat&
 			const arma::ivec& pgroup, const arma::ivec& inp, const arma::ivec& icnp,
 			const arma::vec& mu, const arma::vec& sigma, const int item, const arma::vec& pars)
 {
-	const int nit = ncat.n_elem, nt = theta.n_elem, ng = mu.n_elem;
+	const int nit = ncat.n_elem;
 	
 	field<mat> itrace(nit);
 	

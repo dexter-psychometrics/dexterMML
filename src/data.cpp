@@ -186,6 +186,34 @@ Rcpp::DataFrame plot_data(const arma::ivec& pcni, const arma::ivec& pi, const ar
 	return Rcpp::DataFrame::create(Named("item_score")=out_x, Named("theta")=out_theta);
 }
 
+// 2 col datamatrix for any 2 items and persons who did both
+void persons_ii(const int item1, const int item2, const ivec& ix,
+				const ivec& inp, const ivec& icnp, const ivec& ip,
+				ivec& persons, ivec& x1, ivec& x2, int& np)
+{
+	np=0;
+	int pp1=icnp[item1];
+	int pp2=icnp[item2];
+	while (pp1 < icnp[item1+1] && pp2 <icnp[item2+1])
+	{
+		if( ip[pp1] == ip[pp2])
+		{
+			//add output
+			x1[np] = ix[pp1];
+			x2[np] = ix[pp2];
+			persons[np++] = ip[pp1];
+			pp1++;
+			pp2++;
+		}
+		else if(ip[pp1] < ip[pp2])
+			pp1++;
+		else
+			pp2++;
+	}	
+}
+
+
+
 /****************************
 * Designs
 *****************************/

@@ -1,11 +1,9 @@
-#include <algorithm>
 #include <RcppArmadillo.h>
-#include "minimize.h"
+#include "data.h"
 #include "shared.h"
 #include "pl2_item.h"
 
 using namespace arma;
-using Rcpp::Named;
 
 
 // to do: 2pl v2 hessian is incorrect
@@ -36,31 +34,6 @@ mat full_posterior_2pl(field<mat>& itrace, const ivec& pni, const ivec& pcni, co
 	return posterior;
 }
 
-
-void persons_ii(const int item1, const int item2, const ivec& ix,
-				const ivec& inp, const ivec& icnp, const ivec& ip,
-				ivec& persons, ivec& x1, ivec& x2, int& np)
-{
-	np=0;
-	int pp1=icnp[item1];
-	int pp2=icnp[item2];
-	while (pp1 < icnp[item1+1] && pp2 <icnp[item2+1])
-	{
-		if( ip[pp1] == ip[pp2])
-		{
-			//add output
-			x1[np] = ix[pp1];
-			x2[np] = ix[pp2];
-			persons[np++] = ip[pp1];
-			pp1++;
-			pp2++;
-		}
-		else if(ip[pp1] < ip[pp2])
-			pp1++;
-		else
-			pp2++;
-	}	
-}
 
 
 void pl2_icc(const vec& theta, const ivec& a, const double A, const vec& b, const int ncat, 
@@ -285,7 +258,7 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 						// a number of sums can be saved as doubles
 						double sum1 = accu(item_const1.slice(i).col(x1) % posterior.col(p));
 						double sum2 = accu(item_const1.slice(j).col(x2) % posterior.col(p));
-						vec sum4(ncat[i]);
+						vec sum4(ncat[j]);
 						
 						AA += accu(od_AA1.slice(x1).col(x2) % posterior.col(p)) - sum1*sum2; 
 						

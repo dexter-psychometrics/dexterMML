@@ -122,7 +122,7 @@ struct parvec_nrm
 		{
 			for(int i=0; i<nit;i++)
 			{
-				if(p >= cncat[i])
+				if(p >= cncat[i]  && p<cncat[i+1])
 				{
 					return b.at(p-cncat[i]+1,i);
 				}
@@ -144,9 +144,9 @@ arma::mat num_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::m
 {
 	const long double delta = ddelta;
 	
-	const int ng = mu.n_elem, nit=a.n_cols;
+	const int ng = mu.n_elem;
 	
-	int npar = 2*ng-1 + accu(ncat)-nit;
+	int npar = 2*(ng-1) + accu(ncat);
 
 	mat hess(npar,npar,fill::zeros);
 	parvec_2pl p(ncat,ng);	
@@ -192,10 +192,7 @@ arma::mat num_hessian_nrm(const arma::imat& a, const arma::mat& b, const arma::i
 	
 	const int ng = mu.n_elem, nit=a.n_cols;
 	
-	int npar = 2*ng-2;
-
-	for(int i=0; i<nit; i++) 
-		npar += ncat[i];	
+	int npar = 2*ng-1 + accu(ncat)-nit;
 
 	mat hess(npar,npar,fill::zeros);
 	parvec_nrm p(ncat,ng);	

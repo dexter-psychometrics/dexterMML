@@ -270,15 +270,16 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
         design$groups[,w] = 0L
       }
 
-      res = Oakes_nrm(a, em$b, pre$ncat, em$r,
-                      pre$pni, pre$pcni, pre$pi, pre$px,
-                      theta_grid, em$mu, em$sd, group_n, group,
-                      design$items, design$groups, fixed_items, ref_group,pgw=pgw)
-      # needs some rearranging after this
-      dx = to_dexter(em$a,em$b,pre$ncat,colnames(dat),res$H, fixed_items,ref_group+1L)
+      hess = full_hessian_nrm(a,  em$b, pre$ncat, theta_grid, fixed_items,
+                              pre$ix, pre$pni, pre$pcni, pre$pi, pre$px, group, group_n,
+                              pre$ip,pre$inp, pre$icnp,
+                              em$mu, em$sd, ref_group,design$items,design$groups,
+                              prog_width=pgw)
+      
+      dx = to_dexter(em$a,em$b,pre$ncat,colnames(dat),H=hess, fixed_items,ref_group+1L)
       pop = tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd),
                    SE_mu=dx$SE_pop[seq(1,nrow(em$mu)*2,2)], SE_sigma=dx$SE_pop[seq(2,nrow(em$mu)*2,2)])
-      out = list(items=dx$items,pop=pop,em=em,pre=pre)
+      out = list(items=dx$items,pop=pop,em=em,pre=pre,hess=hess)
     } else
     {
       pop=tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd))
@@ -429,7 +430,7 @@ coef.parms_mml = function(object, what=c('items','populations'),...)
 
 print.parms_mml = function(x,...)
 {
-  m = if(any(x$items$item_score) > 1) ' polytomous ' else ' dichotomous '
+  m = if(any(x$items$item_score > 1)) ' polytomous ' else ' dichotomous '
 
   p = paste0( 'MML parameters for',m,x$model,
               '\nitems: ', ncol(x$em$b),

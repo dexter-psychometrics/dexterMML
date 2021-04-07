@@ -1,101 +1,32 @@
+#include <limits>
 #include <RcppArmadillo.h>
 #include "minimize.h"
 #include "nrm_item.h"
 #include "shared.h"
+#include "posterior.h"
 
 using namespace arma;
 using Rcpp::Named;
 
 
-void estep_nrm(imat& a, mat& b, const mat& exp_at, const ivec& ncat, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
-				const vec& theta, field<mat>& r, vec& thetabar, vec& sumtheta, vec& sumsig2, const vec& mu, const vec& sigma, const ivec& pgroup, long double& ll)
-{
-	const int nit = ncat.n_elem, nt = theta.n_elem, np = pni.n_elem, ng = mu.n_elem;
-	
-	
-	mat posterior0(nt,ng);
-	for(int g=0; g<ng; g++)
-		posterior0.col(g) = gaussian_pts(mu[g],sigma[g],theta);
-
-	field<mat> itrace(nit);
-	
-	for(int i=0; i<nit; i++)
-	{
-		itrace(i) = nrm_trace(theta, a.col(i), b.col(i), ncat[i], exp_at);
-		r(i).zeros();
-	}
-	
-	mat sigma2(nt, ng, fill::zeros);
-	sumtheta.zeros();
-	
-	ll=0;
-
-#pragma omp parallel
-	{
-		vec posterior(nt);
-#pragma omp for reduction(+: r, sigma2, sumtheta, ll)
-		for(int p=0; p<np;p++)
-		{
-			int g = pgroup[p];
-			posterior = posterior0.col(g);
-			
-			for(int indx = pcni[p]; indx<pcni[p+1]; indx++)
-				posterior %= itrace(pi[indx]).col(px[indx]);
-
-			double sp = accu(posterior);
-			// LL according to Bock/Aitkin 1981 eq (5) and (6)
-			ll += std::log(sp); 
-			posterior = posterior / sp;
-			sumtheta[g] += thetabar[p] = accu(posterior % theta);
-			
-			sigma2.col(g) += posterior;
-			
-			for(int indx = pcni[p]; indx<pcni[p+1]; indx++)
-				r(pi[indx]).col(px[indx]) += posterior;
-		}
-	}
-
-	for(int g=0; g<ng;g++)
-		sumsig2[g] = accu(sigma2.col(g) % square(theta));
-}
-
 // [[Rcpp::export]]
 long double loglikelihood_nrm(const arma::imat& a, const arma::mat& b, const arma::ivec& ncat, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 				const arma::vec& theta, const arma::vec& mu, const arma::vec& sigma, const arma::ivec& pgroup)
 {
-	const int nit = ncat.n_elem, nt = theta.n_elem, np = pcni.n_elem-1, ng = mu.n_elem;
+	const int nit = ncat.n_elem, nt = theta.n_elem;
 	const int max_a = a.max();
 	mat exp_at(max_a+1, nt, fill::ones);
 	for(int t=0; t< nt; t++)
 		for(int k=1; k<=max_a;k++)
 			exp_at.at(k,t) = std::exp(k*theta[t]);
 	
-	mat posterior0(nt,ng);
-	for(int g=0; g<ng; g++)
-		posterior0.col(g) = gaussian_pts(mu[g],sigma[g],theta);
-
 	field<mat> itrace(nit);
 	
 	for(int i=0; i<nit; i++)
 		itrace(i) = nrm_trace(theta, a.col(i), b.col(i), ncat[i], exp_at);
-	
-	long double ll=0;
+		
+	return loglikelihood(itrace, pcni, pi, px, theta, mu, sigma, pgroup);	
 
-#pragma omp parallel
-	{
-		vec posterior(nt);
-#pragma omp for reduction(+: ll)
-		for(int p=0; p<np;p++)
-		{
-			posterior = posterior0.col(pgroup[p]);
-			
-			for(int indx = pcni[p]; indx<pcni[p+1]; indx++)
-				posterior %= itrace(pi[indx]).col(px[indx]);
-
-			ll += std::log(accu(posterior)); 		
-		}
-	}
-	return ll;
 }
 
 
@@ -118,6 +49,8 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 		for(int k=1; k<=max_a;k++)
 			exp_at.at(k,t) = std::exp(k*theta[t]);
 	
+	field<mat> itrace(nit);
+	
 	mat b = b_start;
 
 	field<mat> r(nit);
@@ -137,10 +70,11 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 	
 	for(; iter<max_iter; iter++)
 	{
-
-		estep_nrm(a, b, exp_at, ncat, pni, pcni, pi, px, 
-					theta, r, thetabar, sum_theta, sum_sigma2, mu, sigma, pgroup, ll);
+		for(int i=0; i<nit; i++)
+			itrace(i) = nrm_trace(theta, a.col(i), b.col(i), ncat[i], exp_at);
 		
+		estep(itrace, pni, pcni, pi, px, theta, r, thetabar, sum_theta, sum_sigma2, mu, sigma, pgroup, ll);
+
 		if(ll < old_ll)
 		{
 			stop += 2;
@@ -205,7 +139,6 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 	prog.close();
 	
 	return Rcpp::List::create(Named("a")=a, Named("b")=b, Named("thetabar") = thetabar, Named("mu") = mu, Named("sd") = sigma, 
-								Named("r")=r, Named("LL") = ll, Named("niter")=iter,
-								Named("err")=stop, Named("maxdif_b")=maxdif_b); 
+								Named("LL") = ll, Named("niter")=iter, Named("err")=stop, Named("maxdif_b")=maxdif_b); 
 }
 

@@ -7,12 +7,13 @@ progress_width = function()
   } else {-1L}
 }
 
-num_hess_2pl = function(e,delta=1e-5)
+num_hess = function(e,delta=1e-5)
 {
   pre = e$pre
   if(e$model=='1PL')
   {
-    stop('not implemented')
+    num_hessian_nrm(e$em$a, e$em$b, pre$ncat, pre$pcni, pre$pi, pre$px,
+                    e$theta_grid, e$em$mu, e$em$sd, pre$group, delta)
   }
   else
   {
