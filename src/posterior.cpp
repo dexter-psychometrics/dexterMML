@@ -55,7 +55,7 @@ void estep(field<mat>& itrace, const ivec& pni, const ivec& pcni, const ivec& pi
 
 
 // normalized posterior for persons
-mat posterior(field<mat>& itrace, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
+mat normalized_posterior(field<mat>& itrace, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
 						const vec& theta, const vec& mu, const vec& sigma, const ivec& pgroup)
 {
 	const int nt = theta.n_elem, np = pni.n_elem, ng = mu.n_elem;

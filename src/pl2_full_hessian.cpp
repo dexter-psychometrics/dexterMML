@@ -2,68 +2,13 @@
 #include "data.h"
 #include "shared.h"
 #include "pl2_item.h"
+#include "posterior.h"
 
 using namespace arma;
 
 
-// to do: 2pl v2 hessian is incorrect
 // to do: see where long doubles are needed
 
-mat full_posterior_2pl(field<mat>& itrace, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
-						const vec& theta, const vec& mu, const vec& sigma, const ivec& pgroup)
-{
-	const int nt = theta.n_elem, np = pni.n_elem, ng = mu.n_elem;
-		
-	mat posterior0(nt,ng), posterior(nt,np);
-	for(int g=0; g<ng; g++)
-		posterior0.col(g) = gaussian_pts(mu[g],sigma[g],theta);	
-
-#pragma omp parallel for
-	for(int p=0; p<np;p++)
-	{
-		posterior.col(p) = posterior0.col(pgroup[p]);
-		
-		for(int indx = pcni[p]; indx<pcni[p+1]; indx++)
-			posterior.col(p) %= itrace(pi[indx]).col(px[indx]);
-		long double s=0;
-		for(int t=0;t<nt;t++)
-			s+= posterior.at(t,p);
-		posterior.col(p) /= s;
-		
-	}
-	return posterior;
-}
-
-
-
-void pl2_icc(const vec& theta, const ivec& a, const double A, const vec& b, const int ncat, 
-				mat& itrace, double* nc_ptr, double* nca_ptr, double* ncab_ptr)
-{
-	const int nt = theta.n_elem;
-	vec p(ncat);
-	p[0] = 1;
-	
-	vec norm_const(nc_ptr,ncat,false,true), norm_const_a(nca_ptr,ncat,false,true), norm_const_ab(ncab_ptr,ncat,false,true);
-	
-	for(int t=0; t<nt; t++)
-	{
-		double s=1,sa=0,sab=0,sabt=0;		
-		for(int k=1; k<ncat; k++)
-		{
-			p[k] = std::exp(A*a[k]*(theta[t]-b[k])); 
-			s += p[k];
-			sa += p[k]*a[k];
-			sab += p[k]*a[k]*b[k];
-			sabt += p[k]*a[k]*(b[k]-theta[t]);
-		}
-
-		for(int k=0; k<ncat; k++)
-			itrace.at(t,k) = p[k]/s;			
-		norm_const[t] = s;
-		norm_const_a[t] = sa;
-		norm_const_ab[t] = sab;
-	}
-}
 
 // as yet without the item prior part
 // [[Rcpp::export]]
@@ -157,7 +102,7 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 	}
 	
 	mat hess(npar, npar, fill::zeros);
-	mat posterior = full_posterior_2pl(itrace, pni, pcni, pi, px, theta, mu, sigma, pgroup);
+	mat posterior = normalized_posterior(itrace, pni, pcni, pi, px, theta, mu, sigma, pgroup);
 
 	
 	//precompute often recurring constant part

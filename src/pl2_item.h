@@ -7,6 +7,9 @@
 arma::mat pl2_trace(const arma::vec& theta, const arma::ivec& a, const double A,  const arma::vec& b, const int ncat);
 void pl2_trace(const arma::vec& theta, const arma::ivec& a, const double A,  const arma::vec& b, const int ncat, arma::mat& out);
 
+void pl2_icc(const arma::vec& theta, const arma::ivec& a, const double A, const arma::vec& b, const int ncat, 
+				arma::mat& itrace, double* nc_ptr, double* nca_ptr, double* ncab_ptr);
+
 struct ll_pl2_base
 {
 	int A_prior;
@@ -220,7 +223,7 @@ struct ll_pl2_v2 : ll_pl2_base
 	arma::ivec x,a;
 	arma::vec theta, typical_size;
 	arma::mat posterior;
-	int np,npar,nt;	
+	int np,ncat,nt;	
 
 	ll_pl2_v2(const arma::field<arma::mat>& itrace, const arma::vec& theta_, 
 			const arma::ivec& ip, const arma::ivec& pi, const arma::ivec& pcni, const arma::ivec& px, 
@@ -232,13 +235,13 @@ struct ll_pl2_v2 : ll_pl2_base
 		const int ng = mu.n_elem;
 		nt = theta_.n_elem;
 		a = a_item;
-		npar = a.n_elem;
+		ncat = a.n_elem;
 		np = inp[item];
 		theta = theta_;
 		posterior = arma::mat(nt,np);
 		x = arma::ivec(np);
 		arma::mat posterior0(nt,ng);
-		typical_size = arma::vec(npar, arma::fill::ones);
+		typical_size = arma::vec(ncat, arma::fill::ones);
 		
 		for(int g=0; g<ng; g++)
 			posterior0.col(g) = gaussian_pts(mu[g],sigma[g],theta);
@@ -265,7 +268,7 @@ struct ll_pl2_v2 : ll_pl2_base
 		b[0]=0;
 		double A=pars[0];
 		
-		arma::mat itrace = pl2_trace(theta, a, A, b, npar);
+		arma::mat itrace = pl2_trace(theta, a, A, b, ncat);
 		
 		for(int p=0; p<np;p++)
 			ll -= std::log(arma::accu(posterior.col(p) % itrace.col(x[p])));
@@ -281,10 +284,10 @@ struct ll_pl2_v2 : ll_pl2_base
 		
 		arma::vec ptr(nt);
 		
-		arma::mat itr = pl2_trace(theta, a, A, b, npar);
+		arma::mat itr = pl2_trace(theta, a, A, b, ncat);
 		arma::vec C = arma::sum(itr,1);
-		arma::mat atb(nt,npar,arma::fill::zeros);
-		for(int k=1; k<npar;k++)
+		arma::mat atb(nt,ncat,arma::fill::zeros);
+		for(int k=1; k<ncat;k++)
 			atb.col(k) = a[k] * (theta-b[k]); 
 		
 		for(int p=0; p<np;p++)
@@ -294,7 +297,7 @@ struct ll_pl2_v2 : ll_pl2_base
 			// of course this can be largely precomputed
 			g[0] -=arma::accu((atb.col(x[p]) - arma::sum(atb % itr,1)) % ptr)/dnm;
 			
-			for(int k=1;k<npar;k++)
+			for(int k=1;k<ncat;k++)
 			{
 				g[k] -= arma::accu(A * a[k] * (itr.col(k) - kron(k,x[p])) % ptr)/dnm;
 			}
@@ -308,46 +311,71 @@ struct ll_pl2_v2 : ll_pl2_base
 		b[0]=0;
 		const double A=pars[0];
 		
+		arma::vec nconst(nt),nconst_a(nt),nconst_ab(nt);
+		arma::mat itr(nt,ncat);
+		arma::cube itr2(nt,ncat,ncat);
+		for(int k=0; k<ncat; k++)
+		{
+			itr2.slice(k).col(k) = square(itr.col(k));
+			pl2_icc(theta, a, A, b, ncat, itr, nconst.memptr(), nconst_a.memptr(), nconst_ab.memptr());
+			for(int l=k+1; l<ncat; l++)
+			{
+				itr2.slice(k).col(l) = itr.col(k) % itr.col(l);
+				itr2.slice(l).col(k) = itr2.slice(k).col(l);
+			}
+		}
+
 		arma::vec ptr(nt);		
-		arma::mat itr = pl2_trace(theta, a, A, b, npar);
-		//arma::vec C = arma::sum(itr,1);
-		arma::mat atb(nt,npar,arma::fill::zeros);
-		for(int k=1; k<npar;k++)
+		arma::mat atb(nt,ncat,arma::fill::zeros);
+		for(int k=1; k<ncat;k++)
 			atb.col(k) = a[k] * (theta-b[k]); 
 		
-		arma::vec D = -arma::sum(atb % itr,1);
-		arma::vec E = arma::sum(arma::square(atb) % itr,1);
+		arma::mat item_const1(nt, ncat);
+		for(int x1=0; x1<ncat; x1++)
+			item_const1.col(x1) = -(nconst_a % theta - nconst_ab)/nconst - a[x1] * ( b[x1] - theta);
+		
+		arma::mat AA(nt,ncat);
+		arma::vec bb(ncat);
+		arma::cube Ab(nt,ncat,ncat);
+		for(int x1=0; x1<ncat; x1++)
+		{
+			AA.col(x1) = arma::square(item_const1.col(x1)) - arma::sum(arma::square(atb) % itr,1) + square(arma::sum(atb % itr,1));
+			for(int k=1;k<ncat;k++)
+				Ab.slice(k).col(x1) = a[k] * ( kron(k, x1)*(a[k]*(b[k] -theta)-1) \
+											+ itr.col(k) % (a[x1]*(theta-b[x1]) +  a[k]*(theta-b[k]) + 1) \
+											+ (2*itr.col(k)- kron(k, x1)) % (nconst_ab - theta%nconst_a)/nconst);
+		}
+		
+		
 		
 		for(int p=0;p<np;p++)
 		{
 			ptr = itr.col(x[p]) % posterior.col(p);
-			double dnm = arma::accu(ptr);
-			//AA
-			double part1 = arma::accu((arma::square(atb.col(x[p])) + 2*D%atb.col(x[p]) + 2*arma::square(D) - E) % ptr);
-			double part2 = SQR(arma::accu((atb.col(x[p]) + D)%ptr))/dnm;
-			h.at(0,0) -= (part1-part2)/dnm;
-			//bb
-			for(int k=1;k<npar;k++)
+			ptr = ptr/accu(ptr);
+			const int x1 = x[p];
+			
+			h.at(0,0) -= accu( AA.col(x1) % ptr) - SQR(accu(item_const1.col(x1) % ptr));
+				
+			for(int k=1;k<ncat;k++)
+				bb[k] = accu(-(kron(k, x1)*a[x1] - itr.col(k)*a[k]) % ptr);
+		
+			for(int k=1;k<ncat;k++)
 			{
-				part1 = arma::accu((kron(k,x[p])*SQR(a[k]) + itr.col(k)*(-2*kron(k,x[p])*SQR(a[k]) + SQR(a[k]))) % ptr);
-				part2 = SQR(arma::accu((itr.col(k) - a[k]*kron(k,x[p])) % ptr))/dnm;
-				h.at(k,k) += SQR(A) * (part1-part2)/dnm;
-				// bb off diag: TO DO: not tested yet
-				for(int j=k+1; j<npar; j++)
+				for(int l=k; l<ncat; l++)
 				{
-					part1 = arma::accu((2*a[j]*a[k]*itr.col(k)%itr.col(j) - kron(k,x[p])*a[k]*a[j]*itr.col(j) - kron(j,x[p])*a[j]*a[k]*itr.col(k)) % ptr); 
-					part2 = (arma::accu((a[k]*itr.col(k) - kron(k,x[p])*a[k]) % ptr) * arma::accu((a[j]*itr.col(j) - kron(j,x[p])*a[j]) % ptr))/dnm;
-					h.at(k,j) -= SQR(A) * (part1-part2)/dnm;
+					double bb2 = a[k]*a[l]*accu(ptr % (kron(l, x1)*kron(k, x1) - kron(l, x1)*itr.col(k) - kron(k, l)*itr.col(k) - kron(k, x1)*itr.col(l) + 2*itr2.slice(k).col(l) ));
+																
+					h.at(k,l) -= SQR(A) * (bb2 - bb[k] * bb[l]);
 				}
-				//Ab
-				part1 = arma::accu((((a[k]+1)*(A*atb.col(k)) + 2*A*D + a[k])  % itr.col(k) - kron(k,x[p])*a[k]*(1+A*(atb.col(k)+D))) % ptr);
-				part2 = (A*arma::accu((atb.col(k)+D)%ptr) * arma::accu((itr.col(k)-kron(k,x[p])*a[k])%ptr))/dnm;
-				h.at(0,k) -= (part1-part2)/dnm;				
+				//ab
+				h.at(0,k) -= A * (accu(Ab.slice(k).col(x1) % ptr) - bb[k] * accu(item_const1.col(x1) % ptr));
+
 			}
-		}
-		h.at(0,0) += prior_part_hess(A);
-		for(int i=0; i<npar; i++)
-			for(int j=i+1;j<npar;j++)
+		}	
+			
+
+		for(int i=0; i<ncat; i++)
+			for(int j=i+1;j<ncat;j++)
 				h.at(j,i)=h.at(i,j);
 		if(!negative)
 			h=-h;

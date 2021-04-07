@@ -162,7 +162,7 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
   max_score = max(dat,na.rm=TRUE)
 
   pre = lapply(mat_pre(dat, max_score), drop)
-  hess=NULL
+  
   if(any(pre$imax < 1))
   {
     cat('Items with maximum score 0:\n')
@@ -288,6 +288,7 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
     }
   } else
   {
+    hess=NULL
     A=rep(1,ncol(dat))
 
     b=start.2pl(a,pre$icat,pre$ncat)
@@ -391,7 +392,8 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
         i=i+1L
       }
     }
-    out = list(items=items,pop=pop,em=em,pre=pre)
+    out = list(items=items,pop=pop,em=em,pre=pre,hess=hess,
+               prior=list(A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma))
   }
   out$theta_grid = theta_grid
   out$item_id=colnames(dat)
@@ -401,11 +403,6 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
   out$pre$group=group
   out$model=model
   out$em$a=a
-  if(model=='2PL')
-  {
-    out$prior=list(A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma)
-    out$hess=hess
-  }
   class(out) = append('parms_mml',class(out))
   out
 }
@@ -496,8 +493,9 @@ plot.parms_mml = function(x,items=NULL,nbins=5,ci=.95,...)
   for(i in ii)
   {
     max_score = parms$pre$imax[i]
-    x = plot_data(parms$pre$pcni, parms$pre$pi, parms$pre$px, parms$pre$inp,parms$em$thetabar, 
-                  parms$em$a,i-1L) %>%
+    indx = (parms$pre$icnp[i]+1L):parms$pre$icnp[i+1]
+    x = tibble(item_score=parms$em$a[parms$pre$ix[indx]+1L,i], 
+               theta=parms$em$thetabar[1L+parms$pre$ip[indx]])
       mutate(bin=ntile(.data$theta,nbins)) %>%
       group_by(.data$bin) %>%
       summarise(m=mean(.data$theta),obs=mean(.data$item_score),n=n()) %>%

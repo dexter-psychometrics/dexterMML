@@ -14,7 +14,7 @@ inline double QRT(const double v){ return v*v*v*v; };
 inline long double QRT(const long double v){ return v*v*v*v; };
 inline int QRT(const int v){ return v*v*v*v; };
 
-inline int kron(const int a, const int b){return a==b ? 1 : 0; };
+inline int kron(const int a, const int b){return a==b; };
 
 arma::vec gaussian_pts(const double mu, const double s, const arma::vec& theta);
 

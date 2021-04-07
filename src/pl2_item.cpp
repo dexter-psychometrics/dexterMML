@@ -31,6 +31,37 @@ mat pl2_trace(const vec& theta, const ivec& a, const double A, const vec& b, con
 	return out;
 }
 
+// all constants related to icc
+void pl2_icc(const vec& theta, const ivec& a, const double A, const vec& b, const int ncat, 
+				mat& itrace, double* nc_ptr, double* nca_ptr, double* ncab_ptr)
+{
+	const int nt = theta.n_elem;
+	vec p(ncat);
+	p[0] = 1;
+	
+	vec norm_const(nc_ptr,ncat,false,true), norm_const_a(nca_ptr,ncat,false,true), norm_const_ab(ncab_ptr,ncat,false,true);
+	
+	for(int t=0; t<nt; t++)
+	{
+		double s=1,sa=0,sab=0,sabt=0;		
+		for(int k=1; k<ncat; k++)
+		{
+			p[k] = std::exp(A*a[k]*(theta[t]-b[k])); 
+			s += p[k];
+			sa += p[k]*a[k];
+			sab += p[k]*a[k]*b[k];
+			sabt += p[k]*a[k]*(b[k]-theta[t]);
+		}
+
+		for(int k=0; k<ncat; k++)
+			itrace.at(t,k) = p[k]/s;			
+		norm_const[t] = s;
+		norm_const_a[t] = sa;
+		norm_const_ab[t] = sab;
+	}
+}
+
+
 // [[Rcpp::export]]
 double test_ll_p2(arma::ivec& a, arma::vec theta, arma::mat& r, const arma::vec& par, const int prior=0)
 {

@@ -2,35 +2,9 @@
 #include "data.h"
 #include "shared.h"
 #include "nrm_item.h"
+#include "posterior.h"
 
 using namespace arma;
-
-
-//actually, this is identical to 2pl, prbl goes for estep function as well if supply trace, might simplify some code
-mat full_posterior_nrm(field<mat>& itrace, const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
-						const vec& theta, const vec& mu, const vec& sigma, const ivec& pgroup)
-{
-	const int nt = theta.n_elem, np = pni.n_elem, ng = mu.n_elem;
-		
-	mat posterior0(nt,ng), posterior(nt,np);
-	for(int g=0; g<ng; g++)
-		posterior0.col(g) = gaussian_pts(mu[g],sigma[g],theta);	
-
-#pragma omp parallel for
-	for(int p=0; p<np;p++)
-	{
-		posterior.col(p) = posterior0.col(pgroup[p]);
-		
-		for(int indx = pcni[p]; indx<pcni[p+1]; indx++)
-			posterior.col(p) %= itrace(pi[indx]).col(px[indx]);
-		long double s=0;
-		for(int t=0;t<nt;t++)
-			s+= posterior.at(t,p);
-		posterior.col(p) /= s;
-		
-	}
-	return posterior;
-}
 
 
 // [[Rcpp::export]]
@@ -95,7 +69,7 @@ arma::mat full_hessian_nrm(const arma::imat& a, const arma::mat& b, const arma::
 
 	
 	mat hess(npar, npar, fill::zeros);
-	mat posterior = full_posterior_nrm(itrace, pni, pcni, pi, px, theta, mu, sigma, pgroup);
+	mat posterior = normalized_posterior(itrace, pni, pcni, pi, px, theta, mu, sigma, pgroup);
 
 #pragma omp parallel
 	{
