@@ -23,7 +23,7 @@ fit_2pl(
 
 \item{predicate}{logical predicate to filter dataSrc, has no effect when dataSrc is a matrix}
 
-\item{group}{if dataSrc is a matrix then a vector of length nrows, otherwise one or more person
+\item{group}{if dataSrc is a matrix then a vector of length nrows, otherwise the names of one or more person
 properties together grouping people. See details.}
 
 \item{fixed_param}{data.frame with columns: item_id, item_score, beta and, if model is 2PL, also alpha.}
@@ -52,22 +52,29 @@ can be interpreted as a noise factor in the item measurement analogous to item t
 correlations in classical test theory. Both the 1PL and 2PL model can handle polytomous data and respect the item
 scores. Missing categories (e.g. an item scored 0,1,4) are allowed.
 
-Specifying grouping variables for test takers is very important in MML estimation. Failure to include
-relevant grouping can seriously bias parameter and subsequent ability estimation.
+In the 2pl the probability of response \ifelse{html}{\out{a<sub>ij</sub>}}{\eqn{{a}_{i,j}}} for person p (that is a response to item i, category j with score \ifelse{html}{\out{a<sub>ij</sub>}}{\deqn{{a}_{i,j}}}) is:
+\ifelse{html}{\out{<table style="display: inline;"><tr><td style="text-align: center;border-bottom: 1px solid black;">e<sup>(-&beta;<sub>ij</sub>+&theta;<sub>p</sub>)&alpha;<sub>i</sub>a<sub>ij</sub></sup></td></tr><tr><td style="text-align: center;"><table style="display: inline;"><tr><td rowspan="2">&sum;</td><td style="font-size:50\%;">m</td><td rowspan="2">e<sup>(-&beta;<sub>ik</sub>+&theta;<sub>p</sub>)&alpha;<sub>i</sub>a<sub>ik</sub></sup></td></tr><tr><td style="font-size:50\%;">k=1</td></tr></table></td></tr></table>}}{\deqn{\frac{e^{\left(- {\beta}_{i,j} + {\theta}_{p}\right) {a}_{i,j} {\alpha}_{i}}}{\sum_{k=1}^{m} e^{\left(- {\beta}_{i,k} + {\theta}_{p}\right) {a}_{i,k} {\alpha}_{i}}}}}
+}
+\section{CML or MML}{
+                                
 
-Note that MML estimation requires extra assumptions about the population distribution compared to CML.
+MML estimation requires extra assumptions about the population distribution compared to CML.
 Consequently there is rarely a good reason to use MML estimation for an 1PL since it is an exponential family
 model and can be better estimated with CML. Only in case of adaptive data (where CML is not allowed) should you
 use MML to estimate a 1PL.
 
 A 2PL cannnot be estimated using CML, except in the case of complete data (see the interaction model in dexter).
 So for 2PL models MML is usually the method of choice.
+
+Note that correctly specifying grouping variables for test takers is very important in MML estimation. Failure to include
+relevant grouping can seriously bias parameter and subsequent ability estimation.
 }
-\section{troubleshooting}{
+
+\section{Troubleshooting}{
 
 The EM algorithm tries to converge on a solution up to a precision of 0.0001. It usually succeeds.
 If it is not successful
-a message or warning is given (dependent on the severity of the situation). The (less precise/unconverged) results are
+a message or warning is given (dependent on the severity of the situation). The (less precise) results are
 still returned to facilitate identification of the problem but you should generally not trust the results very much.
 
 The following possible solutions can be tried in such a case:
@@ -76,13 +83,13 @@ The following possible solutions can be tried in such a case:
 \item{omit items with too few observations}{Items may have an insufficient number of observations. This is especially problematic
 for a 2PL. There is no clear cut lower bound independent of the purpose of the estimation. However, items with fewer
 than 100 observations will often cause technical problems in the estimation.}
-\item{omit problematic items}{For a 2PL, items that have an alpha parameter very near zero, the beta parameter is undefined
-and will not converge. You can either set a prior on the alpha parameter or omit these items (based on the results of the failed calibration)}
+\item{omit problematic items}{For a 2PL, for items that have an alpha parameter very near zero, the beta parameter is undefined
+and will not converge. You can either look for key errors, set a prior on the alpha parameter or omit these items (based on the results of the failed calibration)}
 \item{omit fixed parameters}{If you use fixed parameters, try to calibrate without fixed parameters
 first and plot the results against your fixed parameters. If these do not fall approximately on
 a straight line, you might need to omit some of the fixed parameters that show the most misfit.}
-\item{priors in 2PL}{If the results of the calibration are extreme (e.g. parameters with absolute values >50) it
-might be necessary to use a prior distribution on the discrimination parameters.
+\item{use priors in 2PL}{If the results of the calibration are extreme or otherwise unbelievable (e.g. parameters with absolute values >50) it
+may be necessary to use a prior distribution on the discrimination parameters.
 This may happen with adaptive test data.}
 }
 }

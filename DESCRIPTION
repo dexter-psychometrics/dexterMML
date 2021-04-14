@@ -1,7 +1,7 @@
 Package: dexterMML
 Type: Package
 Title: MML estimation supplement to dexter
-Version: 0.2.1
+Version: 0.2.2
 Date: 2020-09-28
 Author: Gunter Maris, Timo Bechger, Jesse Koops, Ivailo Partchev
 Maintainer: Jesse Koops <jesse.koops@cito.nl>
@@ -15,7 +15,7 @@ Imports:
   dplyr,
   rlang,
   DBI,
-  dexter,
+  dexter (>= 1.1.1),
   stats
 LinkingTo: Rcpp, RcppArmadillo, dqrng, BH, sitmo
 Suggests: testthat

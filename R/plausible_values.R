@@ -54,7 +54,7 @@ plausible_values.mml = function(dataSrc, parms, predicate=NULL, covariates=NULL,
                                       pre$pni, pre$pcni, pre$pi, pre$px,
                                       WLE=TRUE, USE_A = (pre$model!='1PL'))$theta
 
-  pv =  plausible_values_c(pre$a, pre$A, pre$b, pre$ncat,
+  pv =  plausible_values_c(pre$A, pre$a, pre$b, pre$ncat,
                          pre$pni, pre$pcni, pre$pi, pre$px, group, group_n,
                          as.integer(npv), starting_values,
                          n_prior_updates=70L, thin=70L,pgw = progress_width())
@@ -65,7 +65,7 @@ plausible_values.mml = function(dataSrc, parms, predicate=NULL, covariates=NULL,
 
 #' Simulate data for a 2pl
 #'
-#' note: to simulate form a 1pl, you can omit the alpha column or set it to 1
+#' note: to simulate from a 1pl, you can omit the alpha column or set it to 1
 #'
 #' @param pars data.frame with columns alpha, item_score and beta
 #' @param theta vector of abilities

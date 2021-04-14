@@ -24,7 +24,7 @@ ability.mml(
 \item{unweight}{whether to use the weighted score or the unweighted score. Has no effect for 1PL, see details}
 }
 \value{
-data.frame with vraibels person_id and theta
+data.frame with variables person_id and theta
 }
 \description{
 note: for a 1PL this function calls dexter::ability

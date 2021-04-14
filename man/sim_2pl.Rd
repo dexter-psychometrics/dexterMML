@@ -15,5 +15,5 @@ sim_2pl(pars, theta)
 matrix with persons as rows and items as columns
 }
 \description{
-note: to simulate form a 1pl, you can omit the alpha column or set it to 1
+note: to simulate from a 1pl, you can omit the alpha column or set it to 1
 }

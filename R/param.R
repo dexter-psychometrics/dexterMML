@@ -50,8 +50,8 @@ to_dexter = function(a,logb,ncat,item_id, H=NULL, fixed_items=NULL, ref_group=-1
     if(any_fixed)
     {
       par_indx = which(rep(fixed_items, ncat-1L) == 0)
-      DD = DD[par_indx, par_indx]
       k = length(par_indx)
+      DD = DD[par_indx,par_indx]
       cov.beta = DD %*% cov.all[1:k,1:k] %*% t(DD)
       items$SE_beta = NA_real_
       items$SE_beta[par_indx] = sqrt(-diag(cov.beta))

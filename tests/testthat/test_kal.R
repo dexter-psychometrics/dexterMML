@@ -6,16 +6,16 @@ library(dexter)
 test_that('1pl verb agg confirms to dexter',{
   db = start_new_project(verbAggrRules, ":memory:")
   add_booklet(db, verbAggrData, "agg")
-  f=fit_enorm(db)
+  f=fit_enorm(db,item_id!='S3DoShout')
   p=coef(f)
   
-  e = fit_1pl(db, fixed_param=p[1:2,])
-  expect_lt(mean(abs(p$beta-coef(e)$beta)),.02)
+  e = fit_1pl(db,item_id!='S3DoShout', fixed_param=p[1:2,])
+  expect_lt(mean(abs(p$beta-coef(e)$beta)),.01)
 
-  expect_lt(mean(abs(p$SE_beta-coef(e)$SE_beta)[-(1:2)]),.01)
-  
-  a.cml=ability(db,f,method='WLE',standard_errors=TRUE)
-  a.mml=ability.mml(db,e,method='WLE')
+  expect_gt(cor(p$SE_beta,coef(e)$SE_beta,use='complete.obs'),.99)
+
+  a.cml=ability(db,f,item_id!='S3DoShout',method='WLE',standard_errors=TRUE)
+  a.mml=ability.mml(db,e,item_id!='S3DoShout',method='WLE')
   
   expect_lt(mean(abs(a.cml$theta-a.mml$theta)),.01)
   expect_lt(mean(abs(a.cml$se-a.mml$se)),.001)

@@ -7,7 +7,7 @@
 \method{plot}{parms_mml}(x, items = NULL, nbins = 5, ci = 0.95, ...)
 }
 \arguments{
-\item{x}{object produced by fit_enorm}
+\item{x}{object produced by fit_1pl or fit_2pl}
 
 \item{items}{item_id's of items to plot, if NULL, one plot for each item is made}
 

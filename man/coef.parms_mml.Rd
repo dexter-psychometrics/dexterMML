@@ -7,7 +7,7 @@
 \method{coef}{parms_mml}(object, what = c("items", "populations"), ...)
 }
 \arguments{
-\item{object}{object returned by est}
+\item{object}{object returned by fit_1pl or fit_2pl}
 
 \item{what}{information to extract}
 
