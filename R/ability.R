@@ -53,17 +53,17 @@ abl_pre = function(dataSrc, pars)
 #' note: for a 1PL this function calls dexter::ability
 #'
 #' @param dataSrc	a connection to a dexter database, a matrix, or a data.frame with columns: person_id, item_id, item_score
-#' @param parms	object produced by function fit_marginal
+#' @param parms	object produced by function fit_1pl or fit_2pl
 #' @param predicate An optional expression to subset data, if NULL all data is used
 #' @param method Maximum Likelihood (MLE), Weighted Likelihood (WLE)
 #' @param unweight whether to use the weighted score or the unweighted score. Has no effect for 1PL, see details
 #'
-#' @returns data.frame with variables person_id and theta
+#' @returns data.frame with variables person_id and theta and se
 #'
 #' @details
 #' for a 2pl you have the option to use the weighted or unweighted score. The weighted score gives ML estimates
 #' for the regular 2pl. The unweighted score is an adaptation where ability is computed conditional on the unweighted
-#' sumscore of the repondent. This means people with the same unweighted score get the same ability estimate.,
+#' sumscore of the respondent. This means people with the same unweighted score get the same ability estimate.
 #'
 ability.mml = function(dataSrc, parms, predicate=NULL, method=c('MLE','WLE'), unweight=FALSE)
 {

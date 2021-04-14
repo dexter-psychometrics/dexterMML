@@ -281,11 +281,13 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 	}
 	if(iter>=max_iter-1)
 		stop += 4;
+		
+	ll = prior_part + loglikelihood_2pl(a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, pgroup);
 	
 	prog.close();
 	
 	return Rcpp::List::create(Named("A")=A, Named("b")=b, Named("thetabar") = thetabar, Named("mu") = mu, Named("sd") = sigma, 
-									Named("r")=r, Named("LL") = (double)ll, Named("niter")=iter, Named("prior_part") = (double)prior_part,
+									Named("r")=r, Named("LL") = ll, Named("niter")=iter, Named("prior_part") = prior_part,
 									Named("err")=stop, Named("maxdif_A")=maxdif_A,Named("maxdif_b")=maxdif_b,
 									Named("ll_history") = h_ll,
 									Named("store_A")=store_A, Named("store_b")=store_b); 

@@ -122,9 +122,6 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 			}
 		}
 		
-		//printf("iter: % 4i, logl: %.6f,  max b: %.8f\n", iter, (double)ll, maxdif_b);
-		//fflush(stdout);
-
 		prog.update(maxdif_b, iter);
 		
 		if(maxdif_b < .0001)
@@ -135,6 +132,8 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 	}
 	if(iter>=max_iter-1)
 		stop += 4;
+	
+	ll = loglikelihood_nrm(a, b, ncat, pcni, pi, px, theta, mu, sigma, pgroup);
 	
 	prog.close();
 	

@@ -52,7 +52,7 @@ It will be very easy to use if you are alrady familiar with dexter. If the user 
 
 Using dexterMML is extremely similar to using dexter:
 
-```{r, message = FALSE, results='hide',out.width='8cm'}
+```{r, message = FALSE, results='hide'}
 library(dexter)
 library(dexterMML)
 

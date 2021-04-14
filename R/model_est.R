@@ -541,10 +541,9 @@ logLik.parms_mml = function(object,...)
     e=object
     if(e$model=='1PL')
     {
-      ll = estimate_nrm(e$em$a, e$em$b, pre$ncat,
-                        pre$pni, pre$pcni, pre$pi, pre$px,
-                        nodes, e$em$mu, e$em$sd, pre$group_n, pre$group, pre$fixed_items, 
-                        pre$ref_group, max_iter=1L,pgw=-1)$LL
+      ll = loglikelihood_nrm(e$em$a, e$em$b, pre$ncat,
+                             pre$pcni, pre$pi, pre$px,
+                             nodes, e$em$mu, e$em$sd, pre$group)
     } else
     {
      
@@ -553,5 +552,5 @@ logLik.parms_mml = function(object,...)
                           nodes, e$em$mu, e$em$sd, pre$group)
     }
   }
-  c("log likelihood"=ll)
+  c("log likelihood" = ll)
 }
