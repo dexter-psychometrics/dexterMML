@@ -72,7 +72,7 @@ plot(coef(cml)$beta,coef(mml)$beta, xlab='beta cml', ylab='beta mml')
 abline(0,1)
 ```
 
-<img src="man/figures/README-unnamed-chunk-3-1.png" width="8cm" />
+<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
 
 dexterMML can also fit a 2pl on an incomplete design and can be used
 when there is no pre-specified design, as in random or adaptive tests.
@@ -96,7 +96,7 @@ pv2 = plausible_values.mml(dat,f2,covariates=group)
 
 cor(data.frame(theta_true=theta,pv_1pl=pv1$PV1,pv_2pl=pv2$PV1))
 #>            theta_true    pv_1pl    pv_2pl
-#> theta_true  1.0000000 0.9145213 0.9195686
-#> pv_1pl      0.9145213 1.0000000 0.9258780
-#> pv_2pl      0.9195686 0.9258780 1.0000000
+#> theta_true  1.0000000 0.9147732 0.9215103
+#> pv_1pl      0.9147732 1.0000000 0.9272877
+#> pv_2pl      0.9215103 0.9272877 1.0000000
 ```
