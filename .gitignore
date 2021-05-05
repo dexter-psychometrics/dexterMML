@@ -39,7 +39,7 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
-# compiled crap
+# compiled stuff
 *.dll
 *.so
 *.o

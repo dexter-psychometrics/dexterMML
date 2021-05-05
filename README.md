@@ -12,7 +12,7 @@ DexterMML is not on CRAN and can only be installed from github.
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("jessekps/dexterMML")
+devtools::install_github("dexter-psychometrics/dexterMML")
 ```
 
 This will work on Windows computers, provided
@@ -23,7 +23,7 @@ installed a C++ compiler with openmp support and configured R to use it.
 ## Overview
 
 DexterMML is an extension of the R package
-[dexter](https://CRAN.R-project.org/package=dexter). Dexter fits IRT
+[dexter](https://dexter-psychometrics.github.io/dexter). Dexter fits IRT
 models using Conditional Maximum Likelihood (CML) which is our preferred
 method. DexterMML, as the name implies, offers Marginal Maximum
 Likelihood (MML) estimation of IRT models.
@@ -96,7 +96,7 @@ pv2 = plausible_values.mml(dat,f2,covariates=group)
 
 cor(data.frame(theta_true=theta,pv_1pl=pv1$PV1,pv_2pl=pv2$PV1))
 #>            theta_true    pv_1pl    pv_2pl
-#> theta_true  1.0000000 0.9147732 0.9215103
-#> pv_1pl      0.9147732 1.0000000 0.9272877
-#> pv_2pl      0.9215103 0.9272877 1.0000000
+#> theta_true  1.0000000 0.9163244 0.9166978
+#> pv_1pl      0.9163244 1.0000000 0.9294787
+#> pv_2pl      0.9166978 0.9294787 1.0000000
 ```

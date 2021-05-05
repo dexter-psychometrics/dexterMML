@@ -24,7 +24,7 @@ DexterMML is not on CRAN and can only be installed from github.
 
 ```{r, eval = FALSE}
 # install.packages("devtools")
-devtools::install_github("jessekps/dexterMML")
+devtools::install_github("dexter-psychometrics/dexterMML")
 ```
 
 This will work on Windows computers, provided [Rtools](https://cran.r-project.org/bin/windows/Rtools/) is installed, and on Linux computers. Mac OS is *not* supported unless you have installed a C++ compiler with openmp support and configured R to use it.
@@ -32,7 +32,7 @@ This will work on Windows computers, provided [Rtools](https://cran.r-project.or
 
 ## Overview
 
-DexterMML is an extension of the R package [dexter](https://CRAN.R-project.org/package=dexter). Dexter fits IRT models using Conditional Maximum Likelihood (CML) which is our preferred method. DexterMML, as the name implies, offers Marginal Maximum Likelihood (MML) estimation of IRT models. 
+DexterMML is an extension of the R package [dexter](https://dexter-psychometrics.github.io/dexter). Dexter fits IRT models using Conditional Maximum Likelihood (CML) which is our preferred method. DexterMML, as the name implies, offers Marginal Maximum Likelihood (MML) estimation of IRT models. 
 
 The main difference is that in MML one needs to assume a population distribution. Misspecification of that distribution can result in biased estimation of item parameters. Since CML does not need _a priori_ specification of a population distribution, it is naturally robust against misspecification. MML also supposes a random sample of the population which is not needed for CML.
 

@@ -7,7 +7,8 @@ Author: Gunter Maris, Timo Bechger, Jesse Koops, Ivailo Partchev
 Maintainer: Jesse Koops <jesse.koops@cito.nl>
 Description: Fast 1Pl and 2PL estimation routines for situations where CML is impossible.
 License: GPL-3
-LazyData: yes
+URL: https://dexter-psychometrics.github.io/dexter/
+BugReports: https://github.com/dexter-psychometrics/dexter/issues
 Depends:
     R (>= 3.5)
 Imports: 
