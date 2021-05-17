@@ -499,7 +499,7 @@ plot.parms_mml = function(x,items=NULL,nbins=5,ci=.95,...)
     max_score = parms$pre$imax[i]
     indx = (parms$pre$icnp[i]+1L):parms$pre$icnp[i+1]
     x = tibble(item_score=parms$em$a[parms$pre$ix[indx]+1L,i], 
-               theta=parms$em$thetabar[1L+parms$pre$ip[indx]])
+               theta=parms$em$thetabar[1L+parms$pre$ip[indx]]) %>%
       mutate(bin=ntile(.data$theta,nbins)) %>%
       group_by(.data$bin) %>%
       summarise(m=mean(.data$theta),obs=mean(.data$item_score),n=n()) %>%
