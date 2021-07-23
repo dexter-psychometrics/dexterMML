@@ -20,3 +20,11 @@ DexterMML distinguishes itself from other MML R-packages by:
 \item support for the dexter data(base) structure
 }
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://dexter-psychometrics.github.io/dexter/}
+  \item Report bugs at \url{https://github.com/dexter-psychometrics/dexter/issues}
+}
+
+}

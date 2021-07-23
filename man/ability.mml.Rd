@@ -15,7 +15,7 @@ ability.mml(
 \arguments{
 \item{dataSrc}{a connection to a dexter database, a matrix, or a data.frame with columns: person_id, item_id, item_score}
 
-\item{parms}{object produced by function fit_marginal}
+\item{parms}{object produced by function fit_1pl or fit_2pl}
 
 \item{predicate}{An optional expression to subset data, if NULL all data is used}
 
@@ -24,7 +24,7 @@ ability.mml(
 \item{unweight}{whether to use the weighted score or the unweighted score. Has no effect for 1PL, see details}
 }
 \value{
-data.frame with variables person_id and theta
+data.frame with variables person_id and theta and se
 }
 \description{
 note: for a 1PL this function calls dexter::ability
@@ -32,5 +32,5 @@ note: for a 1PL this function calls dexter::ability
 \details{
 for a 2pl you have the option to use the weighted or unweighted score. The weighted score gives ML estimates
 for the regular 2pl. The unweighted score is an adaptation where ability is computed conditional on the unweighted
-sumscore of the repondent. This means people with the same unweighted score get the same ability estimate.,
+sumscore of the respondent. This means people with the same unweighted score get the same ability estimate.
 }

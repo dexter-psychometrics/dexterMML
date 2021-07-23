@@ -348,8 +348,8 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
 
     items = tibble(item_id = rep(colnames(dat),pre$ncat-1),
                    alpha = rep(em$A,pre$ncat-1L),
-                   item_score = unlist(mapply(function(i,k){ a[2:k,i] },1:ncol(dat),pre$ncat)),
-                   beta = unlist(mapply(function(i,k){ em$b[2:k,i] },1:ncol(dat),pre$ncat)))
+                   item_score = as.integer(unlist(mapply(function(i,k){ a[2:k,i] },1:ncol(dat),pre$ncat))),
+                   beta = as.double(unlist(mapply(function(i,k){ em$b[2:k,i] },1:ncol(dat),pre$ncat))))
 
     pop = tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd))
     if(se)
