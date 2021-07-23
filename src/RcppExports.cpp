@@ -242,7 +242,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // num_hessian_2pl
-arma::mat num_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, const arma::vec& theta, const arma::vec& mu, const arma::vec& sigma, const arma::ivec& pgroup, const int A_prior, const double A_mu, const double A_sigma, const double ddelta);
+Rcpp::List num_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, const arma::vec& theta, const arma::vec& mu, const arma::vec& sigma, const arma::ivec& pgroup, const int A_prior, const double A_mu, const double A_sigma, const double ddelta);
 RcppExport SEXP _dexterMML_num_hessian_2pl(SEXP aSEXP, SEXP ASEXP, SEXP bSEXP, SEXP ncatSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP thetaSEXP, SEXP muSEXP, SEXP sigmaSEXP, SEXP pgroupSEXP, SEXP A_priorSEXP, SEXP A_muSEXP, SEXP A_sigmaSEXP, SEXP ddeltaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

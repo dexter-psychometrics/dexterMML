@@ -136,7 +136,7 @@ struct parvec_nrm
 
 
 // [[Rcpp::export]]
-arma::mat num_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, 
+Rcpp::List num_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, 
 				const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 				const arma::vec& theta, const arma::vec& mu, const arma::vec& sigma, const arma::ivec& pgroup,
 				const int A_prior=0, const double A_mu=0, const double A_sigma=0.5,
@@ -149,6 +149,7 @@ arma::mat num_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::m
 	int npar = 2*(ng-1) + accu(ncat);
 
 	mat hess(npar,npar,fill::zeros);
+	vec grd(npar,fill::zeros);
 	parvec_2pl p(ncat,ng);	
 	
 	long double s1,s2,s3,s4;
@@ -161,6 +162,7 @@ arma::mat num_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::m
         p[i] = p[i] - 4 * delta; 
 		s3 = loglikelihood_2pl(a, p.A, p.b, ncat, pni, pcni, pi, px, theta, p.mu, p.sigma, pgroup);
         hess(i, i) = (s1 - 2*fx + s3) / (4 * SQR(delta));
+		grd[i] = (s1-s3)/(4*delta);
 		for(int j=i+1; j<npar; j++)
 		{
 			p.re_fill(A,b,mu,sigma);
@@ -177,8 +179,11 @@ arma::mat num_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::m
 			hess(j,i) = hess(i,j);
 		}
 	}
-	return hess;
+	return Rcpp::List::create(Rcpp::Named("hess")=hess, Rcpp::Named("gradient")=grd);
 }
+
+
+
 
 
 

@@ -262,7 +262,7 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 			double m0 = accu(exp(-square(theta-mu[g])/dnm));
 			double m1 = accu((mu[g]-theta) % exp(-square(theta-mu[g])/dnm))/m0;			
 			double m2 = accu((square((mu[g] - theta)/sigma[g]) - 1.0) % exp(-square(theta-mu[g])/dnm))/m0;
-			
+
 			th_mu2.col(g) = square(theta-mu[g]);
 			
 			muc0.col(g) = -m2 - 1 + th_mu2.col(g)/sigma2[g] - 2*m1*(mu[g] - theta)/sigma2[g] + 2*SQR(m1)/sigma2[g];
@@ -431,5 +431,4 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 	progr.close();
 	return hess;
 }
-
 

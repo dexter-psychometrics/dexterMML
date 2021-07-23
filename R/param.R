@@ -29,8 +29,8 @@ to_dexter = function(a,logb,ncat,item_id, H=NULL, fixed_items=NULL, ref_group=-1
   any_fixed = !(is.null(fixed_items) || all(fixed_items==0))
 
   # without zero's
-  a = as.integer(mapply(function(i,k){ a[2:k,i] },n,ncat))
-  logb = as.double(mapply(function(i,k){ logb[2:k,i] },n,ncat))
+  a = unlist(mapply(function(i,k){ a[2:k,i] },n,ncat))
+  logb = unlist(mapply(function(i,k){ logb[2:k,i] },n,ncat))
   last = cumsum(ncat-1L)
   first = c(1,last[-length(last)]+1)
 

@@ -25,12 +25,12 @@ em_report = function(em)
   {
     flags = bitflag(em$err,1:4)
     msg = c("minimization error occurred","decreasing likelihood","maximum iterations reached",
-            "alpha prameters near zero")[flags]
+            "alpha parameters near zero")[flags]
     msg = paste0(paste0(msg,collapse=' and '),'.')
     precision = max(em$maxdif_A, em$maxdif_b)
     if(flags[4])
     {
-      warning("Some alpha parameters are too close to zero, the model is unidentified")
+      warning("Some discrimination parameters are too close to zero, the model is unidentified")
     }
 
     if(precision < .001)
@@ -46,8 +46,9 @@ em_report = function(em)
 }
 
 cal_settings = list(
-  theta_grid = seq(-6,6,.3),
+  theta_grid = seq(-6,6,length.out=41),
   max_em_iterations = 800L)
+
 
 #' Fit a marginal model
 #'
@@ -347,8 +348,8 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
 
     items = tibble(item_id = rep(colnames(dat),pre$ncat-1),
                    alpha = rep(em$A,pre$ncat-1L),
-                   item_score = as.integer(a[-1,]),
-                   beta = as.double(em$b[-1,]))
+                   item_score = unlist(mapply(function(i,k){ a[2:k,i] },1:ncol(dat),pre$ncat)),
+                   beta = unlist(mapply(function(i,k){ em$b[2:k,i] },1:ncol(dat),pre$ncat)))
 
     pop = tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd))
     if(se)
@@ -372,6 +373,7 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
       SE = sqrt(-diag(solve(hess)))
       items$SE_alpha = NA_real_
       items$SE_beta = NA_real_
+
       i=1; px=1
       for(ix in 1:ncol(dat))
       {
@@ -386,16 +388,20 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
       }
       pop$SE_mu = NA_real_
       pop$SE_sd = NA_real_
+
       for(g in 1:length(group_n))
       {
         if(g != (ref_group+1))
         {
           pop$SE_mu[g] = SE[px]
           pop$SE_sd[g] = SE[px+1L]
+          
           px=px+2L
         }
         i=i+1L
       }
+     
+      
     }
     out = list(items=items,pop=pop,em=em,pre=pre,hess=hess,
                prior=list(A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma))
