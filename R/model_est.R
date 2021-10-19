@@ -119,8 +119,11 @@ fit_1pl = function(dataSrc, predicate=NULL, group = NULL,
 {
   env = caller_env()
   qtpredicate = eval(substitute(quote(predicate)))
-  est(dataSrc, qtpredicate, env,group=group,model='1PL',
-      fixed_param=fixed_param,se=se) 
+  res = est(dataSrc, qtpredicate, env,group=group,model='1PL',
+            fixed_param=fixed_param,se=se) 
+  if(se && ! 'SE_beta' %in% colnames(res$items))
+    res$items$SE_beta = NA_real_
+  res
 }
 
 #' @rdname fit_1pl
@@ -138,9 +141,16 @@ fit_2pl = function(dataSrc, predicate=NULL, group = NULL,
   qtpredicate = eval(substitute(quote(predicate)))
   env = caller_env()
   
-  est(dataSrc, qtpredicate, env,group=group,model='2PL',
+  res = est(dataSrc, qtpredicate, env,group=group,model='2PL',
       fixed_param=fixed_param,se=se,
       priorA=priorA, priorA_mu=prior_alpha_mu, priorA_sigma=prior_alpha_sigma)
+  
+  if(se && ! 'SE_beta' %in% colnames(res$items))
+  {
+    res$items$SE_alpha = NA_real_
+    res$items$SE_beta = NA_real_
+  }
+  res
 }
 
 
