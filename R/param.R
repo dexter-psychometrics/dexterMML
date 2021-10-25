@@ -175,8 +175,7 @@ simple_pars = function(parms, items=NULL)
     }
     if(!all(items %in% parms$item_id))
       stop('not all items present in your data have parameters')
-    w = match(parms$item_id, items)
-    w = w[!is.na(w)]
+    w = match(items,parms$item_id)
     return(list(A=parms$em$A[w],a=parms$em$a[,w],b=parms$em$b[,w],
                 model=parms$model, icat=parms$pre$icat[,w],
                 imax=parms$pre$imax[w], ncat=parms$pre$ncat[w]))

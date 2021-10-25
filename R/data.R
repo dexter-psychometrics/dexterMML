@@ -59,7 +59,7 @@ get_mml_data = function(dataSrc, qtpredicate, env, group)
                                        paste0(group, collapse=',')))
       } else if(inherits(dataSrc, 'data.frame'))
       {
-        g = distinct(dataSrc, .data$person_id, .keep_all=TRUE)
+        g = distinct(dataSrc[,c('person_id',group)], .data$person_id, .keep_all=TRUE)
       }
       g = g %>%
         mutate(person_id = factor(.data$person_id, levels=rownames(dat))) %>%
