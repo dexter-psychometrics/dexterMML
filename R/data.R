@@ -73,7 +73,10 @@ get_mml_data = function(dataSrc, qtpredicate, env, group)
       persons = tibble(person_id=rownames(dat))
     }
   }
-  list(persons=persons,group=group,dat=dat)
+  if(is.factor(group))
+    group = droplevels(group)
+  
+  list(persons=persons,group=as.factor(group),dat=dat)
 }
 
 
