@@ -5,7 +5,7 @@ import(dplyr)
 importFrom(dexter, "get_resp_matrix", "get_resp_data")
 importFrom(DBI, "dbGetQuery")
 importFrom(rlang,"caller_env",".data")
-importFrom(stats, "var", "sd", "weighted.mean","qnorm")
+importFrom(stats, "var", "sd", "weighted.mean","qnorm","rnorm")
 importFrom(graphics, "arrows", "lines", "points")
 importFrom(utils, "modifyList")
 
