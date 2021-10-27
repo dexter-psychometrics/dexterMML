@@ -17,7 +17,7 @@ using Rcpp::Named;
 #
 */
 
-void sample_musig(const arma::ivec& popn, std::vector<long double>& mu, 
+void sample_musig(const arma::ivec& popn, arma::vec& mu, 
 						long double& sigma, long double& sigma_old, double& mu_all, double& sigma_all)
 {
 	const int J = popn.n_elem;
@@ -65,7 +65,9 @@ arma::mat plausible_values_c(const arma::vec& A, const arma::imat& a, const arma
 	
 	const int max_thr = omp_get_max_threads();
 	
-	std::vector<long double> mu(npop, 0);
+	vec mu(npop, fill::zeros), mu_sum(npop);
+	
+
 	long double sigma=4,sigma_old=4;
 	double mu_all=0, sigma_all=1;
 		
@@ -81,29 +83,18 @@ arma::mat plausible_values_c(const arma::vec& A, const arma::imat& a, const arma
 	
 	for(int p=0;p<np;p++)
 		for(int indx = pcni[p]; indx<pcni[p+1]; indx++)
-			ws[p] += aA.at(px[indx],pi[indx]);
-	
+			ws[p] += aA.at(px[indx],pi[indx]);	
 	
 	int pvcol=0, prevcol;
-	for(int iter = -n_prior_updates;;iter++)
+	int iter = -n_prior_updates;
+	for(;;iter++)
 	{	
 		prevcol=pvcol;
 		if(iter>=0 && iter % thin ==0)
 			pvcol++;
 		if(pvcol == npv)
-			break;
-			
-		std::fill(mu.begin(), mu.end(),0);
-		for(int p=0;p<np;p++)
-			mu[pop[p]] += out.at(p,pvcol);
-	
-		for(int ps=0;ps<npop;ps++)
-			mu[ps] /= popn[ps];
-		sigma=0;
-		for(int p=0;p<np;p++)
-			sigma += SQR(out.at(p,pvcol) - mu[pop[p]]);
-		sigma = std::sqrt(sigma/np);
-		
+			break;		
+		mu_sum.zeros();
 #pragma omp parallel
 		{
 			dqrng::xoshiro256plus lrng(rng);      		
@@ -111,7 +102,7 @@ arma::mat plausible_values_c(const arma::vec& A, const arma::imat& a, const arma
 			vec P(max_cat);
 			P[0]=1;
 			int k;
-#pragma omp for			
+#pragma omp for reduction(+: mu_sum)			
 			for(int p=0;p<np;p++)
 			{		
 				//double theta = R::rnorm((double)mu[pop[p]], (double)sigma);
@@ -130,15 +121,26 @@ arma::mat plausible_values_c(const arma::vec& A, const arma::imat& a, const arma
 				}
 				double acc = std::exp((theta-out.at(p, prevcol))*(ws[p]-x));
 				if(prl_runif(lrng) < acc)
-					out.at(p,pvcol)=theta;
+					out.at(p,pvcol) = theta;
 				else
-					out.at(p,pvcol)=out.at(p,prevcol);					
+					out.at(p,pvcol) = out.at(p,prevcol);
+				
+				mu_sum[pop[p]] += out.at(p,pvcol);
 			}
+		}
+		mu = mu_sum / popn;		
+		sigma=0;
+
+#pragma omp parallel for reduction(+: sigma)
+		for(int p=0;p<np;p++)
+		{
+			sigma += SQR(out.at(p,pvcol) - mu[pop[p]]);
 		}		
+		sigma = std::sqrt(sigma/np);
+		
 		sample_musig(popn, mu, sigma, sigma_old, mu_all, sigma_all);
 		rng.long_jump(max_thr+2);
 		prog.update(++tick);
-		iter++;
 	}
 	prog.close();
 	return out;
@@ -154,7 +156,7 @@ arma::imat sim_2plc(const arma::imat& a, const arma::vec& A, const arma::mat& b,
 	mat aA(a.n_rows,nit,fill::zeros);
 	for(int i=0; i<nit; i++)
 		for(int k=1;k<ncat[i];k++)
-			aA.at(k,i) = a.at(k,i)* A[i];
+			aA.at(k,i) = a.at(k,i) * A[i];
 	imat out(np,nit);
 	dqrng::xoshiro256plus rng(SEED); 	
 	dqrng::uniform_distribution prl_runif(0, 1);
@@ -164,7 +166,7 @@ arma::imat sim_2plc(const arma::imat& a, const arma::vec& A, const arma::mat& b,
 		dqrng::xoshiro256plus lrng(rng);      		
 		lrng.long_jump(omp_get_thread_num() + 1);
 		int k;
-	#pragma omp for
+#pragma omp for
 		for(int i=0;i<nit;i++)
 		{		
 			P[0]=1;

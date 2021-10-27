@@ -38,7 +38,7 @@ get_mml_data = function(dataSrc, qtpredicate, env, group)
       stop(sprintf("Length of group (%i) is not equal to number of rows in data (%i)",
                    length(group),nrow(dat)))
 
-    person_id = if(is.null(rownames(dat))) sprintf("p%09i",1:nrow(dat)) else rownames(dat)
+    person_id = if(is.null(rownames(dat))) 1:nrow(dat) else rownames(dat)
     persons=tibble(person_id=person_id)
     if(!is.null(group))
       persons$group=group
@@ -76,7 +76,10 @@ get_mml_data = function(dataSrc, qtpredicate, env, group)
   if(is.factor(group))
     group = droplevels(group)
   
-  list(persons=persons,group=as.factor(group),dat=dat)
+  if(!is.null(group))
+    group = as.factor(group)
+  
+  list(persons=persons,group=group,dat=dat)
 }
 
 

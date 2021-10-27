@@ -49,15 +49,16 @@ plausible_values.mml = function(dataSrc, parms, predicate=NULL, covariates=NULL,
   
   pre = abl_pre(dat, parms)
 
-  # if WLE not entirely converged, no so much of a problem
-  starting_values = theta_2pl(pre$a, pre$A, pre$b, pre$ncat,
-                                      pre$pni, pre$pcni, pre$pi, pre$px,
-                                      WLE=TRUE, USE_A = (pre$model!='1PL'))$theta
+#  starting_values = theta_2pl(pre$a, pre$A, pre$b, pre$ncat,
+#                                      pre$pni, pre$pcni, pre$pi, pre$px,
+#                                      WLE=TRUE, USE_A = (pre$model!='1PL'))$theta
 
+  starting_values = rnorm(nrow(dat),0,1)
+  
   pv =  plausible_values_c(pre$A, pre$a, pre$b, pre$ncat,
                          pre$pni, pre$pcni, pre$pi, pre$px, group, group_n,
                          as.integer(npv), starting_values,
-                         n_prior_updates=70L, thin=70L,pgw = progress_width())
+                         n_prior_updates=80L, thin=60L,pgw = progress_width())
 
   colnames(pv) = sprintf("PV%i",1:ncol(pv))
   cbind(out, as.data.frame(pv))
