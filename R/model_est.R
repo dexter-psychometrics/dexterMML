@@ -452,7 +452,7 @@ print.parms_mml = function(x,...)
   p = paste0( 'MML parameters for',m,x$model,
               '\nitems: ', ncol(x$em$b),
               '\npersons: ', length(x$pre$pni),
-              '\niterations:',x$em$niter,
+              '\niterations: ',x$em$niter,
               '\nUse coef() or coefficients() to extract the item parameters.\n')
 
   cat(p)

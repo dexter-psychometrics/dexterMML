@@ -4,13 +4,18 @@
 #brings 1pl to 2pl parametrisation
 abl_pre = function(dataSrc, pars)
 {
+  dfpars = inherits(pars,'data.frame')
+  
   pars = simple_pars(pars, colnames(dataSrc))
   # this is all still kludgy
-  if(pars$model=='1PL' && !inherits(pars,'data.frame'))
+  if(pars$model=='1PL')
   {
-    pars$b = -pars$b/pars$a
-    pars$b[1,] = 0
-    pars$A = rep(1,ncol(dataSrc))
+    if(!dfpars)
+    {
+      pars$b = -pars$b/pars$a
+      pars$b[1,] = 0
+    }
+    pars$A = rep(1,ncol(pars$a))
   }
   
   max_score = max(dataSrc, na.rm=TRUE)
