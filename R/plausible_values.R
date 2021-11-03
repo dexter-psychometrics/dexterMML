@@ -29,40 +29,21 @@ plausible_values.mml = function(dataSrc, parms, predicate=NULL, covariates=NULL,
 {
   qtpredicate = eval(substitute(quote(predicate)))
   env = caller_env()
-
-  data = get_mml_data(dataSrc,qtpredicate,env,covariates)
-
-  dat = data$dat
-  group = data$group
-  out = data$persons
-
-  if(is.null(group))
-  {
-    group = integer(nrow(dat))
-    group_n = nrow(dat)
-  } else
-  {
-    group = as.factor(group)
-    group = as.integer(group) -1L
-    group_n = as.integer(table(group))
-  }
   
-  pre = abl_pre(dat, parms)
-
-#  starting_values = theta_2pl(pre$a, pre$A, pre$b, pre$ncat,
-#                                      pre$pni, pre$pcni, pre$pi, pre$px,
-#                                      WLE=TRUE, USE_A = (pre$model!='1PL'))$theta
-
-  starting_values = rnorm(nrow(dat),0,1)
+  pre = abl_pre(dataSrc, parms, qtpredicate=qtpredicate, env=env, group=covariates)
+  
+  
+  starting_values = rnorm(nrow(pre$persons),0,1)
   
   pv =  plausible_values_c(pre$A, pre$a, pre$b, pre$ncat,
-                         pre$pni, pre$pcni, pre$pi, pre$px, group, group_n,
-                         as.integer(npv), starting_values,
-                         n_prior_updates=80L, thin=60L,pgw = progress_width())
-
+                           pre$pni, pre$pcni, pre$pi, pre$px, pre$persons$c_group_nbr, pre$group$group_n,
+                           as.integer(npv), starting_values,
+                           n_prior_updates=80L, thin=60L,pgw = progress_width())
+  
   colnames(pv) = sprintf("PV%i",1:ncol(pv))
-  cbind(out, as.data.frame(pv))
+  cbind(select(pre$persons,-.data$c_group_nbr), as.data.frame(pv))
 }
+
 
 #' Simulate data for a 2pl
 #'

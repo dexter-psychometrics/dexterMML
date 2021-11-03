@@ -17,6 +17,10 @@ mat_pre <- function(dat, max_score) {
     .Call(`_dexterMML_mat_pre`, dat, max_score)
 }
 
+df_pre <- function(person_id, item_id, item_score, max_score, np, nit, sorted = TRUE) {
+    .Call(`_dexterMML_df_pre`, person_id, item_id, item_score, max_score, np, nit, sorted)
+}
+
 categorize <- function(pni, pcni, icnp, pi, icat, imax, max_cat, px, ix) {
     .Call(`_dexterMML_categorize`, pni, pcni, icnp, pi, icat, imax, max_cat, px, ix)
 }

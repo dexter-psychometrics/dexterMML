@@ -1,86 +1,86 @@
 
-combine_ids = function(v,sep=c('_', '.', '-', '&', '|',' ', ','))
-{
-  if(!inherits(v,'data.frame') && !inherits(v,'list'))
-    return(as.character(v))
-  
-  v = lapply(v, as.character)
-  ss=NULL
-  while(is.null(ss))
-  {
-    for(s in sep)
-    {
-      if(!any(sapply(v, function(vec) any(grepl(s,vec,fixed=TRUE)))))
-      {
-        ss=s
-        break
-      }
-    }
-    sep = paste(rep(sep[1],2),collapse='')
-  }
-  v$sep=ss
-  do.call(paste,v)
-}
 
-
-# prepare data from possibly different sources
-# to do: also accept mst db
-get_mml_data = function(dataSrc, qtpredicate, env, group)
+mml_pre = function(dataSrc, qtpredicate, env, group=NULL, sorted=TRUE)
 {
   if(inherits(dataSrc, 'matrix'))
   {
+    if(!is.null(qtpredicate)) stop("predicates are not supported for matrix dataSrc")
+    
     dat = dataSrc
     mode(dat) = 'integer'
     if(is.null(colnames(dat)))
       colnames(dat) = sprintf("item%06i",1:ncol(dat))
-
+    
     if(!is.null(group) && length(group) != nrow(dat))
       stop(sprintf("Length of group (%i) is not equal to number of rows in data (%i)",
                    length(group),nrow(dat)))
-
+    
     person_id = if(is.null(rownames(dat))) 1:nrow(dat) else rownames(dat)
-    persons=tibble(person_id=person_id)
-    if(!is.null(group))
-      persons$group=group
+    if(is.null(group))
+    {
+      persons = tibble(person_id=person_id, c_group_nbr=0L)
+      subgroups = tibble(c_group_nbr=0L, group_id='population', group_n = nrow(dat))
+    } else
+    {
+      persons = tibble(person_id=person_id, group_id=factor(group), c_group_nbr = as.integer(.data$group_id)-1L)
+      subgroups = count(persons, .data$c_group_nbr, name='group_n') %>%
+        arrange(.data$c_group_nbr)
+      subgroups$group_id = levels(persons$group_id)
+    }
 
+    rg = range(dat)
+    if(rg[1] < 0L)
+      stop('negative scores are not allowed')
+
+    pre = mat_pre(dataSrc, rg[2])
+    item_id = colnames(dat)
+        
   } else
   {
-    dat = get_resp_matrix(dataSrc,qtpredicate,env)
-    # to do: possibility to handle groups in resp_matrix should become part of dexter
+    # aiaiaiai, an internal function
+    # has to be done differently before we go to CRAN
+    # to do: adapt dexter to export a get_responses_ with factors
+    dat = dexter:::get_responses_(dataSrc,qtpredicate=qtpredicate,env=env, 
+                                  columns=c('person_id','item_id','item_score',group))
+    
+    dat$person_id = factor(dat$person_id)
+    dat$item_id = factor(dat$item_id)
+    dat$item_score = as.integer(dat$item_score)
+    
     if(!is.null(group))
     {
       if(!is.character(group))
-        stop("Group should be a character variable")
+        stop("Group should be a character vector")
+      
+      persons = distinct(dataSrc[,c('person_id',group)], .data$person_id, .keep_all=TRUE) 
+      
+      subgroups = persons[,group] %>% count(across(), name='group_n')
+      subgroups$c_group_nbr = 0:(nrow(subgroups)-1L)
+      
+      persons = inner_join(persons, select(subgroups,-.data$group_n), by=group) %>%
+        arrange(.data$person_id)
 
-      if(inherits(dataSrc, "DBIConnection"))
-      {
-        # to do: allow booklet_id??
-        g = dbGetQuery(dataSrc,sprintf("SELECT person_id, %s FROM dxPersons;",
-                                       paste0(group, collapse=',')))
-      } else if(inherits(dataSrc, 'data.frame'))
-      {
-        g = distinct(dataSrc[,c('person_id',group)], .data$person_id, .keep_all=TRUE)
-      }
-      g = g %>%
-        mutate(person_id = factor(.data$person_id, levels=rownames(dat))) %>%
-        filter(!is.na(.data$person_id)) %>%
-        arrange(as.integer(.data$person_id))
-
-      persons=g
-      group = combine_ids(g[,group])
     } else
     {
-      persons = tibble(person_id=rownames(dat))
+      persons = tibble(person_id=levels(dat$person_id), c_group_nbr=0L)
+      subgroups = tibble(c_group_nbr=0L, group_id='population', group_n = nlevels(dat$person_id))
     }
+
+    rg = range(dat$item_score)
+    if(anyNA(rg)) stop('item_score should not contain NA values')
+    if(rg[1]<0L) stop('negative scores are not allowed')
+    
+    pre = df_pre(dat$person_id, dat$item_id, dat$item_score, rg[2], nlevels(dat$person_id), nlevels(dat$item_id), sorted)
+    item_id = levels(dat$item_id)
+    
   }
-  if(is.factor(group))
-    group = droplevels(group)
+      
   
-  if(!is.null(group))
-    group = as.factor(group)
-  
-  list(persons=persons,group=group,dat=dat)
+  list(item_id=item_id, persons=persons, groups=arrange(subgroups,.data$c_group_nbr), pre=pre)
 }
+
+
+
 
 
 check_connected = function(design, fixed_items)

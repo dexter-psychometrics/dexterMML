@@ -79,6 +79,23 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// df_pre
+Rcpp::List df_pre(const arma::ivec& person_id, const arma::ivec& item_id, const arma::ivec& item_score, const int max_score, const int np, const int nit, const bool sorted);
+RcppExport SEXP _dexterMML_df_pre(SEXP person_idSEXP, SEXP item_idSEXP, SEXP item_scoreSEXP, SEXP max_scoreSEXP, SEXP npSEXP, SEXP nitSEXP, SEXP sortedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::ivec& >::type person_id(person_idSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type item_id(item_idSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type item_score(item_scoreSEXP);
+    Rcpp::traits::input_parameter< const int >::type max_score(max_scoreSEXP);
+    Rcpp::traits::input_parameter< const int >::type np(npSEXP);
+    Rcpp::traits::input_parameter< const int >::type nit(nitSEXP);
+    Rcpp::traits::input_parameter< const bool >::type sorted(sortedSEXP);
+    rcpp_result_gen = Rcpp::wrap(df_pre(person_id, item_id, item_score, max_score, np, nit, sorted));
+    return rcpp_result_gen;
+END_RCPP
+}
 // categorize
 arma::imat categorize(const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& icnp, const arma::ivec& pi, const arma::imat& icat, const arma::ivec& imax, const int max_cat, arma::ivec& px, arma::ivec& ix);
 RcppExport SEXP _dexterMML_categorize(SEXP pniSEXP, SEXP pcniSEXP, SEXP icnpSEXP, SEXP piSEXP, SEXP icatSEXP, SEXP imaxSEXP, SEXP max_catSEXP, SEXP pxSEXP, SEXP ixSEXP) {
@@ -590,6 +607,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_se_theta_2pl", (DL_FUNC) &_dexterMML_se_theta_2pl, 10},
     {"_dexterMML_E_score", (DL_FUNC) &_dexterMML_E_score, 6},
     {"_dexterMML_mat_pre", (DL_FUNC) &_dexterMML_mat_pre, 2},
+    {"_dexterMML_df_pre", (DL_FUNC) &_dexterMML_df_pre, 7},
     {"_dexterMML_categorize", (DL_FUNC) &_dexterMML_categorize, 9},
     {"_dexterMML_design_matrices", (DL_FUNC) &_dexterMML_design_matrices, 6},
     {"_dexterMML_check_connected_c", (DL_FUNC) &_dexterMML_check_connected_c, 3},

@@ -61,7 +61,7 @@ Rcpp::List mat_pre(const arma::imat& dat, const int max_score)
 			if(dat.at(p,i) >=0)
 			{
 				ix[ii] = dat.at(p,i);
-				ip[ii++]=p;
+				ip[ii++] = p;
 			}
 	// cumulative pointers	
 	ivec pcni(np+1);
@@ -94,8 +94,108 @@ Rcpp::List mat_pre(const arma::imat& dat, const int max_score)
 		Named("icat") = icat, Named("ncat") = ncat, Named("imax") = imax, Named("isum") = isum, Named("psum") = psum);
 }
 
+// less memory grabbing and faster than going via dexter's get_resp_matrix
+// and now just as sorted so in all ways equivalent
 
-// to do:: change ix
+// input all 1-indexed
+// output all 0-indexed// needs 4 loops over the data, O(n);
+
+// [[Rcpp::export]]
+Rcpp::List df_pre(const arma::ivec& person_id, const arma::ivec& item_id, const arma::ivec& item_score, 
+					const int max_score, const int np, const int nit, const bool sorted=true)
+{
+	const int sz = person_id.n_elem;
+	
+	imat icat(max_score+1,nit, fill::zeros);
+	
+	ivec inp(nit,fill::zeros);
+	ivec psum(np,fill::zeros), pni(np,fill::zeros);
+	ivec ip(sz), ix(sz);
+	ivec pi(sz),px(sz);
+
+	// need counts first
+	for(int i=0; i<sz; i++)
+	{
+		inp[item_id[i]-1]++;
+		pni[person_id[i]-1]++;	
+		psum[person_id[i]-1] += item_score[i];
+		icat.at(item_score[i], item_id[i]-1)++;
+	}
+	
+	// cumulative pointers	
+	ivec pcni(np+1);
+	pcni[0] = 0;
+	std::partial_sum(pni.begin(),pni.end(),pcni.begin()+1);
+
+	ivec icnp(nit+1);
+	icnp[0] = 0;
+	std::partial_sum(inp.begin(),inp.end(),icnp.begin()+1);
+	
+	// effectively a variation of a radix sort
+	
+	// working copy
+	ivec icnp2=icnp;
+		
+	// fill items
+	for(int i=0; i<sz; i++)
+	{
+		int ii = icnp2[item_id[i]-1]++;
+			
+		ip[ii] = person_id[i]-1;
+		ix[ii] = item_score[i];		
+	}
+	
+	// fill persons, items become sorted within person
+	ivec pcni2 = pcni;	
+	for(int i=0; i<nit; i++)
+	{
+		for(int indx=icnp[i]; indx<icnp[i+1]; indx++)
+		{
+			int pp = pcni2[ip[indx]]++;
+			pi[pp] = i;
+			px[pp] = ix[indx];
+		}
+	}
+	if(sorted)
+	{
+		// overwrite items, persons become sorted within items completing the radix for item, person
+		icnp2 = icnp;
+		for(int p=0; p<np; p++)
+		{
+			for(int indx=pcni[p]; indx<pcni[p+1]; indx++)
+			{
+				int ii = icnp2[pi[indx]]++;
+				ip[ii] = p;
+				ix[ii] = px[indx];
+			}
+		}
+	}
+
+	ivec imax(nit,fill::zeros), isum(nit,fill::zeros), ncat(nit, fill::zeros);
+	for(int i=0;i<nit;i++)
+	{
+		for(int k = max_score; k>=0; k--)
+			if(icat.at(k,i)>0)
+			{
+				imax[i] = k;
+				break;
+			}
+		for(int k=0; k<=max_score; k++) if(icat.at(k,i)>0)
+		{
+			isum[i] += k * icat.at(k,i);
+			ncat[i]++;
+		}
+	}
+	
+	return Rcpp::List::create(
+		Named("pi") = pi, Named("px") = px, Named("ip") = ip, Named("ix") = ix,
+		Named("inp") = inp, Named("icnp") = icnp, Named("pni") = pni, Named("pcni") = pcni,
+		Named("icat") = icat, Named("ncat") = ncat, Named("imax") = imax, Named("isum") = isum, Named("psum") = psum);
+}
+
+
+
+
 // px changed in place if necessary
 // returns matrix a
 // [[Rcpp::export]]
@@ -157,7 +257,7 @@ arma::imat categorize(const arma::ivec& pni,
 	return a;
 }
 
-
+// ai, this one assumes ordered person id's within items
 // 2 col datamatrix for any 2 items and persons who did both
 void persons_ii(const int item1, const int item2, const ivec& ix,
 				const ivec& inp, const ivec& icnp, const ivec& ip,

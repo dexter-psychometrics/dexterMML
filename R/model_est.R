@@ -121,8 +121,7 @@ fit_1pl = function(dataSrc, predicate=NULL, group = NULL,
   qtpredicate = eval(substitute(quote(predicate)))
   res = est(dataSrc, qtpredicate, env,group=group,model='1PL',
             fixed_param=fixed_param,se=se) 
-  if(se && ! 'SE_beta' %in% colnames(res$items))
-    res$items$SE_beta = NA_real_
+  
   res
 }
 
@@ -141,18 +140,10 @@ fit_2pl = function(dataSrc, predicate=NULL, group = NULL,
   qtpredicate = eval(substitute(quote(predicate)))
   env = caller_env()
   
-  res = est(dataSrc, qtpredicate, env,group=group,model='2PL',
-      fixed_param=fixed_param,se=se,
-      priorA=priorA, priorA_mu=prior_alpha_mu, priorA_sigma=prior_alpha_sigma)
-  
-  if(se && ! 'SE_beta' %in% colnames(res$items))
-  {
-    res$items$SE_alpha = NA_real_
-    res$items$SE_beta = NA_real_
-  }
-  res
+  est(dataSrc, qtpredicate, env,group=group,model='2PL',
+       fixed_param=fixed_param,se=se,
+       priorA=priorA, priorA_mu=prior_alpha_mu, priorA_sigma=prior_alpha_sigma)
 }
-
 
 est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL','2PL'),
                fixed_param=NULL, se=TRUE,
@@ -161,85 +152,66 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
                priorA_sigma = 0.2)
 {
   model = match.arg(model)
-
+  
   pgw = progress_width()
   theta_grid = cal_settings$theta_grid
   max_em_iterations = cal_settings$max_em_iterations
-
-  data = get_mml_data(dataSrc,qtpredicate,env,group)
-
-  dat = data$dat
-  if(nrow(dat)<ncol(dat))
-    stop("You need at least as many persons as items in your dataset to estimate an IRT model",call.=FALSE)
   
-  group = data$group
-
-  ## Pre and groups
-  max_score = max(dat,na.rm=TRUE)
-
-  pre = lapply(mat_pre(dat, max_score), drop)
+  data = mml_pre(dataSrc,qtpredicate,env,group)
+  
+  if(nrow(data$persons) < length(data$item_id)+1)
+    stop("You need more persons than items in your dataset to estimate an IRT model",call.=FALSE)
+  
+  pre = data$pre
+  nit = length(data$item_id)
   
   if(any(pre$imax < 1))
   {
     cat('Items with maximum score 0:\n')
-    print(colnames(dat)[pre$imax < 1])
+    print(pre$item_id[pre$imax < 1])
     stop('Some items have a maximum score of 0, model cannot be calibrated',call.=FALSE)
   }
   if(any(pre$icat[1,]==0))
   {
     cat('Items without a 0 score:\n')
-    print(colnames(dat)[pre$icat[1,]==0])
+    print(pre$item_id[pre$icat[1,]==0])
     stop('Some items have no 0 score category, model cannot be calibrated',call.=FALSE)
   }
-
-  if(is.null(group))
+  
+  ref_group = which.max(data$groups$group_n) - 1L
+  
+  if(any(data$groups$group_n<10L))
   {
-    has_groups=FALSE
-    group = integer(nrow(dat))
-    ref_group = 0L
-    group_n = nrow(dat)
-    group_id = 'population'
-  } else
-  {
-    has_groups = TRUE
-    group = as.factor(group)
-    group_id = levels(group)
-    group = as.integer(group) -1L
-    group_n = as.integer(table(group))
-    ref_group = which.max(group_n) -1L
-    if(any(group_n<10L))
-    {
-      # an arbitrary number
-      # 10 is ridiculously small but at least reasonably safe against divide by 0
-      
-      stop("Group ", paste(group_id[group_n],collapse=', '), " has only ", 
-           paste(group_n[group_n<10],collapse=', '), " people. You need at least 10 but preferably many more ",
-           "people per group.",call.=FALSE)
-    }
+    # an arbitrary number
+    # 10 is ridiculously small but at least reasonably safe against divide by 0
+    stop("Each subgroup needs to contain at least 10 persons.")
   }
-
+  
   # estimation
-  design = design_matrices(pre$pni, pre$pcni, pre$pi, group, ncol(dat), length(group_n))
+  design = design_matrices(pre$pni, pre$pcni, pre$pi, data$persons$c_group_nbr, length(data$item_id), nrow(data$groups))
+  
+  mu = rep(0, nrow(data$groups))
+  sigma = rep(1, nrow(data$groups))
   
   # this changes the respons vectors px and ix in pre
   a = categorize(pre$pni, pre$pcni, pre$icnp, pre$pi,
-                       pre$icat, pre$imax,max(pre$ncat), pre$px, pre$ix)
-
+                 pre$icat, pre$imax,max(pre$ncat), pre$px, pre$ix)
+  
   if(se && pgw>0) cat("(1/2) Parameter estimation\n")
-
+  
   if(model=='1PL')
   {
     # nominal response model
     b=start.1pl(a,pre$icat,pre$ncat)
-
     
-    fixed_items = rep(0L,ncol(dat))
+    
+    fixed_items = rep(0L,nit)
     if(!is.null(fixed_param))
     {
-      fixed_param = tibble(item_id=colnames(dat), index=1:ncol(dat)) %>%
+      fixed_param = tibble(item_id=data$item_id, index=1:nit) %>%
         inner_join(fixed_param, by='item_id',suffix=c('','.y')) %>%
         arrange(.data$index, .data$item_score)
-
+      
       fpar = split(fixed_param,fixed_param$index)
       shift = 0
       for(x in fpar)
@@ -255,7 +227,7 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
           stop("Not implemented: mismatch between fixed parameters and data vs item scores")
         }
       }
-
+      
       fixed_items[unique(fixed_param$index)] = 1L
       shift = shift / sum(fixed_items)
       b[2:nrow(b),fixed_items==0L] = b[2:nrow(b),fixed_items==0L] + shift
@@ -263,18 +235,19 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
       ref_group = -1L
     }
     check_connected(design, fixed_items)
-
-    mu = rep(0, length(group_n))
-    sigma = rep(1, length(group_n))
-
+    
     em = estimate_nrm(a, b, pre$ncat,
-                        pre$pni, pre$pcni, pre$pi, pre$px,
-                        theta_grid, mu, sigma, group_n, group, fixed_items, ref_group,
-                        max_iter=max_em_iterations,pgw=pgw)
-
+                      pre$pni, pre$pcni, pre$pi, pre$px,
+                      theta_grid, mu, sigma, data$groups$group_n, data$persons$c_group_nbr, fixed_items, ref_group,
+                      max_iter=max_em_iterations,pgw=pgw)
+    
     em_report(em)
+    pop = select(data$groups, -.data$c_group_nbr)
+    pop$mu = drop(em$mu)
+    pop$sd = drop(em$sd)
+    
     if(em$err != 0L && em$maxdif_b>.001) se=FALSE
-
+    
     if(se)
     {
       if(pgw>0) cat("(2/2) Computing standard errors\n")
@@ -285,34 +258,34 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
         design$items[,w] = 0L
         design$groups[,w] = 0L
       }
-
+      
       hess = full_hessian_nrm(a,  em$b, pre$ncat, theta_grid, fixed_items,
-                              pre$ix, pre$pni, pre$pcni, pre$pi, pre$px, group, group_n,
+                              pre$ix, pre$pni, pre$pcni, pre$pi, pre$px, data$persons$c_group_nbr, data$groups$group_n,
                               pre$ip,pre$inp, pre$icnp,
                               em$mu, em$sd, ref_group,design$items,design$groups,
                               prog_width=pgw)
       
-      dx = to_dexter(em$a,em$b,pre$ncat,colnames(dat),H=hess, fixed_items,ref_group+1L)
-      pop = tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd),
-                   SE_mu=dx$SE_pop[seq(1,nrow(em$mu)*2,2)], SE_sigma=dx$SE_pop[seq(2,nrow(em$mu)*2,2)])
+      dx = to_dexter(em$a,em$b,pre$ncat,data$item_id,H=hess, fixed_items,ref_group+1L)
+      pop$SE_mu=dx$SE_pop[seq(1,nrow(em$mu)*2,2)]
+      pop$SE_sigma=dx$SE_pop[seq(2,nrow(em$mu)*2,2)]
+      
       out = list(items=dx$items,pop=pop,em=em,pre=pre,hess=hess)
     } else
     {
-      pop=tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd))
-      out = list(items=to_dexter(em$a,em$b,pre$ncat,colnames(dat))$items,
-                  pop=pop,em=em,pre=pre)
+      out = list(items=to_dexter(em$a,em$b,pre$ncat,data$item_id)$items,
+                 pop=pop,em=em,pre=pre)
     }
   } else
   {
     hess=NULL
-    A=rep(1,ncol(dat))
-
+    A=rep(1,nit)
+    
     b=start.2pl(a,pre$icat,pre$ncat)
-
-    fixed_items = rep(0L,ncol(dat))
+    
+    fixed_items = rep(0L,nit)
     if(!is.null(fixed_param))
     {
-      fixed_param = tibble(item_id=colnames(dat), index=1:ncol(dat)) %>%
+      fixed_param = tibble(item_id=data$item_id, index=1:nit) %>%
         inner_join(fixed_param, by='item_id',suffix=c('','.y')) %>%
         arrange(.data$index, .data$item_score)
       
@@ -340,28 +313,29 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
       ref_group = -1L
     }
     check_connected(design, fixed_items)
-    mu = rep(0, length(group_n))
-    sigma = rep(1, length(group_n))
-
+    
     em = estimate_pl2(a, A, b, pre$ncat,
-                          pre$pni, pre$pcni, pre$pi, pre$px,
-                          theta_grid, mu, sigma, group_n, group, fixed_items, 
-                          pre$ip, pre$inp, pre$icnp,
-                          ref_group,
-                          A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,
-                          use_m2=150L,max_iter=max_em_iterations,pgw=pgw)
+                      pre$pni, pre$pcni, pre$pi, pre$px,
+                      theta_grid, mu, sigma, data$groups$group_n, data$persons$c_group_nbr, fixed_items, 
+                      pre$ip, pre$inp, pre$icnp,
+                      ref_group,
+                      A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,
+                      use_m2=150L,max_iter=max_em_iterations,pgw=pgw)
     
     
-
+    
     em_report(em)
     if(em$err != 0L && max(em$maxdif_b,em$maxdif_A)>.001) se=FALSE
-
-    items = tibble(item_id = rep(colnames(dat),pre$ncat-1),
+    
+    items = tibble(item_id = rep(data$item_id,pre$ncat-1),
                    alpha = rep(em$A,pre$ncat-1L),
-                   item_score = as.integer(unlist(mapply(function(i,k){ a[2:k,i] },1:ncol(dat),pre$ncat))),
-                   beta = as.double(unlist(mapply(function(i,k){ em$b[2:k,i] },1:ncol(dat),pre$ncat))))
-
-    pop = tibble(group=group_id,mu=drop(em$mu),sd=drop(em$sd))
+                   item_score = as.integer(unlist(mapply(function(i,k){ a[2:k,i] },1:nit,pre$ncat))),
+                   beta = as.double(unlist(mapply(function(i,k){ em$b[2:k,i] },1:nit,pre$ncat))))
+    
+    pop = select(data$groups, -.data$c_group_nbr)
+    pop$mu = drop(em$mu)
+    pop$sd = drop(em$sd)
+    
     if(se)
     {
       if(pgw>0) cat("(2/2) Computing standard errors\n")
@@ -372,20 +346,20 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
         design$items[,w] = 0L
         design$groups[,w] = 0L
       }
-
+      
       hess = full_hessian_2pl(a, em$A, em$b, pre$ncat, theta_grid, fixed_items,
-                              pre$ix, pre$pni, pre$pcni, pre$pi, pre$px, group, group_n,
+                              pre$ix, pre$pni, pre$pcni, pre$pi, pre$px, data$persons$c_group_nbr, data$groups$group_n,
                               pre$ip,pre$inp, pre$icnp,
                               em$mu, em$sd, ref_group,design$items,design$groups,
                               A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,
                               prog_width=pgw)
-
+      
       SE = sqrt(-diag(solve(hess)))
       items$SE_alpha = NA_real_
       items$SE_beta = NA_real_
-
+      
       i=1; px=1
-      for(ix in 1:ncol(dat))
+      for(ix in 1:nit)
       {
         k = pre$ncat[ix]
         if(fixed_items[ix]==0L)
@@ -398,8 +372,8 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
       }
       pop$SE_mu = NA_real_
       pop$SE_sd = NA_real_
-
-      for(g in 1:length(group_n))
+      
+      for(g in 1:nrow(pop))
       {
         if(g != (ref_group+1))
         {
@@ -410,24 +384,23 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
         }
         i=i+1L
       }
-     
+      
       
     }
     out = list(items=items,pop=pop,em=em,pre=pre,hess=hess,
                prior=list(A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma))
   }
   out$theta_grid = theta_grid
-  out$item_id=colnames(dat)
-  out$pre$fixed_items=fixed_items
-  out$pre$group_n=group_n
+  out$item_id = data$item_id
+  out$pre$fixed_items = fixed_items
+  out$pre$group_n = data$groups$group_n
   out$pre$ref_group = ref_group
-  out$pre$group=group
-  out$model=model
-  out$em$a=a
+  out$pre$group = data$persons$c_group_nbr
+  out$model = model
+  out$em$a = a
   class(out) = append('parms_mml',class(out))
   out
 }
-
 
 #' Extract information from MML fit object
 #' 
@@ -469,6 +442,8 @@ merge_arglists = function(args, default = NULL, override = NULL)
   
   args
 }
+
+# plot looks weird, check, at least sorted is not necessary
 
 #' Plot for fitted MML models
 #' 
