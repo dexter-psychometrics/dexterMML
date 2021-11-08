@@ -52,7 +52,7 @@ mml_pre = function(dataSrc, qtpredicate, env, group=NULL, sorted=TRUE)
       if(!is.character(group))
         stop("Group should be a character vector")
       
-      persons = distinct(dataSrc[,c('person_id',group)], .data$person_id, .keep_all=TRUE) 
+      persons = distinct(dataSrc[,c('person_id',group)], .data$person_id, .keep_all=TRUE) %>% as_tibble()
       
       subgroups = persons[,group] %>% count(across(), name='group_n')
       subgroups$c_group_nbr = 0:(nrow(subgroups)-1L)
