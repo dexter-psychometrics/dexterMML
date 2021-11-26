@@ -28,7 +28,7 @@ mml_pre = function(dataSrc, qtpredicate, env, group=NULL, sorted=TRUE)
       subgroups$group_id = levels(persons$group_id)
     }
 
-    rg = range(dat)
+    rg = range(dat, na.rm=TRUE)
     if(rg[1] < 0L)
       stop('negative scores are not allowed')
 

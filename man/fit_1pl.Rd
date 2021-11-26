@@ -40,7 +40,7 @@ lognormal or normal}
 \item{prior_alpha_sigma}{second moment of prior distribution on discrimination parameters.}
 }
 \value{
-an object of type parms_mml, see \code{\link{coef.parms_mml}}.
+an object of type parms_mml, see \code{\link{coef.parms_mml}} and \code{\link{plot.parms_mml}}.
 }
 \description{
 Estimate a one or two parameter model using Marginal Maximum Likelihood

@@ -23,6 +23,7 @@
 #' @references
 #' Marsman, M., Maris, G., Bechger, T. M., and Glas, C.A.C. (2014) Composition algorithms for Conditional Distributions.
 #' PhD thesis
+#' 
 #' Murray, I., Ghahramani, Z., & MacKay, D. (2012). MCMC for doubly-intractable distributions. via: https://arxiv.org/abs/1206.6848
 #'
 plausible_values.mml = function(dataSrc, parms, predicate=NULL, covariates=NULL, npv=1)

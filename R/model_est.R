@@ -67,7 +67,7 @@ cal_settings = list(
 #' @param prior_alpha_mu first moment of prior distribution on discrimination parameters.
 #' @param prior_alpha_sigma second moment of prior distribution on discrimination parameters.
 #'
-#' @return an object of type parms_mml, see \code{\link{coef.parms_mml}}.
+#' @return an object of type parms_mml, see \code{\link{coef.parms_mml}} and \code{\link{plot.parms_mml}}.
 #'
 #' @details
 #' In a 1PL item difficulties are estimated according to the Nominal Response Model.
