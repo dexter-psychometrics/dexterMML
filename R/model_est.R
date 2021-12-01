@@ -168,13 +168,13 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
   if(any(pre$imax < 1))
   {
     cat('Items with maximum score 0:\n')
-    print(pre$item_id[pre$imax < 1])
+    print(data$item_id[pre$imax < 1])
     stop('Some items have a maximum score of 0, model cannot be calibrated',call.=FALSE)
   }
   if(any(pre$icat[1,]==0))
   {
     cat('Items without a 0 score:\n')
-    print(pre$item_id[pre$icat[1,]==0])
+    print(data$item_id[pre$icat[1,]==0])
     stop('Some items have no 0 score category, model cannot be calibrated',call.=FALSE)
   }
   
