@@ -4,21 +4,9 @@
 #brings 1pl to 2pl parametrisation
 abl_pre = function(dataSrc, pars, qtpredicate, env, group=NULL)
 {
-  dfpars = inherits(pars,'data.frame')
-  
   data = mml_pre(dataSrc,qtpredicate,env,group)
   
   pars = simple_pars(pars, data$item_id)
-  # this is all still kludgy
-  if(pars$model=='1PL')
-  {
-    if(!dfpars)
-    {
-      pars$b = -pars$b/pars$a
-      pars$b[1,] = 0
-    }
-    pars$A = rep(1,ncol(pars$a))
-  }
   
   pre = data$pre
   if(any(pre$imax>pars$imax))
@@ -56,7 +44,7 @@ abl_pre = function(dataSrc, pars, qtpredicate, env, group=NULL)
 #' note: for a 1PL this function calls dexter::ability
 #'
 #' @param dataSrc	a connection to a dexter database, a matrix, or a data.frame with columns: person_id, item_id, item_score
-#' @param parms	object produced by function fit_1pl or fit_2pl
+#' @param parms	object produced by function fit_1pl or fit_2pl or possibly a data.frame of parameters
 #' @param predicate An optional expression to subset data, if NULL all data is used
 #' @param method Maximum Likelihood (MLE), Weighted Likelihood (WLE)
 #' @param unweight whether to use the weighted score or the unweighted score. Has no effect for 1PL, see details
@@ -67,6 +55,8 @@ abl_pre = function(dataSrc, pars, qtpredicate, env, group=NULL)
 #' for a 2pl you have the option to use the weighted or unweighted score. The weighted score gives ML estimates
 #' for the regular 2pl. The unweighted score is an adaptation where ability is computed conditional on the unweighted
 #' sumscore of the respondent. This means people with the same unweighted score get the same ability estimate.
+#' 
+#' When using a data.frame of parameters, be sure that you use the correct parametrisation. See \code{link{fit_1pl}} for details. 
 #'
 ability.mml = function(dataSrc, parms, predicate=NULL, method=c('MLE','WLE'), unweight=FALSE)
 {

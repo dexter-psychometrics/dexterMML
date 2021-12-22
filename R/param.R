@@ -85,7 +85,7 @@ to_dexter = function(a,logb,ncat,item_id, H=NULL, fixed_items=NULL, ref_group=-1
 #
 # items = dexterMML:::to_dexter(a,logb,4,'bla')$items
 #
-# a=items$item_score; beta=items$beta
+# dexterMML:::from_dexter(a=items$item_score, beta=items$beta)
 # for single item
 from_dexter = function(a,beta)
 {
@@ -118,65 +118,86 @@ start.2pl = function(a,icat,ncat)
   b
 }
 
-#simplify pars, arranges by items
+
+# simplify pars, arranges by items, 
+# uses a different (beta) parametrisation that is used by ability functions
 simple_pars = function(parms, items=NULL)
 {
   if(inherits(parms,'data.frame'))
   {
-    warning("data.frame parameters in dexterMML is experimental")
     df = parms
     if(!is.null(items))
     {
       if(!all(items %in% df$item_id))
         stop('not all items present in your data have parameters')
       df = filter(df,.data$item_id %in% items)
+      df$item_id = as.integer(factor(df$item_id, levels=items))
+    } else
+    {
+      df$item_id = as.integer(factor(df$item_id))
     }
-    df$item_id = as.integer(factor(df$item_id, levels=items))
     
     df = arrange(df,.data$item_id,.data$item_score)
     
     
-    ncat = max(df$item_score)
+    ncat = max(table(df$item_id))
+    max_score = max(df$item_score)
     nit = n_distinct(df$item_id)
-    out = list(icat = matrix(0L, ncat+1,nit), ncat = integer(nit),
+    out = list(icat = matrix(0L, max_score+1,nit), ncat = integer(nit),
              imax = integer(nit), b = matrix(0,ncat+1,nit), a = matrix(0L,ncat+1,nit))
     
     if('alpha' %in% colnames(df))
     {
+      out$model='2PL'
       out$A = distinct(df,.data$item_id,.keep_all=TRUE) %>%
         arrange(.data$item_id) %>%
         pull(.data$alpha)
-      out$model='2PL'
     } else
     {
       out$model='1PL'
+      out$A = rep(1,ncol(out$a))
     }
     
     out$icat[1,] = 1L
-    itm = split(df,df$item_id)
+    items = split(df,df$item_id)
     
-    for(i in seq_along(itm))
+    for(i in seq_along(items))
     {
-      out$b[2:(nrow(itm[[i]])+1),i] = itm[[i]]$beta
-      out$a[2:(nrow(itm[[i]])+1),i] = itm[[i]]$item_score
-      out$icat[itm[[i]]$item_score+1L,i] = 1L
-      out$ncat[i] = nrow(itm[[i]]) + 1L
-      out$imax[i] = max(itm[[i]]$item_score)
+      itm = items[[i]]
+      b = if(out$model=='1PL'){-from_dexter(itm$item_score, itm$beta)/itm$item_score}else{itm$beta}
+      n = nrow(itm)
+      
+      out$b[2:(n+1),i] = b
+      out$a[2:(n+1),i] = itm$item_score
+      out$icat[itm$item_score+1L,i] = 1L
+      out$ncat[i] = n + 1L
+      out$imax[i] = max(itm$item_score)
     }
     return(out)
   }
   if(inherits(parms,'parms_mml'))
   {
+    if(parms$model == '1PL')
+    {
+      b = -parms$em$b/parms$em$a
+      b[1,] = 0
+      A = rep(1,ncol(b))
+    } else
+    {
+      b = parms$em$b 
+      A = parms$em$A
+    }
+    
     if(is.null(items))
     {
-      return(list(A=parms$em$A,a=parms$em$a,b=parms$em$b,
+      return(list(A=A,a=parms$em$a,b=b,
                   model=parms$model, icat=parms$pre$icat,
                   imax=parms$pre$imax,ncat=parms$pre$ncat))
     }
     if(!all(items %in% parms$item_id))
       stop('not all items present in your data have parameters')
     w = match(items,parms$item_id)
-    return(list(A=parms$em$A[w],a=parms$em$a[,w],b=parms$em$b[,w],
+    return(list(A=A[w],a=parms$em$a[,w],b=b[,w],
                 model=parms$model, icat=parms$pre$icat[,w],
                 imax=parms$pre$imax[w], ncat=parms$pre$ncat[w]))
   }

@@ -15,7 +15,7 @@ plausible_values.mml(
 \arguments{
 \item{dataSrc}{a connection to a dexter database, a matrix, or a data.frame with columns: person_id, item_id, item_score}
 
-\item{parms}{object produced by function fit_marginal}
+\item{parms}{object produced by function fit_1pl or fit_2pl or possibly a data.frame of parameters}
 
 \item{predicate}{An optional expression to subset data, if NULL all data is used}
 
@@ -38,9 +38,12 @@ This function uses the Single Variable Exchange algorithm
 to produce a dependent sample of plausible values. The settings are such that the autocorrelation is reasonably low
 for tests with up to 40 items. To further lower the autocorrelation, e.g. for longer tests, the user can
 simply draw more plausible values than needed (see argument npv) and apply additional thinning.
+
+When using a data.frame of parameters, be sure that you use the correct parametrisation. See \code{link{fit_1pl}} for details.
 }
 \references{
 Marsman, M., Maris, G., Bechger, T. M., and Glas, C.A.C. (2014) Composition algorithms for Conditional Distributions.
 PhD thesis
+
 Murray, I., Ghahramani, Z., & MacKay, D. (2012). MCMC for doubly-intractable distributions. via: https://arxiv.org/abs/1206.6848
 }
