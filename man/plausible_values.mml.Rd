@@ -39,7 +39,7 @@ to produce a dependent sample of plausible values. The settings are such that th
 for tests with up to 40 items. To further lower the autocorrelation, e.g. for longer tests, the user can
 simply draw more plausible values than needed (see argument npv) and apply additional thinning.
 
-When using a data.frame of parameters, be sure that you use the correct parametrisation. See \code{link{fit_1pl}} for details.
+When using a data.frame of parameters, be sure that you use the correct parametrisation. See \code{\link{fit_1pl}} for details.
 }
 \references{
 Marsman, M., Maris, G., Bechger, T. M., and Glas, C.A.C. (2014) Composition algorithms for Conditional Distributions.

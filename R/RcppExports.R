@@ -13,12 +13,12 @@ E_score <- function(theta, A, a, b, items, ncat) {
     .Call(`_dexterMML_E_score`, theta, A, a, b, items, ncat)
 }
 
-mat_pre <- function(dat, max_score) {
-    .Call(`_dexterMML_mat_pre`, dat, max_score)
+mat_pre <- function(dat, max_score, pgroup, ng) {
+    .Call(`_dexterMML_mat_pre`, dat, max_score, pgroup, ng)
 }
 
-df_pre <- function(person_id, item_id, item_score, max_score, np, nit, sorted = TRUE) {
-    .Call(`_dexterMML_df_pre`, person_id, item_id, item_score, max_score, np, nit, sorted)
+df_pre <- function(person_id, pgroup, ng, item_id, item_score, max_score, np, nit, sorted = TRUE) {
+    .Call(`_dexterMML_df_pre`, person_id, pgroup, ng, item_id, item_score, max_score, np, nit, sorted)
 }
 
 categorize <- function(pni, pcni, icnp, pi, icat, imax, max_cat, px, ix) {
@@ -33,12 +33,16 @@ check_connected_c <- function(item, group, item_fixed) {
     .Call(`_dexterMML_check_connected_c`, item, group, item_fixed)
 }
 
+start_beta <- function(a, ncat, icatg, ref_group, item_fixed, fixed_beta) {
+    .Call(`_dexterMML_start_beta`, a, ncat, icatg, ref_group, item_fixed, fixed_beta)
+}
+
 loglikelihood_nrm <- function(a, b, ncat, pcni, pi, px, theta, mu, sigma, pgroup) {
     .Call(`_dexterMML_loglikelihood_nrm`, a, b, ncat, pcni, pi, px, theta, mu, sigma, pgroup)
 }
 
-estimate_nrm <- function(a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group = 0L, max_iter = 200L, pgw = 80L) {
-    .Call(`_dexterMML_estimate_nrm`, a, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group, max_iter, pgw)
+estimate_nrm <- function(a, b_start, ncat, pni, pcni, pi, px, theta_start, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group = 0L, max_iter = 200L, pgw = 80L) {
+    .Call(`_dexterMML_estimate_nrm`, a, b_start, ncat, pni, pcni, pi, px, theta_start, mu_start, sigma_start, gn, pgroup, item_fixed, ref_group, max_iter, pgw)
 }
 
 full_hessian_nrm <- function(a, b, ncat, theta, item_fixed, ix, pni, pcni, pi, px, pgroup, gn, ip, inp, icnp, mu, sigma, ref_group, dsg_ii, dsg_gi, prog_width = 80L) {
@@ -69,8 +73,8 @@ loglikelihood_2pl <- function(a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma
     .Call(`_dexterMML_loglikelihood_2pl`, a, A, b, ncat, pni, pcni, pi, px, theta, mu, sigma, pgroup)
 }
 
-estimate_pl2 <- function(a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ip, inp, icnp, ref_group = 0L, A_prior = 0L, A_mu = 0, A_sigma = 0.5, use_m2 = 150L, max_iter = 200L, pgw = 80L) {
-    .Call(`_dexterMML_estimate_pl2`, a, A_start, b_start, ncat, pni, pcni, pi, px, theta, mu_start, sigma_start, gn, pgroup, item_fixed, ip, inp, icnp, ref_group, A_prior, A_mu, A_sigma, use_m2, max_iter, pgw)
+estimate_pl2 <- function(a, A_start, b_start, ncat, pni, pcni, pi, px, theta_start, mu_start, sigma_start, gn, pgroup, item_fixed, ip, inp, icnp, ref_group = 0L, A_prior = 0L, A_mu = 0, A_sigma = 0.5, use_m2 = 150L, max_iter = 200L, pgw = 80L, max_pre = 10L) {
+    .Call(`_dexterMML_estimate_pl2`, a, A_start, b_start, ncat, pni, pcni, pi, px, theta_start, mu_start, sigma_start, gn, pgroup, item_fixed, ip, inp, icnp, ref_group, A_prior, A_mu, A_sigma, use_m2, max_iter, pgw, max_pre)
 }
 
 gradient_2pl <- function(a, A, b, ncat, pcni, pi, px, theta, mu, sigma, pgroup, ip, inp, icnp) {
@@ -111,6 +115,14 @@ plausible_values_c <- function(A, a, b, ncat, pni, pcni, pi, px, pop, popn, npv,
 
 sim_2plc <- function(a, A, b, ncat, theta) {
     .Call(`_dexterMML_sim_2plc`, a, A, b, ncat, theta)
+}
+
+loglikelihood_2pl_GH <- function(a, A, b, ncat, pni, pcni, pi, px, GH_theta, w, mu, sigma, pgroup) {
+    .Call(`_dexterMML_loglikelihood_2pl_GH`, a, A, b, ncat, pni, pcni, pi, px, GH_theta, w, mu, sigma, pgroup)
+}
+
+loglikelihood_1pl_GH <- function(a, b, ncat, pni, pcni, pi, px, GH_theta, w, mu, sigma, pgroup) {
+    .Call(`_dexterMML_loglikelihood_1pl_GH`, a, b, ncat, pni, pcni, pi, px, GH_theta, w, mu, sigma, pgroup)
 }
 
 test_nlm <- function(a, theta, r, par_in) {

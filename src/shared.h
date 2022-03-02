@@ -18,6 +18,8 @@ inline int kron(const int a, const int b){return a==b; };
 
 arma::vec gaussian_pts(const double mu, const double s, const arma::vec& theta);
 
+void scale_theta(const arma::vec& means, const arma::vec& sds, const arma::ivec& gn, const arma::vec& theta_start, arma::vec& theta);
+
 arma::field<arma::mat>& field_plus(arma::field<arma::mat>& a, const arma::field<arma::mat>& b); 
 
 arma::field<arma::mat> field_init(const arma::field<arma::mat>& orig);

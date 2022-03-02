@@ -31,6 +31,17 @@ mat pl2_trace(const vec& theta, const ivec& a, const double A, const vec& b, con
 	return out;
 }
 
+cube pl2_trace_GH(const mat& theta, const ivec& a, const double A, const vec& b, const int ncat)
+{
+	const int ng = theta.n_cols;
+	cube out(theta.n_rows, ncat, ng);
+	for(int g=0;g<ng;g++)
+		pl2_trace(theta.col(g), a, A, b, ncat, out.slice(g));
+		
+	return out;
+}
+
+
 // all constants related to icc
 void pl2_icc(const vec& theta, const ivec& a, const double A, const vec& b, const int ncat, 
 				mat& itrace, double* nc_ptr, double* nca_ptr, double* ncab_ptr)

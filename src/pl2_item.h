@@ -7,6 +7,8 @@
 arma::mat pl2_trace(const arma::vec& theta, const arma::ivec& a, const double A,  const arma::vec& b, const int ncat);
 void pl2_trace(const arma::vec& theta, const arma::ivec& a, const double A,  const arma::vec& b, const int ncat, arma::mat& out);
 
+arma::cube pl2_trace_GH(const arma::mat& theta, const arma::ivec& a, const double A, const arma::vec& b, const int ncat);
+
 void pl2_icc(const arma::vec& theta, const arma::ivec& a, const double A, const arma::vec& b, const int ncat, 
 				arma::mat& itrace, double* nc_ptr, double* nca_ptr, double* ncab_ptr);
 

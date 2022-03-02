@@ -93,30 +93,81 @@ from_dexter = function(a,beta)
   solve(DD,beta)
 }
 
-# to do: test for items with >2 categories
-start.1pl = function(a,icat,ncat)
+
+
+start_2pl = function(a, ncat, icatg, ref_group, item_id, fixed_param=NULL)
 {
-  b=matrix(0,nrow(a),ncol(a))
-  nc = sqrt(1.702)
-  for(i in seq_along(ncat))
+  nit = ncol(a)
+  A = rep(1,nit)
+  fixed_items = rep(0L,nit)
+  fixb = matrix(0, nrow(a),ncol(a))
+  
+  if(!is.null(fixed_param))
   {
-    icat_i = icat[a[1:ncat[i],i]+1L,i]
-    b[2:ncat[i],i] = nc*(log(icat_i[2:ncat[i]]/icat_i[1]) - a[1:(ncat[i]-1)])
+    fixed_param = tibble(item_id=item_id, index=1:nit) %>%
+      inner_join(fixed_param, by='item_id', suffix = c('','.ignore')) %>%
+      arrange(.data$index, .data$item_score)
+    
+    fpar = split(fixed_param,fixed_param$index)
+    
+    for(x in fpar)
+    {
+      i = x$index[1]
+      if(all(a[2:ncat[i],i] == x$item_score))
+      {
+        fixed_items[i] = 1L
+        fixb[2:ncat[i],i] = x$beta
+        A[i] = x$alpha[1]
+      } else
+      {
+        stop("Not implemented: mismatch between fixed parameters and data vs item scores")
+      }
+    }
+    ref_group = -1L
+    A[fixed_items==0L] = exp(mean(log(A[fixed_items==1L])))
   }
-  b
+  b = start_beta(a,ncat,icatg,ref_group,fixed_items, fixb)
+  list(A=A, b=b, fixed_items=fixed_items, ref_group=ref_group)
 }
 
-start.2pl = function(a,icat,ncat)
+start_1pl = function(a, ncat, icatg, ref_group, item_id, fixed_param=NULL)
 {
-  b=matrix(0,nrow(a),ncol(a))
-  nc = -sqrt(1.702)
-  for(i in seq_along(ncat))
+  nit = ncol(a)
+  fixed_items = rep(0L,nit)
+  fixb = matrix(0, nrow(a),ncol(a))
+  
+  if(!is.null(fixed_param))
   {
-    icat_i = icat[a[1:ncat[i],i]+1L,i]
-    b[2:ncat[i],i] = nc*(log(icat_i[2:ncat[i]]/icat_i[1]))
+    fixed_param = tibble(item_id=item_id, index=1:nit) %>%
+      inner_join(fixed_param, by='item_id', suffix = c('','.ignore')) %>%
+      arrange(.data$index, .data$item_score)
+    
+    fpar = split(fixed_param,fixed_param$index)
+    
+    for(x in fpar)
+    {
+      i = x$index[1]
+      if(all(a[2:ncat[i],i] == x$item_score))
+      {
+        fixed_items[i] = 1L
+        fixb[2:ncat[i],i] = x$beta
+      } else
+      {
+        stop("Not implemented: mismatch between fixed parameters and data vs item scores")
+      }
+    }
+    ref_group = -1L
   }
-  b
+  
+  b = start_beta(a,ncat,icatg,ref_group,fixed_items, fixb)
+  
+  for(i in 1:ncol(b))
+    b[2:ncat[i],i] = from_dexter(a[2:ncat[i],i], b[2:ncat[i],i])
+
+  list(b=b, fixed_items=fixed_items, ref_group=ref_group)
 }
+  
+
 
 
 # simplify pars, arranges by items, 

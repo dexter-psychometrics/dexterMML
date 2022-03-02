@@ -46,4 +46,5 @@ vignettes/*.pdf
 
 # my working directory
 /derivations/
+/smoke_test/
 

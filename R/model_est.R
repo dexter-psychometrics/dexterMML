@@ -24,11 +24,15 @@ em_report = function(em)
   if(em$err>0)
   {
     flags = bitflag(em$err,1:4)
-    msg = c("minimization error occurred","decreasing likelihood","maximum iterations reached",
+    msg = c("minimization error occurred","could not increase likelihood further","maximum iterations reached",
             "alpha parameters near zero")[flags]
     msg = paste0(paste0(msg,collapse=' and '),'.')
+    
+    if(is.null(em$maxdif_A)) em$maxdif_A=0
+    
     precision = max(em$maxdif_A, em$maxdif_b)
-    if(flags[4])
+   
+     if(flags[4])
     {
       warning("Some discrimination parameters are too close to zero, the model is unidentified")
     }
@@ -37,17 +41,22 @@ em_report = function(em)
     {
       message("The EM solution has a lower accuracy (~",round(precision,5),"). Reasons: ",msg,
               " See the section 'troubleshooting' in the help documentation for possible solutions.")
+      return(c('severity'=1L))
     } else
     {
       warning("The EM algorithm did not converge. Reasons: ",msg,
               " See the section 'troubleshooting' in the help documentation for possible solutions.",call.=FALSE)
+      return(c('severity'=2L))
     }
   }
+  0L
 }
 
+#denk stoppen bij 800 als alpha's < 0.1
 cal_settings = list(
   theta_grid = seq(-6,6,length.out=41),
-  max_em_iterations = 800L)
+  max_em_iterations = 1250L,
+  pre_iter=10L)
 
 
 #' Fit a marginal model
@@ -93,10 +102,9 @@ cal_settings = list(
 #' relevant grouping can seriously bias parameter and subsequent ability estimation.
 #'
 #' @section Troubleshooting:
-#' The EM algorithm tries to converge on a solution up to a precision of 0.0001. It usually succeeds.
-#' If it is not successful
-#' a message or warning is given (dependent on the severity of the situation). The (less precise) results are
-#' still returned to facilitate identification of the problem but you should generally not trust the results very much.
+#' The EM algorithm tries to converge on a solution where all parameters change less 0.0001 in a subsequent iteration. It usually succeeds.
+#' If it is not successful a message or warning is given (dependent on the severity of the situation). The (less precise) results are
+#' still returned to facilitate identification of the problem but you should possibly not trust the results very much.
 #'
 #' The following possible solutions can be tried in such a case:
 #'
@@ -105,12 +113,13 @@ cal_settings = list(
 #' for a 2PL. There is no clear cut lower bound independent of the purpose of the estimation. However, items with fewer
 #' than 100 observations will often cause technical problems in the estimation.}
 #' \item{omit problematic items}{For a 2PL, for items that have an alpha parameter very near zero, the beta parameter is undefined
-#' and will not converge. You can either look for key errors, set a prior on the alpha parameter or omit these items (based on the results of the failed calibration)}
+#' and will not converge. You can either look for key errors, set a prior on the alpha parameter or omit these items 
+#' (based on the results of the failed calibration)}
 #' \item{omit fixed parameters}{If you use fixed parameters, try to calibrate without fixed parameters
 #' first and plot the results against your fixed parameters. If these do not fall approximately on
 #' a straight line, you might need to omit some of the fixed parameters that show the most misfit.}
-#' \item{use priors in 2PL}{If the results of the calibration are extreme or otherwise unbelievable (e.g. parameters with absolute values >50) it
-#' may be necessary to use a prior distribution on the discrimination parameters.
+#' \item{use priors in 2PL}{If the results of the calibration are extreme or otherwise unbelievable 
+#' (e.g. parameters with absolute values >50) it may be necessary to use a prior distribution on the discrimination parameters.
 #' This may happen with adaptive test data.}
 #' }
 #'
@@ -119,10 +128,9 @@ fit_1pl = function(dataSrc, predicate=NULL, group = NULL,
 {
   env = caller_env()
   qtpredicate = eval(substitute(quote(predicate)))
-  res = est(dataSrc, qtpredicate, env,group=group,model='1PL',
-            fixed_param=fixed_param,se=se) 
+  est(dataSrc, qtpredicate, env,group=group,model='1PL',
+        fixed_param=fixed_param,se=se) 
   
-  res
 }
 
 #' @rdname fit_1pl
@@ -144,6 +152,7 @@ fit_2pl = function(dataSrc, predicate=NULL, group = NULL,
        fixed_param=fixed_param,se=se,
        priorA=priorA, priorA_mu=prior_alpha_mu, priorA_sigma=prior_alpha_sigma)
 }
+
 
 est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL','2PL'),
                fixed_param=NULL, se=TRUE,
@@ -194,6 +203,7 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
   sigma = rep(1, nrow(data$groups))
   
   # this changes the respons vectors px and ix in pre
+  # icatg hoefdt niet mee, icat is const
   a = categorize(pre$pni, pre$pcni, pre$icnp, pre$pi,
                  pre$icat, pre$imax,max(pre$ncat), pre$px, pre$ix)
   
@@ -201,54 +211,26 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
   
   if(model=='1PL')
   {
-    # nominal response model
-    b=start.1pl(a,pre$icat,pre$ncat)
+    start = start_1pl(a, pre$ncat, pre$icatg, ref_group, data$item_id, fixed_param)
     
-    
-    fixed_items = rep(0L,nit)
-    if(!is.null(fixed_param))
-    {
-      fixed_param = tibble(item_id=data$item_id, index=1:nit) %>%
-        inner_join(fixed_param, by='item_id',suffix=c('','.y')) %>%
-        arrange(.data$index, .data$item_score)
-      
-      fpar = split(fixed_param,fixed_param$index)
-      shift = 0
-      for(x in fpar)
-      {
-        i = x$index[1]
-        if(all(a[2:pre$ncat[i],i] == x$item_score))
-        {
-          shift = shift - log(sum(exp(b[2:pre$ncat[i],i])))
-          b[2:pre$ncat[i],i] = from_dexter(x$item_score, x$beta)
-          shift = shift + log(sum(exp(b[2:pre$ncat[i],i])))
-        } else
-        {
-          stop("Not implemented: mismatch between fixed parameters and data vs item scores")
-        }
-      }
-      
-      fixed_items[unique(fixed_param$index)] = 1L
-      shift = shift / sum(fixed_items)
-      b[2:nrow(b),fixed_items==0L] = b[2:nrow(b),fixed_items==0L] + shift
-      
-      ref_group = -1L
-    }
+    ref_group = start$ref_group
+    fixed_items = start$fixed_items
     check_connected(design, fixed_items)
-    
-    em = estimate_nrm(a, b, pre$ncat,
+
+    em = estimate_nrm(a, start$b, pre$ncat,
                       pre$pni, pre$pcni, pre$pi, pre$px,
                       theta_grid, mu, sigma, data$groups$group_n, data$persons$c_group_nbr, fixed_items, ref_group,
                       max_iter=max_em_iterations,pgw=pgw)
+
+    em$LL = loglikelihood_1pl_GH(a, em$b, pre$ncat, pre$pni, pre$pcni, pre$pi, pre$px, 
+                                 quadpoints$nodes, quadpoints$weights, em$mu, em$sigma, data$persons$c_group_nbr)
     
-    em_report(em)
+    severity = em_report(em$debug)
     pop = select(data$groups, -.data$c_group_nbr)
-    pop$mu = drop(em$mu)
-    pop$sd = drop(em$sd)
+    pop$mean = drop(em$mu)
+    pop$sd = drop(em$sigma)
     
-    if(em$err != 0L && em$maxdif_b>.001) se=FALSE
-    
-    if(se)
+    if(se && severity < 2L)
     {
       if(pgw>0) cat("(2/2) Computing standard errors\n")
       if(!is.null(fixed_param))
@@ -262,12 +244,12 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
       hess = full_hessian_nrm(a,  em$b, pre$ncat, theta_grid, fixed_items,
                               pre$ix, pre$pni, pre$pcni, pre$pi, pre$px, data$persons$c_group_nbr, data$groups$group_n,
                               pre$ip,pre$inp, pre$icnp,
-                              em$mu, em$sd, ref_group,design$items,design$groups,
+                              em$mu, em$sigma, ref_group,design$items,design$groups,
                               prog_width=pgw)
       
       dx = to_dexter(em$a,em$b,pre$ncat,data$item_id,H=hess, fixed_items,ref_group+1L)
-      pop$SE_mu=dx$SE_pop[seq(1,nrow(em$mu)*2,2)]
-      pop$SE_sigma=dx$SE_pop[seq(2,nrow(em$mu)*2,2)]
+      pop$SE_mean = dx$SE_pop[seq(1,nrow(em$mu)*2,2)]
+      pop$SE_sd = dx$SE_pop[seq(2,nrow(em$mu)*2,2)]
       
       out = list(items=dx$items,pop=pop,em=em,pre=pre,hess=hess)
     } else
@@ -278,65 +260,37 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
   } else
   {
     hess=NULL
-    A=rep(1,nit)
+    start = start_2pl(a, pre$ncat, pre$icatg, ref_group, data$item_id, fixed_param)
+    ref_group = start$ref_group
+    fixed_items = start$fixed_items
     
-    b=start.2pl(a,pre$icat,pre$ncat)
-    
-    fixed_items = rep(0L,nit)
-    if(!is.null(fixed_param))
-    {
-      fixed_param = tibble(item_id=data$item_id, index=1:nit) %>%
-        inner_join(fixed_param, by='item_id',suffix=c('','.y')) %>%
-        arrange(.data$index, .data$item_score)
-      
-      fpar = split(fixed_param,fixed_param$index)
-      shift = 0
-      for(x in fpar)
-      {
-        i = x$index[1]
-        if(all(a[2:pre$ncat[i],i] == x$item_score))
-        {
-          shift = shift - log(sum(exp(b[2:pre$ncat[i],i])))
-          b[2:pre$ncat[i],i] = x$beta
-          shift = shift + log(sum(exp(b[2:pre$ncat[i],i])))
-          A[i] = x$alpha[1]
-        } else
-        {
-          stop("Not implemented: mismatch between fixed parameters and data vs item scores")
-        }
-      }
-      
-      fixed_items[unique(fixed_param$index)] = 1L
-      shift = shift / sum(fixed_items)
-      b[2:nrow(b),fixed_items==0L] = b[2:nrow(b),fixed_items==0L] + shift
-      A[fixed_items==0L] = mean(A[fixed_items==1L])
-      ref_group = -1L
-    }
     check_connected(design, fixed_items)
     
-    em = estimate_pl2(a, A, b, pre$ncat,
+    em = estimate_pl2(a, start$A, start$b, pre$ncat,
                       pre$pni, pre$pcni, pre$pi, pre$px,
                       theta_grid, mu, sigma, data$groups$group_n, data$persons$c_group_nbr, fixed_items, 
                       pre$ip, pre$inp, pre$icnp,
                       ref_group,
                       A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,
-                      use_m2=150L,max_iter=max_em_iterations,pgw=pgw)
+                      use_m2=150L,max_iter=max_em_iterations,pgw=pgw, max_pre = cal_settings$pre_iter)
+    
+
+    em$LL = loglikelihood_2pl_GH(a, em$A, em$b, pre$ncat, pre$pni, pre$pcni, pre$pi, pre$px, 
+                      quadpoints$nodes, quadpoints$weights, em$mu, em$sigma, data$persons$c_group_nbr) + em$prior_part
     
     
-    
-    em_report(em)
-    if(em$err != 0L && max(em$maxdif_b,em$maxdif_A)>.001) se=FALSE
-    
+    severity = em_report(em$debug)
+
     items = tibble(item_id = rep(data$item_id,pre$ncat-1),
                    alpha = rep(em$A,pre$ncat-1L),
                    item_score = as.integer(unlist(mapply(function(i,k){ a[2:k,i] },1:nit,pre$ncat))),
                    beta = as.double(unlist(mapply(function(i,k){ em$b[2:k,i] },1:nit,pre$ncat))))
     
     pop = select(data$groups, -.data$c_group_nbr)
-    pop$mu = drop(em$mu)
-    pop$sd = drop(em$sd)
+    pop$mean = drop(em$mu)
+    pop$sd = drop(em$sigma)
     
-    if(se)
+    if(se && severity < 2L)
     {
       if(pgw>0) cat("(2/2) Computing standard errors\n")
       if(!is.null(fixed_param))
@@ -350,7 +304,7 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
       hess = full_hessian_2pl(a, em$A, em$b, pre$ncat, theta_grid, fixed_items,
                               pre$ix, pre$pni, pre$pcni, pre$pi, pre$px, data$persons$c_group_nbr, data$groups$group_n,
                               pre$ip,pre$inp, pre$icnp,
-                              em$mu, em$sd, ref_group,design$items,design$groups,
+                              em$mu, em$sigma, ref_group,design$items,design$groups,
                               A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,
                               prog_width=pgw)
       
@@ -370,14 +324,14 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
         }
         i = i+k-1
       }
-      pop$SE_mu = NA_real_
+      pop$SE_mean = NA_real_
       pop$SE_sd = NA_real_
       
       for(g in 1:nrow(pop))
       {
         if(g != (ref_group+1))
         {
-          pop$SE_mu[g] = SE[px]
+          pop$SE_mean[g] = SE[px]
           pop$SE_sd[g] = SE[px+1L]
           
           px=px+2L
@@ -399,16 +353,20 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
   out$model = model
   out$em$a = a
   class(out) = append('parms_mml',class(out))
+
   out
 }
 
-#' Extract information from MML fit object
+#' Extract parameters from MML fit object
 #' 
 #' @param object object returned by fit_1pl or fit_2pl
-#' @param what information to extract
+#' @param what parameters to extract
 #' @param ... ignored
 #' 
-coef.parms_mml = function(object, what=c('items','populations'),...)
+#' @return data.frame of parameters
+#' 
+#' @method parms_mml coef
+coef.parms_mml = function(object, what=c('items','populations'), ...)
 {
   what=match.arg(what)
   if(what=='items')
@@ -518,30 +476,67 @@ plot.parms_mml = function(x,items=NULL,nbins=5,ci=.95,...)
   }
 }
 
-logLik.parms_mml = function(object,...)
+
+logLik.parms_mml = function(object, ...)
 {
-  nodes = list(...)$nodes
-  if(is.null(nodes))
+  dots = list(...)
+  ll = object$em$LL
+  
+  if(any(c('items','populations') %in% names(dots)))
   {
-    ll = object$em$LL
-  } else
-  {
-    #internal
-    nodes = sort(nodes)
-    pre=object$pre
-    e=object
-    if(e$model=='1PL')
+    if(!is.null(dots$items))
     {
-      ll = loglikelihood_nrm(e$em$a, e$em$b, pre$ncat,
-                             pre$pcni, pre$pi, pre$px,
-                             nodes, e$em$mu, e$em$sd, pre$group)
+      
+      items = inner_join(dots$items, mutate(object$items[,c('item_id','item_score')], indx = row_number()), 
+                         by=c('item_id','item_score')) %>%
+        group_by(.data$item_id) %>%
+        mutate(ii = min(.data$indx)) %>%
+        ungroup() %>%
+        mutate(ii = dense_rank(.data$ii)) %>%
+        arrange(.data$indx)
+      
+      if(nrow(items) == nrow(object$items))
+      {
+        itm = split(items, items$ii)
+        if(object$em$model == '1PL')
+        {
+          object$em$b[1+(1:nrow(itm[[i]])),i] = from_dexter(object$em$a[1+(1:nrow(itm[[i]])),i], itm[[i]]$beta)
+          
+        } else
+        {
+          for(i in seq_along(itm))
+          {
+             object$em$b[1+(1:nrow(itm[[i]])),i] = itm[[i]]$beta
+             object$em$A[i] = itm[[i]]$alpha[1]
+             
+          }
+        }
+      } else stop('items mismatch')
+    }
+    if(!is.null(dots$populations))
+    {
+      idcols = setdiff(colnames(object$pop),c('mean','sd','group_n'))
+      pop = arrange(dots$populations, across(idcols))
+      object$em$mu = pop$mean
+      object$em$sigma = pop$sd
+    }
+    if(object$em$model == '1PL')
+    {
+      ll = loglikelihood_1pl_GH(object$em$a,  object$em$b, object$pre$ncat, object$pre$pni, object$pre$pcni, 
+                     object$pre$pi, object$pre$px, 
+                    quadpoints$nodes, quadpoints$weights, object$em$mu, object$em$sigma, object$pre$group)
     } else
     {
-     
-      ll = loglikelihood_2pl(e$em$a, e$em$A, e$em$b, pre$ncat,
-                          pre$pni, pre$pcni, pre$pi, pre$px,
-                          nodes, e$em$mu, e$em$sd, pre$group)
+      ll = loglikelihood_2pl_GH(object$em$a, object$em$A, object$em$b, object$pre$ncat, object$pre$pni, object$pre$pcni, 
+                                object$pre$pi, object$pre$px, 
+                                quadpoints$nodes, quadpoints$weights, object$em$mu, object$em$sigma, object$pre$group)
     }
+    
+    
+    
   }
-  c("log likelihood" = ll)
+  names(ll) = "log likelihood"
+  ll
 }
+
+

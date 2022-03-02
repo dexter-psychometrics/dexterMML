@@ -22,6 +22,18 @@ mat nrm_trace(const vec& theta, const ivec& a, const vec& b, const int ncat, con
 }
 
 
+cube nrm_trace_GH(const mat& theta, const ivec& a, const vec& b, const int ncat, const cube& exp_at)
+{
+	const int ng = theta.n_cols;
+	cube out(theta.n_rows, ncat, ng);
+	
+	for(int g=0;g<ng;g++)
+		out.slice(g) = nrm_trace(theta.col(g), a, b, ncat, exp_at.slice(g));
+		
+	return out;
+}
+
+
 // [[Rcpp::export]]
 double test_ll_nrm(arma::ivec& a, arma::vec theta, arma::mat& r, const arma::vec& par)
 {

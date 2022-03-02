@@ -32,20 +32,12 @@ mml_pre = function(dataSrc, qtpredicate, env, group=NULL, sorted=TRUE)
     if(rg[1] < 0L)
       stop('negative scores are not allowed')
 
-    pre = mat_pre(dat, rg[2])
+    pre = mat_pre(dat, rg[2], persons$c_group_nbr, nrow(subgroups))
     item_id = colnames(dat)
         
   } else
   {
-    # aiaiaiai, an internal function
-    # has to be done differently before we go to CRAN
-    # to do: adapt dexter to export a get_responses_ with factors
-    dat = dexter:::get_responses_(dataSrc,qtpredicate=qtpredicate,env=env, 
-                                  columns=c('person_id','item_id','item_score',group))
-    
-    dat$person_id = factor(dat$person_id)
-    dat$item_id = factor(dat$item_id)
-    dat$item_score = as.integer(dat$item_score)
+    dat = get_resp_data(dataSrc,qtpredicate=qtpredicate,env=env,extra_columns=group, raw=TRUE)$x
     
     if(!is.null(group))
     {
@@ -70,7 +62,8 @@ mml_pre = function(dataSrc, qtpredicate, env, group=NULL, sorted=TRUE)
     if(anyNA(rg)) stop('item_score should not contain NA values')
     if(rg[1]<0L) stop('negative scores are not allowed')
     
-    pre = df_pre(dat$person_id, dat$item_id, dat$item_score, rg[2], nlevels(dat$person_id), nlevels(dat$item_id), sorted)
+    pre = df_pre(dat$person_id, persons$c_group_nbr, nrow(subgroups),
+                 dat$item_id, dat$item_score, rg[2], nlevels(dat$person_id), nlevels(dat$item_id), sorted)
     item_id = levels(dat$item_id)
     
   }

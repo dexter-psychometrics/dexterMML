@@ -5,8 +5,10 @@
 #include "shared.h"
 
 arma::mat nrm_trace(const arma::vec& theta, const arma::ivec& a, const arma::vec& b, const int ncat, const arma::mat& exp_at);
+arma::cube nrm_trace_GH(const arma::mat& theta, const arma::ivec& a, const arma::vec& b, const int ncat, const arma::cube& exp_at);
 
-// polytomous nrm (can also be used for dichotmous nrm or rasch)
+
+// polytomous nrm (can also be used for dichotomous nrm or rasch)
 
 struct ll_nrm
 {

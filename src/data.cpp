@@ -26,11 +26,11 @@ int count_not_NA(const imat& dat)
 
 
 // [[Rcpp::export]]
-Rcpp::List mat_pre(const arma::imat& dat, const int max_score)
+Rcpp::List mat_pre(const arma::imat& dat, const int max_score, const arma::ivec& pgroup, const int ng)
 {
 	const int nit = dat.n_cols, np = dat.n_rows;
 	
-	imat icat(max_score+1,nit, fill::zeros);
+	icube icatg(max_score+1,nit, ng, fill::zeros);
 	ivec inp(nit,fill::zeros);
 	ivec psum(np,fill::zeros), pni(np,fill::zeros);
 	
@@ -48,7 +48,7 @@ Rcpp::List mat_pre(const arma::imat& dat, const int max_score)
 				psum[p] += rsp;				
 				inp[i]++;
 				pni[p]++;
-				icat.at(rsp,i)++;	
+				icatg.at(rsp,i,pgroup[p])++;	
 				pi[pp] = i;
 				px[pp++] = rsp; 
 			}
@@ -72,6 +72,7 @@ Rcpp::List mat_pre(const arma::imat& dat, const int max_score)
 	icnp[0] = 0;
 	std::partial_sum(inp.begin(),inp.end(),icnp.begin()+1);
 
+	imat icat = sum(icatg,2);
 	ivec imax(nit,fill::zeros), isum(nit,fill::zeros), ncat(nit, fill::zeros);
 	for(int i=0;i<nit;i++)
 	{
@@ -86,27 +87,28 @@ Rcpp::List mat_pre(const arma::imat& dat, const int max_score)
 			isum[i] += k * icat.at(k,i);
 			ncat[i]++;
 		}
-	}
+	}	
 	
 	return Rcpp::List::create(
 		Named("pi") = pi, Named("px") = px, Named("ip") = ip, Named("ix") = ix,
 		Named("inp") = inp, Named("icnp") = icnp, Named("pni") = pni, Named("pcni") = pcni,
-		Named("icat") = icat, Named("ncat") = ncat, Named("imax") = imax, Named("isum") = isum, Named("psum") = psum);
+		Named("icat") = icat, Named("icatg") = icatg, Named("ncat") = ncat, Named("imax") = imax, Named("isum") = isum, Named("psum") = psum);
 }
 
 // less memory grabbing and faster than going via dexter's get_resp_matrix
 // and now just as sorted so in all ways equivalent
 
-// input all 1-indexed
-// output all 0-indexed// needs 4 loops over the data, O(n);
+// input all 1-indexed, except pgroup & item_score, 0 indexed
+// output all 0-indexed
+// needs 4 loops over the data, O(n);
 
 // [[Rcpp::export]]
-Rcpp::List df_pre(const arma::ivec& person_id, const arma::ivec& item_id, const arma::ivec& item_score, 
+Rcpp::List df_pre(const arma::ivec& person_id, const arma::ivec& pgroup, const int ng, const arma::ivec& item_id, const arma::ivec& item_score, 
 					const int max_score, const int np, const int nit, const bool sorted=true)
 {
 	const int sz = person_id.n_elem;
 	
-	imat icat(max_score+1,nit, fill::zeros);
+	icube icatg(max_score+1,nit,ng, fill::zeros);	
 	
 	ivec inp(nit,fill::zeros);
 	ivec psum(np,fill::zeros), pni(np,fill::zeros);
@@ -116,10 +118,12 @@ Rcpp::List df_pre(const arma::ivec& person_id, const arma::ivec& item_id, const 
 	// need counts first
 	for(int i=0; i<sz; i++)
 	{
+		const int p = person_id[i]-1;
 		inp[item_id[i]-1]++;
-		pni[person_id[i]-1]++;	
-		psum[person_id[i]-1] += item_score[i];
-		icat.at(item_score[i], item_id[i]-1)++;
+		pni[p]++;	
+		psum[p] += item_score[i];
+		//icat.at(item_score[i], item_id[i]-1)++;
+		icatg.at(item_score[i], item_id[i]-1, pgroup[p])++;
 	}
 	
 	// cumulative pointers	
@@ -170,6 +174,7 @@ Rcpp::List df_pre(const arma::ivec& person_id, const arma::ivec& item_id, const 
 			}
 		}
 	}
+	imat icat = sum(icatg,2);	
 
 	ivec imax(nit,fill::zeros), isum(nit,fill::zeros), ncat(nit, fill::zeros);
 	for(int i=0;i<nit;i++)
@@ -190,7 +195,7 @@ Rcpp::List df_pre(const arma::ivec& person_id, const arma::ivec& item_id, const 
 	return Rcpp::List::create(
 		Named("pi") = pi, Named("px") = px, Named("ip") = ip, Named("ix") = ix,
 		Named("inp") = inp, Named("icnp") = icnp, Named("pni") = pni, Named("pcni") = pcni,
-		Named("icat") = icat, Named("ncat") = ncat, Named("imax") = imax, Named("isum") = isum, Named("psum") = psum);
+		Named("icat") = icat, Named("icatg") = icatg, Named("ncat") = ncat, Named("imax") = imax, Named("isum") = isum, Named("psum") = psum);
 }
 
 
@@ -323,7 +328,7 @@ Rcpp::List design_matrices(const arma::ivec& pni, const arma::ivec& pcni, const 
 	return Rcpp::List::create(Named("items")=item, Named("groups")=group);
 }
 
-// bitflag, 0=unidentified; 1=connected; 2,4,8 and combinations are tenously identified (should give warnings)
+// bitflag, 0=unidentified; 1=connected; 2,4,8 and combinations are tenuously identified (should give warnings)
 // [[Rcpp::export]]
 int check_connected_c(const arma::imat& item, const arma::imat& group, const arma::ivec& item_fixed)
 {
@@ -426,4 +431,113 @@ int check_connected_c(const arma::imat& item, const arma::imat& group, const arm
 	}
 	return out;
 }
+
+
+// very unsure about the polytomous correctness of this after categorize a, test with weird a
+// when understood, add comments in several places
+
+
+// heuristic to estimate beta sequentially per population and add to one scale
+// not sure if polytomous is done very correclty
+// [[Rcpp::export]]
+arma::mat start_beta(const arma::imat& a, const arma::ivec& ncat, const arma::icube& icatg, const int ref_group,
+					 const arma::ivec& item_fixed, const arma::mat& fixed_beta)
+{
+	const int nit = a.n_cols, ng=icatg.n_slices;
+	const double nc = -std::sqrt(1.702);
+	
+	imat ign = sum(icatg,0);
+	
+	if(ign.n_rows == 1) ign = ign.t(); // dimension drops with ng==1 for an unfathomable reason, maybe make a bugreport with armadillo
+	
+	mat beta(a.n_rows, nit, fill::zeros);
+	mat g_beta = beta;
+	ivec estimated(nit, fill::zeros), g_estimated(nit, fill::zeros), g_used(ng,fill::zeros);
+	
+	int max_iter = ng;
+	if(ref_group < 0) // fixed items
+	{		
+		for(int i=0; i<nit; i++) if(item_fixed[i] == 1)
+			beta.col(i) = fixed_beta.col(i);
+		
+		estimated = item_fixed;
+	}
+	else
+	{
+		int g = ref_group;
+		
+		for(int i=0; i<nit; i++) if(ign.at(i,g) > 0)
+		{
+			bool incl = true;
+			for(int j=0;j<ncat[i]; j++)
+				incl = incl && icatg.at(a.at(j,i),i,g) > 5;
+			if(incl)
+			{
+				for(int j=1;j<ncat[i]; j++)
+				{
+					beta.at(j,i) = nc * (std::log(icatg.at(a.at(j,i),i,g)) - std::log(icatg.at(0,i,g)))/j;
+				}
+				estimated[i] = 1;		
+			}
+		}
+		g_used[g] = 1;
+		max_iter--;
+	}
+		
+	for(int iter=0; iter<max_iter; iter++)
+	{
+		int max_ovl = -1, g=-1;
+
+		for(int gg=0; gg<ng; gg++) if(g_used[gg] == 0)
+		{
+			const int m = accu(ign.col(gg) % estimated);
+			if(m > max_ovl)
+			{
+				max_ovl = m;
+				g = gg;
+			}
+		}
+		g_used[g] = 1;
+		g_estimated.zeros(); g_beta.zeros();
+		for(int i=0; i<nit; i++) if(ign.at(i,g) > 0)
+		{			
+			bool incl = true;
+			for(int j=0;j<ncat[i]; j++)
+				incl = incl && icatg.at(a.at(j,i),i,g) > 5;
+			
+			if(incl)
+			{
+				for(int j=1;j<ncat[i]; j++)
+				{
+					g_beta.at(j,i) = nc * (std::log(icatg.at(a.at(j,i),i,g)) - std::log(icatg.at(0,i,g)))/j;
+				}
+				g_estimated[i] = 1;		
+			}
+		}
+		ivec overlap = g_estimated % estimated;
+		double df = 0;
+		int nn=0;
+
+		for(int i=0; i<nit; i++) if(overlap[i] == 1)
+		{
+			for(int j=1;j<ncat[i]; j++)
+			{
+				df += g_beta.at(j,i) - beta.at(j,i) ;
+				nn++;
+			}			
+		}
+		
+		g_beta = g_beta - df/nn;
+		g_beta.row(0).zeros();
+		for(int i=0; i<nit; i++) if(overlap[i] == 0 && g_estimated[i] == 1)
+			beta.col(i) = g_beta.col(i);
+
+		estimated = estimated + g_estimated - overlap;			
+	}
+
+	return beta;
+}
+
+
+
 

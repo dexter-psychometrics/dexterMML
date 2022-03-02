@@ -34,5 +34,5 @@ for a 2pl you have the option to use the weighted or unweighted score. The weigh
 for the regular 2pl. The unweighted score is an adaptation where ability is computed conditional on the unweighted
 sumscore of the respondent. This means people with the same unweighted score get the same ability estimate.
 
-When using a data.frame of parameters, be sure that you use the correct parametrisation. See \code{link{fit_1pl}} for details.
+When using a data.frame of parameters, be sure that you use the correct parametrisation. See \code{\link{fit_1pl}} for details.
 }

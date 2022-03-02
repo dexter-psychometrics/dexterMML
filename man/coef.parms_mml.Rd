@@ -2,17 +2,20 @@
 % Please edit documentation in R/model_est.R
 \name{coef.parms_mml}
 \alias{coef.parms_mml}
-\title{Extract information from MML fit object}
+\title{Extract parameters from MML fit object}
 \usage{
-\method{coef}{parms_mml}(object, what = c("items", "populations"), ...)
+\method{parms_mml}{coef}(object, what = c("items", "populations"), ...)
 }
 \arguments{
 \item{object}{object returned by fit_1pl or fit_2pl}
 
-\item{what}{information to extract}
+\item{what}{parameters to extract}
 
 \item{...}{ignored}
 }
+\value{
+data.frame of parameters
+}
 \description{
-Extract information from MML fit object
+Extract parameters from MML fit object
 }

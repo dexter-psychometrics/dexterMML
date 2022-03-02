@@ -7,7 +7,7 @@
 sim_2pl(pars, theta)
 }
 \arguments{
-\item{pars}{data.frame with columns alpha, item_score and beta}
+\item{pars}{data.frame with columns item_id, alpha, item_score and beta}
 
 \item{theta}{vector of abilities}
 }

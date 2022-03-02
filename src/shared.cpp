@@ -1,5 +1,6 @@
 
 #include <RcppArmadillo.h>
+#include "shared.h"
 
 using namespace arma;
 
@@ -54,3 +55,13 @@ vec vec_init(const vec& orig)
 	return vec(orig.n_elem, fill::zeros);
 }
 
+
+void scale_theta(const vec& means, const vec& sds, const ivec& gn, const vec& theta_start, vec& theta)
+{
+  const int N = accu(gn);  
+  const double q = accu((gn-1) % square(sds) + gn % square(means));  
+  const double mu = accu(means % gn)/N;
+  const double sigma = std::sqrt((q-N*SQR(mu))/(N-1));
+  
+  theta = theta_start * sigma + mu;  
+}

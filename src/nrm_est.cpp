@@ -31,15 +31,28 @@ long double loglikelihood_nrm(const arma::imat& a, const arma::mat& b, const arm
 
 
 // if fixed parameters, set ref_group to a negative nbr
+
+void identify_1pl(vec& mu, const int ref_group, mat& b)
+{
+	const double mm = mu[ref_group];
+	
+	mu -= mm;
+	b += mm;
+	b.row(0).zeros();
+}
+
+
 // [[Rcpp::export]]
 Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ivec& ncat,
 						const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
-						arma::vec& theta, const arma::vec& mu_start, const arma::vec& sigma_start, const arma::ivec& gn, const arma::ivec& pgroup, 
+						arma::vec& theta_start, const arma::vec& mu_start, const arma::vec& sigma_start, const arma::ivec& gn, const arma::ivec& pgroup, 
 						const arma::ivec& item_fixed,
 						const int ref_group=0, const int max_iter = 200, const int pgw=80)
 {
-	const int nit = a.n_cols, nt = theta.n_elem, np = pni.n_elem, ng=gn.n_elem;	
+	const int nit = a.n_cols, nt = theta_start.n_elem, np = pni.n_elem, ng=gn.n_elem;	
 	const int max_a = a.max();
+	
+	vec sigma = sigma_start, mu=mu_start, theta=theta_start;
 	
 	progress_est prog(max_iter, pgw);
 	
@@ -59,14 +72,13 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 	
 	vec thetabar(np,fill::zeros);
 	
-	vec sigma = sigma_start, mu=mu_start;
-	
 	vec sum_theta(ng), sum_sigma2(ng);
 	
 	const double tol = 1e-10;
 	int iter = 0,min_error=0,stop=0;
 	long double ll, old_ll=-std::numeric_limits<long double>::max();
 	double maxdif_b;
+	
 	
 	for(; iter<max_iter; iter++)
 	{
@@ -110,21 +122,23 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 		}
 		for(int g=0;g<ng;g++)
 		{			
-			if(g==ref_group)
-			{
-				mu[g] = 0;
-				sigma[g] = std::sqrt(sum_sigma2[g]/gn[g]);
-			}
-			else
-			{
-				mu[g] = sum_theta[g]/gn[g];		
-				sigma[g] = std::sqrt(sum_sigma2[g]/gn[g] - mu[g] * mu[g]);
-			}
+			mu[g] = sum_theta[g]/gn[g];		
+			sigma[g] = std::sqrt(sum_sigma2[g]/gn[g] - mu[g] * mu[g]);
 		}
+			
+		if(ref_group >= 0) identify_1pl(mu, ref_group, b);
+		
+		if(ng>1 || ref_group<0)
+		{
+			scale_theta(mu, sigma, gn, theta_start, theta);
+			for(int t=0; t< nt; t++)
+				for(int k=1; k<=max_a;k++)
+					exp_at.at(k,t) = std::exp(k*theta[t]);		
+		}		
 		
 		prog.update(maxdif_b, iter);
 		
-		if(maxdif_b < .0001)
+		if(maxdif_b < 0.0001)
 			break;
 		
 		old_ll = ll;
@@ -133,11 +147,12 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 	if(iter>=max_iter-1)
 		stop += 4;
 	
-	ll = loglikelihood_nrm(a, b, ncat, pcni, pi, px, theta, mu, sigma, pgroup);
-	
 	prog.close();
 	
-	return Rcpp::List::create(Named("a")=a, Named("b")=b, Named("thetabar") = thetabar, Named("mu") = mu, Named("sd") = sigma, 
-								Named("LL") = ll, Named("niter")=iter, Named("err")=stop, Named("maxdif_b")=maxdif_b); 
+	return Rcpp::List::create(Named("a")=a, Named("b")=b, Named("thetabar") = thetabar, Named("mu") = mu, Named("sigma") = sigma, 
+								Named("niter")=iter, Named("err")=stop, 
+		Named("debug")=Rcpp::List::create( Named("error")=stop, Named("maxdif_b")=maxdif_b,Named("ll")=ll)); 
 }
+
+
 
