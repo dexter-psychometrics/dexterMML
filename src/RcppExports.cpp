@@ -388,7 +388,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // gradient_2pl
-arma::vec gradient_2pl(arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, arma::vec& theta, const arma::vec& mu, const arma::vec& sigma, const arma::ivec& pgroup, const arma::ivec ip, const arma::ivec& inp, const arma::ivec& icnp);
+arma::vec gradient_2pl(arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, arma::vec& theta, const arma::vec& mu, const arma::vec& sigma, const arma::ivec& pgroup, const arma::ivec& ip, const arma::ivec& inp, const arma::ivec& icnp);
 RcppExport SEXP _dexterMML_gradient_2pl(SEXP aSEXP, SEXP ASEXP, SEXP bSEXP, SEXP ncatSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP thetaSEXP, SEXP muSEXP, SEXP sigmaSEXP, SEXP pgroupSEXP, SEXP ipSEXP, SEXP inpSEXP, SEXP icnpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -404,7 +404,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::vec& >::type mu(muSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type sigma(sigmaSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type pgroup(pgroupSEXP);
-    Rcpp::traits::input_parameter< const arma::ivec >::type ip(ipSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type ip(ipSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type inp(inpSEXP);
     Rcpp::traits::input_parameter< const arma::ivec& >::type icnp(icnpSEXP);
     rcpp_result_gen = Rcpp::wrap(gradient_2pl(a, A, b, ncat, pcni, pi, px, theta, mu, sigma, pgroup, ip, inp, icnp));
@@ -412,7 +412,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // full_hessian_2pl
-arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, const arma::vec& theta, const arma::ivec& item_fixed, const arma::ivec& ix, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, const arma::ivec& pgroup, const arma::ivec& gn, const arma::ivec& ip, const arma::ivec& inp, const arma::ivec& icnp, const arma::vec& mu, const arma::vec& sigma, const int ref_group, const arma::imat dsg_ii, const arma::imat& dsg_gi, const int A_prior, const double A_mu, const double A_sigma, const int prog_width);
+arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, const arma::vec& theta, const arma::ivec& item_fixed, const arma::ivec& ix, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, const arma::ivec& pgroup, const arma::ivec& gn, const arma::ivec& ip, const arma::ivec& inp, const arma::ivec& icnp, const arma::vec& mu, const arma::vec& sigma, const int ref_group, const arma::imat& dsg_ii, const arma::imat& dsg_gi, const int A_prior, const double A_mu, const double A_sigma, const int prog_width);
 RcppExport SEXP _dexterMML_full_hessian_2pl(SEXP aSEXP, SEXP ASEXP, SEXP bSEXP, SEXP ncatSEXP, SEXP thetaSEXP, SEXP item_fixedSEXP, SEXP ixSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP pgroupSEXP, SEXP gnSEXP, SEXP ipSEXP, SEXP inpSEXP, SEXP icnpSEXP, SEXP muSEXP, SEXP sigmaSEXP, SEXP ref_groupSEXP, SEXP dsg_iiSEXP, SEXP dsg_giSEXP, SEXP A_priorSEXP, SEXP A_muSEXP, SEXP A_sigmaSEXP, SEXP prog_widthSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -436,7 +436,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::vec& >::type mu(muSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type sigma(sigmaSEXP);
     Rcpp::traits::input_parameter< const int >::type ref_group(ref_groupSEXP);
-    Rcpp::traits::input_parameter< const arma::imat >::type dsg_ii(dsg_iiSEXP);
+    Rcpp::traits::input_parameter< const arma::imat& >::type dsg_ii(dsg_iiSEXP);
     Rcpp::traits::input_parameter< const arma::imat& >::type dsg_gi(dsg_giSEXP);
     Rcpp::traits::input_parameter< const int >::type A_prior(A_priorSEXP);
     Rcpp::traits::input_parameter< const double >::type A_mu(A_muSEXP);

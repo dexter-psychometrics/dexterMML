@@ -2,5 +2,5 @@
 ^\.Rproj\.user$
 ^Readme.Rmd$
 ^LICENSE$
-derivations
-smoke_test
+^derivations
+^smoke_test

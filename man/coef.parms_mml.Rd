@@ -4,7 +4,7 @@
 \alias{coef.parms_mml}
 \title{Extract parameters from MML fit object}
 \usage{
-\method{parms_mml}{coef}(object, what = c("items", "populations"), ...)
+\method{coef}{parms_mml}(object, what = c("items", "populations"), ...)
 }
 \arguments{
 \item{object}{object returned by fit_1pl or fit_2pl}

@@ -20,10 +20,7 @@ abl_pre = function(dataSrc, pars, qtpredicate, env, group=NULL)
                       pars$icat, pars$imax, max(pars$ncat), pre$px, pre$ix)
   
   #have to test this, it might be wrong
-  mismatch = sapply(1:ncol(data_a), function(i)
-  {
-    length(setdiff(data_a[,i],pars$a[,i]))>0  
-  })
+  mismatch = sapply(1:ncol(data_a), function(i){length(setdiff(data_a[,i],pars$a[,i]))>0})
   
   if(any(mismatch))
   {

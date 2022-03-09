@@ -39,14 +39,14 @@ if (requireNamespace("Cairo", quietly = TRUE)) opts_chunk$set(dev='CairoPNG')
 CML (conditional maximum likelihood) calibration is not possible for fully adaptive tests or for Multi Stage tests with probabilistic routing rules. CML is currently also impractical for random tests (i.e. tests with items randomly selected from a bank). So in these cases we must turn to Marginal Maximum Likelihood, or MML. As the name implies, in MML estimation the likelihood that is maximized is marginal. The likelihood for a response vector $x$ for a single person is defined as:
 
 $$
-P(x) = \int P(x|\theta, \omega)f(\theta|Y)d\theta
+P(x) = \int P(x|\theta, \omega)f(\theta|\phi,Y)d\theta
 $$
 
-with $\theta$ denoting ability and $\omega$ denoting a set of item parameters and Y zero or more background variables. For unidimensional models, in practice $f(\theta|Y)$ is assumed to be a normal distribution or a combination of independent normal distributions. To identify the model, one or two population parameters can be fixed to an arbitrary value for a 1PL or a 2PL respectively, or the parameters for one or more items can be set to a fixed value. 
+with $\theta$ denoting ability and $\omega$ denoting a set of item parameters and Y zero or more background variables. For unidimensional models, in practice $f(\theta|\phi,Y)$ is assumed to be a normal distribution or a combination of independent normal distributions. To identify the model, one or two population parameters can be fixed to an arbitrary value for a 1PL or a 2PL respectively, or the parameters for one or more items can be set to a fixed value. 
 
-# Inclusion of background variables
+# Inclusion of background variables Y
 
-We will simulate some data. We have a population that consists of 3 different subgroups with a different distribution of the true ability $\theta$.
+To illustrate the effect of including background variables, we will simulate some data. We assume a population that consists of 3 different subgroups with a different distribution of the true ability $\theta$.
 
 ```{r}
 library(dexterMML)
@@ -74,7 +74,7 @@ for(i in 1:nrow(dat))
 
 Now we can proceed to estimate.
 
-```{r, fig.show='hold',out.extra='style="width:48%;display:inline-block;"'}
+```{r, fig.show='hold',out.extra='style="width:48%;display:inline-block;"',fig.cap="Item parameters for a fully random test. True values are on the x-axis versus estimates on the  y-axis."}
 f2 = fit_2pl(dat)
 
 check = inner_join(items, coef(f2), 
@@ -87,9 +87,9 @@ plot(check$beta.true, check$beta.est,
      xlab='true', ylab='estimated', main='beta', bty='l', pch=20)
 ```
 
-At this point it can be noted that we severely misspecified the population distribution. The default assumption is a normal distribution, but from our known ability distribution we know that to be false.
+Ignoring an arbitrary identification constant, the estimates are reasonably close to the true values. However, at this point it can be noted that we severely misspecified the population distribution. The default assumption is a normal distribution, but because we used simulation we know that to be false.
 
-```{r,fig.margin=TRUE, fig.cap="Distribution of true theta (black line) and subgroups (gray lines). The green reference line shows the density of a normal distribution with the same mean and standard deviation as the true distribution."}
+```{r,fig.margin=TRUE, fig.cap="Distribution of true ability (black line) and subgroups (gray lines). The green reference line shows the density of a normal distribution with the same mean and standard deviation as the true distribution."}
 plot(density(population$theta), bty='l',xlab='', main='')
 
 dn = function(mu,sigma) function(x) dnorm(x,mu,sigma)
@@ -107,7 +107,7 @@ for(y in unique(population$Y))
 
 ```
 
-Yet, even though we misspecified the population distribution, there is no visible bias in the item parameter estimates. Let's try our random test again but now we use a targeted testing approach. Suppose that the item constructors were able to provide an imperfect difficulty estimate of each item on a scale of 1 to 5. Further suppose that the background variable Y is known at the time of test administration and from previous studies it is known that the mean ability is highest in schooltype C and lowest in schooltype A. To enable a more precise measurement of ability it is decided to use a targeted testing approach, in which population A gets the easier items, B the intermediate and C the hardest.
+Yet, even though we misspecified the population distribution, there is no visible bias in the item parameter estimates. Let's try our random test again but this time we want to adapt our test a bit more to the individuals and so use a targeted testing approach. Suppose that the item constructors were able to provide an imperfect difficulty estimate of each item on a scale of 1 to 5. Further suppose that the background variable Y is known at the time of test administration and from previous studies it is known that the mean ability is highest in schooltype C and lowest in schooltype A. To enable a more precise measurement population A will get the easier items, B the intermediate and C the hardest items.
 
 ```{r}
 # an imperfect difficulty categorization
@@ -129,7 +129,7 @@ for(i in 1:nrow(dat))
 
 ```
 
-If we calibrate on this new dataset, we see that omitting the relevant marginals leads to much bias in the item parameter estimates^[The code for the plots is the same as before and is omitted here for clarity.]. 
+If we calibrate on this new dataset, we see that omitting the relevant marginals leads to quite extreme bias in the item parameter estimates^[The code for the plots is the same as before and is omitted here for brevity.]. 
 
 
 ```{r}
@@ -137,7 +137,7 @@ f2 = fit_2pl(dat)
 f2_marg = fit_2pl(dat, group=population$Y)
 ```
 
-```{r,echo=FALSE, fig.show='hold', out.extra='style="width:48%;display:inline-block;"', fig.cap="Item parameters for a targeted random test. The top two plots show the resulting parameters of a calibration in which the background variable Y is erroneously omitted, the bottom two plots show the results when the background variable is included."}
+```{r,echo=FALSE, fig.show='hold', out.extra='style="width:48%;display:inline-block;"', fig.cap="Item parameters for a targeted random test. True values are on the x-axis versus estimates on the  y-axis. The top two plots show the resulting parameters of a calibration in which the background variable Y is erroneously omitted, the bottom two plots show the results when the background variable is included."}
 check = inner_join(items, coef(f2), 
                    by=c('item_id','item_score'),suffix=c('.true','.est'))
 

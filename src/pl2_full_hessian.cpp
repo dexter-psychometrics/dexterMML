@@ -16,7 +16,7 @@ using namespace arma;
 arma::vec gradient_2pl(arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat,
 						const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 						arma::vec& theta, const arma::vec& mu, const arma::vec& sigma, const arma::ivec& pgroup, 
-						const arma::ivec ip, const arma::ivec& inp, const arma::ivec& icnp)
+						const arma::ivec& ip, const arma::ivec& inp, const arma::ivec& icnp)
 {
 	const int max_cat = ncat.max();
 	const int nit =ncat.n_elem;
@@ -43,17 +43,82 @@ arma::vec gradient_2pl(arma::imat& a, const arma::vec& A, const arma::mat& b, co
 	}
 	return grd;
 }
+/*
+// [[Rcpp::export]]
+arma::vec gradient_2pl_p(arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, const arma::ivec& pni,
+						const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
+						arma::vec& theta, const arma::ivec& item_fixed, const arma::vec& mu, const arma::vec& sigma, const int ref_group, const arma::ivec& pgroup, 
+						const arma::ivec& ip, const arma::ivec& inp, const arma::ivec& icnp)
+{
+	const int max_cat = ncat.max(), ng = mu.n_elem, nit =ncat.n_elem, np = pgroup.n_elem, nt=theta.n_elem;
+	
+	int npar = accu(ncat % (1-item_fixed)) + ng*2;
+	if(ref_group>=0) npar -= 2;
+	
+	
+	vec grd(npar,fill::zeros);
+	
+	field<mat> itrace(nit);
+	for(int i=0; i<nit; i++)
+	{
+		itrace(i) = pl2_trace(theta, a.col(i), A[i], b.col(i), ncat[i]);
+	}
+	
+	vec gi(max_cat);
+	int pr=0;
+	for(int i=0; i<nit; i++)
+	{	
+		ll_pl2_v2 f(itrace, theta, ip, pi, pcni, px, 
+							pgroup, inp, icnp, mu, sigma, i, a.col(i));
+		
+		vec pars = b.col(i).head(ncat[i]);
+		pars[0] = A[i];
+		f.df(pars,gi);
+		for(int p=0;p<ncat[i];p++)
+			grd[pr++] = gi[p];
+	}
+	if(ref_group<0 || ng>1)
+	{
+		mat posterior = normalized_posterior(itrace, pni, pcni, pi, px, theta, mu, sigma, pgroup);
 
+		ivec g_indx(ng);
+		g_indx[0] = pr;
+		for(int g=0; g<(ng-1); g++) g_indx[g+1] = g_indx[g] + 2*(g!=ref_group);
+		
+		mat mu_mlt(nt,ng), sigma_mlt(nt,ng);
+		
+		for(int g=0; g<ng; g++)
+		{
+			double ca = accu(exp(-square(theta - mu[g])/(2*SQR(sigma[g]))));			
+			double cb = accu((theta-mu[g]) % exp(-square(theta - mu[g])/(2*SQR(sigma[g])))/SQR(sigma[g]));			
+			double cc = accu(square(theta-mu[g]) % exp(-square(theta - mu[g])/(2*SQR(sigma[g])))/CUB(sigma[g]));
+			
+			mu_mlt.col(g) = -cb/ca - (theta-mu[g])/SQR(sigma[g]);
+			sigma_mlt.col(g) = -cc/ca + square(theta-mu[g])/CUB(sigma[g]);	
+		}
+		
+		for(int p=0; p<np;p++)
+		{
+			int g = pgroup[p];
+			if(g!=ref_group)
+			{
+				grd[g_indx[g]] += accu(posterior.col(p) % mu_mlt.col(g));
+				grd[g_indx[g]+1] += accu(posterior.col(p) % sigma_mlt.col(g));
+			}
+			
+		}	
+	}
+	return grd;
+}
 
-
-
+*/
 
 // [[Rcpp::export]]
 arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat, const arma::vec& theta, const arma::ivec& item_fixed,
 						const arma::ivec& ix, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, const arma::ivec& pgroup, const arma::ivec& gn,
 						const arma::ivec& ip, const arma::ivec& inp, const arma::ivec& icnp,
 						const arma::vec& mu, const arma::vec& sigma, const int ref_group,
-						const arma::imat dsg_ii, const arma::imat& dsg_gi, 
+						const arma::imat& dsg_ii, const arma::imat& dsg_gi, 
 						const int A_prior=0, const double A_mu=0, const double A_sigma=0.5, const int prog_width=80)
 {
 	const int ng = mu.n_elem, nit=a.n_cols, max_cat=ncat.max(), nt=theta.n_elem, np=pni.n_elem;
@@ -432,4 +497,41 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 	progr.close();
 	return hess;
 }
-
+/*
+using Rcpp::Named;
+// [[Rcpp::export]]
+Rcpp::List NR_pl2(arma::imat& a, const arma::vec& A, const arma::mat& b, const arma::ivec& ncat,arma::vec& theta, const arma::ivec& item_fixed,
+						const arma::ivec& ix, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, const arma::ivec& pgroup, const arma::ivec& gn,
+						const arma::ivec& ip, const arma::ivec& inp, const arma::ivec& icnp,
+						const arma::vec& mu, const arma::vec& sigma, const int ref_group,
+						const arma::imat& dsg_ii, const arma::imat& dsg_gi)
+{
+	const int nit = a.n_cols, nt = theta.n_elem, np = pni.n_elem, ng=gn.n_elem;
+	
+	mat hess = full_hessian_2pl(a, A, b, ncat, theta, item_fixed,
+						ix, pni, pcni, pi, px, pgroup, gn,
+						ip, inp, icnp,mu, sigma, ref_group,	dsg_ii, dsg_gi);
+	
+	vec grd = gradient_2pl_p(a, A, b, ncat, pni, pcni, pi, px, theta, item_fixed, mu, sigma, ref_group, pgroup, ip, inp, icnp);
+	
+	vec y = solve(hess,grd);
+	
+	vec out_A=A, out_mu=mu, out_sigma=sigma;
+	mat out_b=b;
+	
+	int p = 0;
+	for(int i=0; i<nit; i++) if(item_fixed[i]==0)
+	{
+		out_A[i] += y[p++];
+		for(int j=1; j<ncat[i]; j++)
+			out_b.at(j,i) += y[p++];	
+	}
+	for(int g=0; g<ng; g++) if(g!=ref_group)
+	{
+		out_mu[g] += y[p++];
+		out_sigma[g] += y[p++];
+	}
+	
+	return Rcpp::List::create(Named("A")=out_A, Named("b")=out_b,Named("mu")=out_mu,Named("sigma")=out_sigma, Named("y") = y,Named("H")=hess,Named("G")=grd);
+}
+*/

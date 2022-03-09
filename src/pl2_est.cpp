@@ -114,18 +114,16 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 	
 	vec h_ll(max_iter, fill::zeros);
 	
-	cube store_b(b.n_rows, nit, 2, fill::zeros);
-	mat store_A(nit,2,fill::zeros), store_mu(ng,2,fill::zeros), store_sigma(ng,2,fill::zeros);
-	int store_i=0;	
+	vec old_A=A;
+	mat old_b=b;
 	
-	vec pre_ll(max_pre,fill::zeros);
-	mat mu_hist(ng,max_iter,fill::zeros), sd_hist(ng,max_iter,fill::zeros);
+	mat mu_hist(ng,max_iter,fill::zeros), sd_hist(ng,max_iter,fill::zeros), A_hist(nit,max_iter,fill::zeros), b_hist(nit,max_iter,fill::zeros);
 	
+	bool adapt_theta = ng > 1 || ref_group < 0;
 
 	for(int itr=0; itr<max_pre; itr++)
 	{
 		estep(itrace, pni, pcni, pi, px, theta, r, thetabar, sum_theta, sum_sigma2, mu, sigma, pgroup, ll);
-		pre_ll[itr] = ll;	
 			
 		for(int g=0;g<ng;g++)
 		{		
@@ -135,7 +133,7 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 			
 		if(ref_group >= 0) identify_2pl(mu, sigma, ref_group, A, b, A_prior);
 		
-		if(ng>1 || ref_group < 0)
+		if(adapt_theta)
 			scale_theta(mu, sigma, gn, theta_start, theta);
 			
 		for(int i=0; i<nit; i++)
@@ -144,10 +142,6 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 		if( ll < old_ll + 0.1 ) break;
 		old_ll=ll;			
 	}
-
-	vec pre_mu=mu,pre_sigma=sigma;
-	vec pre_A = A;
-	mat pre_b = b;
 
 	old_ll=-std::numeric_limits<long double>::max(); // reset as prior part was not taken into account in pre
 	
@@ -160,17 +154,17 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 		
 		if(ll + prior_part < old_ll)
 		{
-			stop += 2;
-			break;
+			if(adapt_theta) adapt_theta=false;
+			else
+			{
+				stop += 2;
+				break;
+			}			
 		}
 		old_ll = prior_part+ll;
-		maxdif_A=0; maxdif_b=0; prior_part=0;
-		store_A.col(store_i)=A;
-		store_b.slice(store_i)=b;
-		store_mu.col(store_i)=mu;
-		store_sigma.col(store_i)=sigma;
-		store_i=1-store_i;
-		
+
+		old_A=A;
+		old_b=b;	
 		
 #pragma omp parallel for reduction(max: maxdif_A, maxdif_b) reduction(+:min_error, prior_part)
 		for(int i=0; i<nit; i++)
@@ -185,11 +179,9 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 			min_error += err;
 			if(err==0)
 			{
-				maxdif_A = std::max(maxdif_A, std::abs(A[i] - pars[0]));
 				A[i] = pars[0];
 				for(int k=1;k<ncat[i];k++)
 				{
-					maxdif_b = std::max(maxdif_b, std::abs(b.at(k,i) - pars[k]));
 					b.at(k,i) = pars[k];
 				}		
 				prior_part -= f.prior_part_ll(A[i]);
@@ -204,15 +196,22 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 		
 		mu_hist.col(iter) = mu;
 		sd_hist.col(iter) = sigma;
+		b_hist.col(iter) = trans(b.row(1));
+		A_hist.col(iter) = A;
 		
-		if(ref_group >= 0) identify_2pl(mu, sigma, ref_group, A, b, A_prior);
+		if(ref_group >= 0) 
+		{ 
+			identify_2pl(mu, sigma, ref_group, A, b, A_prior);
+			mu[ref_group] = 0;
+			sigma[ref_group] = 1;
+		}
 		
 		if(any_m2)
 		{
 			for(int i=0; i<nit; i++)
 				pl2_trace(theta, a.col(i), A[i], b.col(i), ncat[i], itrace(i));
 
-#pragma omp parallel for reduction(max: maxdif_A, maxdif_b) reduction(+:min_error, prior_part)
+#pragma omp parallel for reduction(+:min_error, prior_part)
 			for(int i=0; i<nit; i++)
 			{	
 				if(item_fixed[i] == 1 || inp[i] >= use_m2)
@@ -227,11 +226,9 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 				min_error += err;
 				if(err==0)
 				{
-					maxdif_A = std::max(maxdif_A, std::abs(A[i] - pars[0]));
 					A[i] = pars[0];
 					for(int k=1;k<ncat[i];k++)
 					{
-						maxdif_b = std::max(maxdif_b, std::abs(b.at(k,i) - pars[k]));
 						b.at(k,i) = pars[k];
 					}		
 					prior_part -= f.prior_part_ll(A[i]);
@@ -239,7 +236,7 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 			}
 		}
 		
-		if(ng>1 || ref_group<0)
+		if(adapt_theta)
 			scale_theta(mu, sigma, gn, theta_start, theta);
 		
 		for(int i=0; i<nit; i++)
@@ -256,6 +253,9 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 			break;
 		}	
 	
+		maxdif_b = (abs(b-old_b)).max();
+		maxdif_A = max(abs(A-old_A));
+	
 		prog.update(std::max(maxdif_b, maxdif_A), iter);
 				
 		if(maxdif_b < .0001 && maxdif_A < .0001)
@@ -269,15 +269,14 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 	
 	return Rcpp::List::create(Named("A")=A, Named("b")=b, Named("thetabar") = thetabar, Named("mu") = mu, Named("sigma") = sigma, 
 							  Named("niter")=iter, Named("theta")=theta, Named("prior_part") = prior_part, 
-							  /*Named("r")=r,*/		
 		Named("debug")=Rcpp::List::create( 	Named("error")=stop, Named("maxdif_A")=maxdif_A, Named("maxdif_b")=maxdif_b,
-											Named("ll_history") = h_ll,	Named("store_A")=store_A, Named("store_b")=store_b,  
-											Named("store_mu") = store_mu, Named("store_sigma") = store_sigma, Named("store_i") = 2-store_i,
-											Named("pre_ll") = pre_ll,
-											Named("pre_mu")=pre_mu,Named("pre_sigma")=pre_sigma,
-											Named("pre_A")=pre_A,Named("pre_b")=pre_b,
-											Named("mu_hist") = mu_hist, Named("sd_hist")=sd_hist)); 
+											Named("ll_history") = h_ll));
 }
+
+
+
+
+
 
 
 

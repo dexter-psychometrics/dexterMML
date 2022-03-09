@@ -55,7 +55,7 @@ em_report = function(em)
 #denk stoppen bij 800 als alpha's < 0.1
 cal_settings = list(
   theta_grid = seq(-6,6,length.out=41),
-  max_em_iterations = 1250L,
+  max_em_iterations = 1000L,
   pre_iter=10L)
 
 
@@ -241,7 +241,7 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
         design$groups[,w] = 0L
       }
       
-      hess = full_hessian_nrm(a,  em$b, pre$ncat, theta_grid, fixed_items,
+      hess = full_hessian_nrm(a,  em$b, pre$ncat, em$theta, fixed_items,
                               pre$ix, pre$pni, pre$pcni, pre$pi, pre$px, data$persons$c_group_nbr, data$groups$group_n,
                               pre$ip,pre$inp, pre$icnp,
                               em$mu, em$sigma, ref_group,design$items,design$groups,
@@ -274,7 +274,7 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
                       A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,
                       use_m2=150L,max_iter=max_em_iterations,pgw=pgw, max_pre = cal_settings$pre_iter)
     
-
+    
     em$LL = loglikelihood_2pl_GH(a, em$A, em$b, pre$ncat, pre$pni, pre$pcni, pre$pi, pre$px, 
                       quadpoints$nodes, quadpoints$weights, em$mu, em$sigma, data$persons$c_group_nbr) + em$prior_part
     
@@ -301,7 +301,7 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
         design$groups[,w] = 0L
       }
       
-      hess = full_hessian_2pl(a, em$A, em$b, pre$ncat, theta_grid, fixed_items,
+      hess = full_hessian_2pl(a, em$A, em$b, pre$ncat, em$theta, fixed_items,
                               pre$ix, pre$pni, pre$pcni, pre$pi, pre$px, data$persons$c_group_nbr, data$groups$group_n,
                               pre$ip,pre$inp, pre$icnp,
                               em$mu, em$sigma, ref_group,design$items,design$groups,
@@ -365,7 +365,7 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
 #' 
 #' @return data.frame of parameters
 #' 
-#' @method parms_mml coef
+#' @method coef parms_mml
 coef.parms_mml = function(object, what=c('items','populations'), ...)
 {
   what=match.arg(what)
@@ -498,7 +498,7 @@ logLik.parms_mml = function(object, ...)
       if(nrow(items) == nrow(object$items))
       {
         itm = split(items, items$ii)
-        if(object$em$model == '1PL')
+        if(object$model == '1PL')
         {
           object$em$b[1+(1:nrow(itm[[i]])),i] = from_dexter(object$em$a[1+(1:nrow(itm[[i]])),i], itm[[i]]$beta)
           
@@ -520,7 +520,7 @@ logLik.parms_mml = function(object, ...)
       object$em$mu = pop$mean
       object$em$sigma = pop$sd
     }
-    if(object$em$model == '1PL')
+    if(object$model == '1PL')
     {
       ll = loglikelihood_1pl_GH(object$em$a,  object$em$b, object$pre$ncat, object$pre$pni, object$pre$pcni, 
                      object$pre$pi, object$pre$px, 

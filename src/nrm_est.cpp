@@ -64,7 +64,7 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 	
 	field<mat> itrace(nit);
 	
-	mat b = b_start;
+	mat b = b_start, old_b=b_start;
 
 	field<mat> r(nit);
 	for(int i=0; i<nit; i++)
@@ -77,8 +77,9 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 	const double tol = 1e-10;
 	int iter = 0,min_error=0,stop=0;
 	long double ll, old_ll=-std::numeric_limits<long double>::max();
-	double maxdif_b;
+	double maxdif_b=0;
 	
+	bool adapt_theta = true;
 	
 	for(; iter<max_iter; iter++)
 	{
@@ -89,12 +90,16 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 
 		if(ll < old_ll)
 		{
-			stop += 2;
-			break;
+			if(adapt_theta) adapt_theta = false;
+			else
+			{
+				stop += 2;
+				break;
+			}	
 		}
 		
-		maxdif_b=0;
-#pragma omp parallel for reduction(max: maxdif_b) reduction(+:min_error)
+		old_b=b;
+#pragma omp parallel for reduction(+:min_error)
 		for(int i=0; i<nit; i++)
 		{	
 			if(item_fixed[i] == 1)
@@ -111,7 +116,6 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 			min_error += err;
 			for(int k=1;k<ncat[i];k++)
 			{
-				maxdif_b = std::max(maxdif_b, std::abs(b.at(k,i) - pars[k-1]));
 				b.at(k,i) = pars[k-1];
 			}
 		}
@@ -128,7 +132,7 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 			
 		if(ref_group >= 0) identify_1pl(mu, ref_group, b);
 		
-		if(ng>1 || ref_group<0)
+		if(adapt_theta)
 		{
 			scale_theta(mu, sigma, gn, theta_start, theta);
 			for(int t=0; t< nt; t++)
@@ -136,7 +140,8 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 					exp_at.at(k,t) = std::exp(k*theta[t]);		
 		}		
 		
-		prog.update(maxdif_b, iter);
+		maxdif_b = abs(b-old_b).max();
+		prog.update(maxdif_b, iter);		
 		
 		if(maxdif_b < 0.0001)
 			break;
@@ -150,7 +155,7 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 	prog.close();
 	
 	return Rcpp::List::create(Named("a")=a, Named("b")=b, Named("thetabar") = thetabar, Named("mu") = mu, Named("sigma") = sigma, 
-								Named("niter")=iter, Named("err")=stop, 
+								Named("niter")=iter, Named("err")=stop, Named("theta")=theta,
 		Named("debug")=Rcpp::List::create( Named("error")=stop, Named("maxdif_b")=maxdif_b,Named("ll")=ll)); 
 }
 

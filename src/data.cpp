@@ -455,6 +455,7 @@ arma::mat start_beta(const arma::imat& a, const arma::ivec& ncat, const arma::ic
 	ivec estimated(nit, fill::zeros), g_estimated(nit, fill::zeros), g_used(ng,fill::zeros);
 	
 	int max_iter = ng;
+	
 	if(ref_group < 0) // fixed items
 	{		
 		for(int i=0; i<nit; i++) if(item_fixed[i] == 1)
@@ -502,6 +503,7 @@ arma::mat start_beta(const arma::imat& a, const arma::ivec& ncat, const arma::ic
 		for(int i=0; i<nit; i++) if(ign.at(i,g) > 0)
 		{			
 			bool incl = true;
+
 			for(int j=0;j<ncat[i]; j++)
 				incl = incl && icatg.at(a.at(j,i),i,g) > 5;
 			
@@ -537,7 +539,3 @@ arma::mat start_beta(const arma::imat& a, const arma::ivec& ncat, const arma::ic
 
 	return beta;
 }
-
-
-
-
