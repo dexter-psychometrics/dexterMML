@@ -65,7 +65,7 @@ cal_settings = list(
 #'
 #' @param dataSrc a matrix, long format data.frame or a dexter database
 #' @param predicate logical predicate to filter dataSrc, has no effect when dataSrc is a matrix
-#' @param group if dataSrc is a matrix then a vector of length nrows, otherwise the names of one or more person
+#' @param group if dataSrc is a matrix then a vector of length `nrows(dataSrc)`, otherwise the names of one or more person
 #' properties together grouping people. See details.
 #' @param fixed_param data.frame with columns: item_id, item_score, beta and, if model is 2PL, also alpha.
 #' @param se should standard errors be determined. For large datasets with many items this can take some time. Set
@@ -102,8 +102,8 @@ cal_settings = list(
 #' relevant grouping can seriously bias parameter and subsequent ability estimation.
 #'
 #' @section Troubleshooting:
-#' The EM algorithm tries to converge on a solution where all parameters change less 0.0001 in a subsequent iteration. It usually succeeds.
-#' If it is not successful a message or warning is given (dependent on the severity of the situation). The (less precise) results are
+#' The EM algorithm tries to converge on a solution where all parameters change less than 0.0001 in a subsequent iteration. It usually succeeds.
+#' If it is not successful a message or warning is given (depending on the severity of the situation). The (less precise) results are
 #' still returned to facilitate identification of the problem but you should possibly not trust the results very much.
 #'
 #' The following possible solutions can be tried in such a case:
@@ -256,6 +256,12 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
     {
       out = list(items=to_dexter(em$a,em$b,pre$ncat,data$item_id)$items,
                  pop=pop,em=em,pre=pre)
+      if(se)
+      {
+        out$items$SE_beta = NA_real_
+        out$pop$SE_mean = NA_real_
+        out$pop$SE_sd = NA_real_
+      }
     }
   } else
   {
@@ -290,56 +296,60 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
     pop$mean = drop(em$mu)
     pop$sd = drop(em$sigma)
     
-    if(se && severity < 2L)
+    if(se)
     {
-      if(pgw>0) cat("(2/2) Computing standard errors\n")
-      if(!is.null(fixed_param))
-      {
-        w = which(fixed_items==1L)
-        design$items[w,] = 0L
-        design$items[,w] = 0L
-        design$groups[,w] = 0L
-      }
-      
-      hess = full_hessian_2pl(a, em$A, em$b, pre$ncat, em$theta, fixed_items,
-                              pre$ix, pre$pni, pre$pcni, pre$pi, pre$px, data$persons$c_group_nbr, data$groups$group_n,
-                              pre$ip,pre$inp, pre$icnp,
-                              em$mu, em$sigma, ref_group,design$items,design$groups,
-                              A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,
-                              prog_width=pgw)
-      
-      SE = sqrt(-diag(solve(hess)))
       items$SE_alpha = NA_real_
       items$SE_beta = NA_real_
-      
-      i=1; px=1
-      for(ix in 1:nit)
-      {
-        k = pre$ncat[ix]
-        if(fixed_items[ix]==0L)
-        {
-          items$SE_alpha[i:(i+k-2)] = SE[px]
-          items$SE_beta[i:(i+k-2)] = SE[(px+1):(px+k-1)]
-          px=px+k
-        }
-        i = i+k-1
-      }
       pop$SE_mean = NA_real_
       pop$SE_sd = NA_real_
-      
-      for(g in 1:nrow(pop))
+    
+      if(severity < 2L)
       {
-        if(g != (ref_group+1))
+        if(pgw>0) cat("(2/2) Computing standard errors\n")
+        if(!is.null(fixed_param))
         {
-          pop$SE_mean[g] = SE[px]
-          pop$SE_sd[g] = SE[px+1L]
-          
-          px=px+2L
+          w = which(fixed_items==1L)
+          design$items[w,] = 0L
+          design$items[,w] = 0L
+          design$groups[,w] = 0L
         }
-        i=i+1L
+        
+        hess = full_hessian_2pl(a, em$A, em$b, pre$ncat, em$theta, fixed_items,
+                                pre$ix, pre$pni, pre$pcni, pre$pi, pre$px, data$persons$c_group_nbr, data$groups$group_n,
+                                pre$ip,pre$inp, pre$icnp,
+                                em$mu, em$sigma, ref_group,design$items,design$groups,
+                                A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,
+                                prog_width=pgw)
+        
+        SE = sqrt(-diag(solve(hess)))
+        
+        i=1; px=1
+        for(ix in 1:nit)
+        {
+          k = pre$ncat[ix]
+          if(fixed_items[ix]==0L)
+          {
+            items$SE_alpha[i:(i+k-2)] = SE[px]
+            items$SE_beta[i:(i+k-2)] = SE[(px+1):(px+k-1)]
+            px=px+k
+          }
+          i = i+k-1
+        }
+        
+        for(g in 1:nrow(pop))
+        {
+          if(g != (ref_group+1))
+          {
+            pop$SE_mean[g] = SE[px]
+            pop$SE_sd[g] = SE[px+1L]
+            
+            px=px+2L
+          }
+          i=i+1L
+        }
+        
+        
       }
-      
-      
     }
     out = list(items=items,pop=pop,em=em,pre=pre,hess=hess,
                prior=list(A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma))

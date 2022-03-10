@@ -21,18 +21,19 @@ ability.mml(
 
 \item{method}{Maximum Likelihood (MLE), Weighted Likelihood (WLE)}
 
-\item{unweight}{whether to use the weighted score or the unweighted score. Has no effect for 1PL, see details}
+\item{unweight}{(experimental) whether to use the weighted score or the unweighted score. Has no effect for 1PL, see details}
 }
 \value{
 data.frame with variables person_id and theta and se
 }
 \description{
-note: for a 1PL this function calls dexter::ability
+Abilities for a 1 and 2pl
 }
 \details{
 for a 2pl you have the option to use the weighted or unweighted score. The weighted score gives ML estimates
-for the regular 2pl. The unweighted score is an adaptation where ability is computed conditional on the unweighted
-sumscore of the respondent. This means people with the same unweighted score get the same ability estimate.
+for the regular 2pl. The unweighted score is an experimental adaptation where ability is computed conditional on the unweighted
+sumscore of the respondent. This means people with the same unweighted score get the same ability estimate. This is 
+option is experimental and awaiting future adaptations and checks.
 
 When using a data.frame of parameters, be sure that you use the correct parametrisation. See \code{\link{fit_1pl}} for details.
 }

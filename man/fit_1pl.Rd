@@ -23,7 +23,7 @@ fit_2pl(
 
 \item{predicate}{logical predicate to filter dataSrc, has no effect when dataSrc is a matrix}
 
-\item{group}{if dataSrc is a matrix then a vector of length nrows, otherwise the names of one or more person
+\item{group}{if dataSrc is a matrix then a vector of length `nrows(dataSrc)`, otherwise the names of one or more person
 properties together grouping people. See details.}
 
 \item{fixed_param}{data.frame with columns: item_id, item_score, beta and, if model is 2PL, also alpha.}
@@ -72,8 +72,8 @@ relevant grouping can seriously bias parameter and subsequent ability estimation
 
 \section{Troubleshooting}{
 
-The EM algorithm tries to converge on a solution where all parameters change less 0.0001 in a subsequent iteration. It usually succeeds.
-If it is not successful a message or warning is given (dependent on the severity of the situation). The (less precise) results are
+The EM algorithm tries to converge on a solution where all parameters change less than 0.0001 in a subsequent iteration. It usually succeeds.
+If it is not successful a message or warning is given (depending on the severity of the situation). The (less precise) results are
 still returned to facilitate identification of the problem but you should possibly not trust the results very much.
 
 The following possible solutions can be tried in such a case:
