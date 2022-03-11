@@ -43,19 +43,14 @@ abl_pre = function(dataSrc, pars, qtpredicate, env, group=NULL)
 #' @param parms	object produced by function fit_1pl or fit_2pl or possibly a data.frame of parameters
 #' @param predicate An optional expression to subset data, if NULL all data is used
 #' @param method Maximum Likelihood (MLE), Weighted Likelihood (WLE)
-#' @param unweight (experimental) whether to use the weighted score or the unweighted score. Has no effect for 1PL, see details
 #'
 #' @returns data.frame with variables person_id and theta and se
 #'
 #' @details
-#' for a 2pl you have the option to use the weighted or unweighted score. The weighted score gives ML estimates
-#' for the regular 2pl. The unweighted score is an experimental adaptation where ability is computed conditional on the unweighted
-#' sumscore of the respondent. This means people with the same unweighted score get the same ability estimate. This is 
-#' option is experimental and awaiting future adaptations and checks.
 #' 
 #' When using a data.frame of parameters, be sure that you use the correct parametrisation. See \code{\link{fit_1pl}} for details. 
 #'
-ability.mml = function(dataSrc, parms, predicate=NULL, method=c('MLE','WLE'), unweight=FALSE)
+ability.mml = function(dataSrc, parms, predicate=NULL, method=c('MLE','WLE'))
 {
   qtpredicate = eval(substitute(quote(predicate)))
   env = caller_env()
@@ -63,10 +58,8 @@ ability.mml = function(dataSrc, parms, predicate=NULL, method=c('MLE','WLE'), un
   
   pre = abl_pre(dataSrc, parms, qtpredicate=qtpredicate, env=env)
   
-  
-  if(pre$model=='1PL')
-    unweight=TRUE
-  
+  unweight = (pre$model=='1PL')
+
   res = theta_2pl(pre$a, pre$A, pre$b, pre$ncat,
                   pre$pni, pre$pcni, pre$pi, pre$px,
                   WLE=(method=='WLE'), USE_A = (!unweight))

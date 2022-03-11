@@ -236,7 +236,7 @@ arma::vec se_theta_2pl(const arma::imat& a, const arma::vec& A, const arma::mat&
 					const arma::ivec& pni, const arma::ivec& pcni, arma::ivec& pi, const arma::vec& theta,
 					const bool WLE=false, const bool USE_A=true)
 {
-	if(USE_A) return templ_se_2pl<true, true>(a, A, b, ncat, pni, pcni, pi, theta);
+	if(WLE && USE_A) return templ_se_2pl<true, true>(a, A, b, ncat, pni, pcni, pi, theta);
 	if(!WLE && USE_A) return templ_se_2pl<false, true>(a, A, b, ncat, pni, pcni, pi, theta);
 	if(WLE && !USE_A) return templ_se_2pl<true, false>(a, A, b, ncat, pni, pcni, pi, theta);
 	//if(!WLE && !USE_A)
@@ -254,3 +254,4 @@ arma::vec E_score(const arma::vec& theta, const arma::vec& A, const arma::imat& 
 		out[i] = E_2pl<false,false>(theta[i], A, a, b, items, ncat);
 	return out;
 }
+
