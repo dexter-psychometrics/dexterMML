@@ -9,7 +9,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.path = "man/figures/README-",
-  out.width = "100%"
+  out.width = "60%"
 )
 options(tibble.print_min = 5, tibble.print_max = 5)
 ```
@@ -23,8 +23,8 @@ DexterMML is currently in a beta version. Interfaces to functions should be reas
 DexterMML is not on CRAN and can only be installed from github.
 
 ```{r, eval = FALSE}
-# install.packages("devtools")
-devtools::install_github("dexter-psychometrics/dexterMML")
+# install.packages("remotes")
+remotes::install_github("dexter-psychometrics/dexterMML", build_vignettes=TRUE)
 ```
 
 This will work on Windows computers, provided [Rtools](https://cran.r-project.org/bin/windows/Rtools/) is installed, and on Linux computers. Mac OS is *not* supported unless you have installed a C++ compiler with openmp support and configured R to use it.
@@ -64,8 +64,7 @@ cml = fit_enorm(db)
 #equivalent in dexterMML
 mml = fit_1pl(db)
 
-plot(coef(cml)$beta,coef(mml)$beta, xlab='beta cml', ylab='beta mml')
-abline(0,1)
+plot(coef(cml)$beta,coef(mml)$beta, xlab='beta cml', ylab='beta mml',bty='l')
 
 ```
 

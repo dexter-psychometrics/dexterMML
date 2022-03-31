@@ -510,7 +510,8 @@ logLik.parms_mml = function(object, ...)
         itm = split(items, items$ii)
         if(object$model == '1PL')
         {
-          object$em$b[1+(1:nrow(itm[[i]])),i] = from_dexter(object$em$a[1+(1:nrow(itm[[i]])),i], itm[[i]]$beta)
+          for(i in seq_along(itm))
+            object$em$b[1+(1:nrow(itm[[i]])),i] = from_dexter(object$em$a[1+(1:nrow(itm[[i]])),i], itm[[i]]$beta)
           
         } else
         {

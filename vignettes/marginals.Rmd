@@ -35,14 +35,15 @@ set.seed(42)
 if (requireNamespace("Cairo", quietly = TRUE)) opts_chunk$set(dev='CairoPNG')
 ```
 
+In [dexter](https://dexter-psychometrics.github.io/dexter/) we use an extended Rasch model or Nominal Response Model to equate test forms and [classical test analysis](https://dexter-psychometrics.github.io/dexter/reference/tia_tables.html), [distractor plots](https://dexter-psychometrics.github.io/dexter/reference/distractor_plot.html) and the [interaction model](https://dexter-psychometrics.github.io/dexter/reference/fit_inter.html) for quality control of items. For calibration of the NRM and interacton model we can use conditional maximum likelihood (CML).
 
-CML (conditional maximum likelihood) calibration is not possible for fully adaptive tests or for Multi Stage tests with probabilistic routing rules. CML is currently also impractical for random tests (i.e. tests with items randomly selected from a bank). So in these cases we must turn to Marginal Maximum Likelihood, or MML. As the name implies, in MML estimation the likelihood that is maximized is marginal. The likelihood for a response vector $x$ for a single person is defined as:
+CML calibration is not possible for fully adaptive tests or for Multi Stage tests with probabilistic routing rules. CML is currently also impractical for random tests (i.e. tests with items randomly selected from a bank). Classical analysis is also not feasible in these situations. So in these cases we must turn to Marginal Maximum Likelihood (MML) where we can use a marginal Rasch model (NRM, 1PL) for equating and a 2PL for quality control of the items. As the name implies, in MML estimation the likelihood that is maximized is marginal. The likelihood for a response vector $x$ for a single person is defined as:
 
 $$
 P(x) = \int P(x|\theta, \omega)f(\theta|\phi,Y)d\theta
 $$
 
-with $\theta$ denoting ability and $\omega$ denoting a set of item parameters and Y zero or more background variables. For unidimensional models, in practice $f(\theta|\phi,Y)$ is assumed to be a normal distribution or a combination of independent normal distributions. To identify the model, one or two population parameters can be fixed to an arbitrary value for a 1PL or a 2PL respectively, or the parameters for one or more items can be set to a fixed value. 
+with $\theta$ denoting ability and $\omega$ denoting a set of item parameters and Y zero or more background variables. For unidimensional models, in practice $f(\theta|\phi,Y)$ is assumed to be a normal distribution or a combination of independent normal distributions. To identify the model, one or two population parameters can be fixed to an arbitrary value for a 1PL or a 2PL respectively, or the parameters of one or more items can be set to a fixed value. 
 
 # Inclusion of background variables Y
 
@@ -107,21 +108,21 @@ for(y in unique(population$Y))
 
 ```
 
-Yet, even though we misspecified the population distribution, there is no visible bias in the item parameter estimates. Let's try our random test again but this time we want to adapt our test a bit more to the individuals and so use a targeted testing approach. Suppose that the item constructors were able to provide an imperfect difficulty estimate of each item on a scale of 1 to 5. Further suppose that the background variable Y is known at the time of test administration and from previous studies it is known that the mean ability is highest in schooltype C and lowest in schooltype A. To enable a more precise measurement population A will get the easier items, B the intermediate and C the hardest items.
+Yet, even though we misspecified the population distribution, there is no visible bias in the item parameter estimates. Let's try our random test again but this time we want to adapt our test a bit more to the individuals and so we use a targeted testing approach. Suppose that the item developers were able to provide an imperfect difficulty estimate for each item on a scale of 1 to 5. Further suppose that the background variable Y (schooltype) is known at the time of test administration, and from previous studies it is also known that the mean ability is highest in schooltype C and lowest in schooltype A. To enable a more precise measurement population A will get the easier items (difficulty 1-2), B the intermediate (2-4) and C the hardest items (4-5).
 
 ```{r}
 # an imperfect difficulty categorization
 items = items %>%
-  mutate(cat = ntile(beta + runif(100,-.2,.2), 5),
+  mutate(df_cat = ntile(beta + runif(100,-.2,.2), 5),
          j = row_number()) 
 
 #simulate data
 dat = sim_2pl(items, population$theta)
 
 # 3 overlapping item banks
-bank = list(a=filter(items,cat %in% 1:2)$j,
-            b=filter(items,cat %in% 2:4)$j,
-            c=filter(items,cat %in% 4:5)$j)
+bank = list(a=filter(items, df_cat %in% 1:2)$j,
+            b=filter(items, df_cat %in% 2:4)$j,
+            c=filter(items, df_cat %in% 4:5)$j)
 
 # a targeted random test of 30 items
 for(i in 1:nrow(dat))
@@ -163,7 +164,7 @@ plot(check2$beta.true, check2$beta.est,
 ```
 
 
-It should be noted that in the first case, when we did not use the targeted test, we were strictly still wrong in omitting the background variable Y, since the different subgroups were not part of the same population. This is all perfectly explained in a more than excellent article by Eggen and Verhelst (2011)^[Eggen, T. J. H. M., & Verhelst, N. D. (2011). <br/> [Item calibration in incomplete testing designs.](https://research.utwente.nl/en/publications/item-calibration-in-incomplete-testing-designs) Psicologica, 32(1), 107-132.<br/>The excerpt is from page 124], in which they note:
+It should be noted that in the first case, when we did not use the targeted test, we were strictly still wrong in omitting the background variable Y, since the different subgroups were not part of the same population. This is all perfectly explained in an excellent article by Eggen and Verhelst (2011)^[Eggen, T. J. H. M., & Verhelst, N. D. (2011). <br/> [Item calibration in incomplete testing designs.](https://research.utwente.nl/en/publications/item-calibration-in-incomplete-testing-designs) Psicologica, 32(1), 107-132.<br/>The excerpt is from page 124. TTOP and TTMP stand for targeted testing in one or multiple (sub)populations respectively], in which they note:
 
 > Summarizing we can say that in MML item calibration in complete testing designs is
 justified as long as we are sampling from one population there is more or less a free choice of
@@ -179,7 +180,9 @@ is not general and in practice many failures are made.
 
 # Conclusion
 
-In conclusion, whenever relevant (categorical) background variables are known they should be included in an MML calibration, at least from a psychometric standpoint^[from a societal standpoint, this can be a wholly different matter]. Whenever a somewhat targeted test approach is used, omission of the background variable will lead to bias, this bias can range from the barely noticable to the extreme, depending in a largely unknown manner on the design and the population distributions.
+In conclusion, whenever relevant background variables are known it is always safest to include them in an MML calibration, at least from a psychometric standpoint^[from a societal standpoint, this can be a wholly different matter]. Whenever a targeted testing approach is used (i.e. a background variable influences the design), omission of the background variable will always lead to bias. This bias can range from the barely noticeable to the extreme, depending in a largely unknown and unverifiable manner on aspects of the design and the population distributions. 
+
+There are other ways of misspecifying a population distribution, e.g. the true population distribution might be skewed instead of Normal but, at least when estimating a 1PL or 2PL, in practice MML estimation is quite robust against this other type of misspecification so can be safely used.
 
 
 

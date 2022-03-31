@@ -11,8 +11,8 @@ be reasonably stable and there are no known errors.
 DexterMML is not on CRAN and can only be installed from github.
 
 ``` r
-# install.packages("devtools")
-devtools::install_github("dexter-psychometrics/dexterMML")
+# install.packages("remotes")
+remotes::install_github("dexter-psychometrics/dexterMML", build_vignettes=TRUE)
 ```
 
 This will work on Windows computers, provided
@@ -42,9 +42,9 @@ be used when your dataset includes adaptive or multi stage tests.
 
 DexterMML distinguishes itself from other MML R-packages by:
 
-  - including far fewer models and options
-  - being considerably faster
-  - support for the dexter data(base) structure
+-   including far fewer models and options
+-   being considerably faster
+-   support for the dexter data(base) structure
 
 It will be very easy to use if you are alrady familiar with dexter. If
 the user desires more flexibility in model choice and estimation
@@ -68,11 +68,10 @@ cml = fit_enorm(db)
 #equivalent in dexterMML
 mml = fit_1pl(db)
 
-plot(coef(cml)$beta,coef(mml)$beta, xlab='beta cml', ylab='beta mml')
-abline(0,1)
+plot(coef(cml)$beta,coef(mml)$beta, xlab='beta cml', ylab='beta mml',bty='l')
 ```
 
-<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-3-1.png" width="60%" />
 
 dexterMML can also fit a 2pl on an incomplete design and can be used
 when there is no pre-specified design, as in random or adaptive tests.
@@ -96,7 +95,7 @@ pv2 = plausible_values.mml(dat,f2,covariates=group)
 
 cor(data.frame(theta_true=theta,pv_1pl=pv1$PV1,pv_2pl=pv2$PV1))
 #>            theta_true    pv_1pl    pv_2pl
-#> theta_true  1.0000000 0.9163244 0.9166978
-#> pv_1pl      0.9163244 1.0000000 0.9294787
-#> pv_2pl      0.9166978 0.9294787 1.0000000
+#> theta_true  1.0000000 0.8963820 0.9046078
+#> pv_1pl      0.8963820 1.0000000 0.9089848
+#> pv_2pl      0.9046078 0.9089848 1.0000000
 ```
