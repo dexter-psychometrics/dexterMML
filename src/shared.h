@@ -28,6 +28,10 @@ arma::mat mat_init(const arma::mat& orig);
 
 arma::vec vec_init(const arma::vec& orig);
 
+arma::imat imat_init(const arma::imat& orig);
+
+void imat_ipl_or(arma::imat& m1, const arma::imat& m2);
+
 #pragma omp declare reduction( + : arma::field<arma::mat> : field_plus(omp_out, omp_in)) \
 initializer( omp_priv = field_init(omp_orig) )
 
@@ -36,6 +40,10 @@ initializer( omp_priv = mat_init(omp_orig) )
 
 #pragma omp declare reduction( + : arma::vec : omp_out += omp_in ) \
 initializer( omp_priv = vec_init(omp_orig) )
+
+#pragma omp declare reduction( || : arma::imat : imat_ipl_or(omp_out,omp_in) ) \
+initializer( omp_priv = imat_init(omp_orig) )
+
 
 
 static void chkIntFn(void *dummy) {

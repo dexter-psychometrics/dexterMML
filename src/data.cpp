@@ -2,6 +2,8 @@
 #include <unordered_map>
 #include <RcppArmadillo.h>
 
+#include "shared.h"
+
 using namespace arma;
 using Rcpp::Named;
 
@@ -295,38 +297,59 @@ void persons_ii(const int item1, const int item2, const ivec& ix,
 * Designs
 *****************************/
 
+// to do: want a test for this
 // [[Rcpp::export]]
 Rcpp::List design_matrices(const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& pg, const int nit, const int ng)
 {
 	const int np = pni.n_elem;
 	imat item(nit,nit,fill::zeros), group(ng,nit,fill::zeros);
 	
-	std::vector<bool> bk(nit);
-	std::unordered_map<std::vector<bool>, int> booklets;
-	
-	for(int p=0; p<np; p++)
+	//case complete data
+	if(np * nit == pi.n_elem)
 	{
-		std::fill(bk.begin(), bk.end(), false);
-		int g = pg[p];
-		for(int indx = pcni[p]; indx<pcni[p+1]; indx++)
+		item.ones();
+		group.ones();		
+	}
+	else
+	{
+	
+#pragma omp parallel for reduction(||: item, group)
+		for(int p=0; p<np; p++)
 		{
-			bk[pi[indx]] = true;
-			group.at(g,pi[indx]) = 1;
+			const int g = pg[p];
+			const int r2 = pni[p] % 2;
+			if(r2>0)
+			{
+				const int itm=pi[pcni[p]];
+				group.at(g,itm) = 1;
+				for(int j=pcni[p]+1;j<pcni[p+1]; j++) item.at(itm,pi[j]) = 1;	
+			}		
+			
+			for(int i=pcni[p]+r2; i<pcni[p+1]; i+=2)
+			{
+				const int itm1=pi[i], itm2=pi[i+1];
+				
+				group.at(g,itm1) = 1;
+				group.at(g,itm2) = 1;
+				item.at(itm1,itm2) = 1;
+				
+				for(int j=i+2; j<pcni[p+1]; j++)
+				{
+					item.at(itm1,pi[j]) = 1;	
+					item.at(itm2,pi[j]) = 1;
+				}
+			}
 		}
-		booklets.insert(std::make_pair(bk,p));		
+
+		item += item.t();
+		item.diag().ones(); 
 	}
 	
-	for(auto& iter: booklets )
-	{
-		int p = iter.second;
-		for(int i= pcni[p]; i<pcni[p+1]; i++)
-			for(int j=i+1; j<pcni[p+1]; j++)
-				item.at(pi[i],pi[j]) = 1;	
-	}
-	item += item.t();
-	item.diag().ones(); 
 	return Rcpp::List::create(Named("items")=item, Named("groups")=group);
 }
+
+
+
 
 // bitflag, 0=unidentified; 1=connected; 2,4,8 and combinations are tenuously identified (should give warnings)
 // [[Rcpp::export]]

@@ -197,7 +197,7 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
   }
   
   # estimation
-  design = design_matrices(pre$pni, pre$pcni, pre$pi, data$persons$c_group_nbr, length(data$item_id), nrow(data$groups))
+  design = design_matrices(pre$pni, pre$pcni, pre$pi, data$persons$c_group_nbr, nit, nrow(data$groups))
   
   mu = rep(0, nrow(data$groups))
   sigma = rep(1, nrow(data$groups))

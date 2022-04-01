@@ -30,22 +30,22 @@ li span.sidenote, blockquote span.sidenote{
 library(knitr)
 opts_chunk$set(tidy = FALSE, message = FALSE)
 
-options(scipen=999, ndigits=3)
+options(scipen=999, digits=3)
 set.seed(42)
 if (requireNamespace("Cairo", quietly = TRUE)) opts_chunk$set(dev='CairoPNG')
 ```
 
-In [dexter](https://dexter-psychometrics.github.io/dexter/) we use an extended Rasch model or Nominal Response Model to equate test forms and [classical test analysis](https://dexter-psychometrics.github.io/dexter/reference/tia_tables.html), [distractor plots](https://dexter-psychometrics.github.io/dexter/reference/distractor_plot.html) and the [interaction model](https://dexter-psychometrics.github.io/dexter/reference/fit_inter.html) for quality control of items. For calibration of the NRM and interacton model we can use conditional maximum likelihood (CML).
+In [dexter](https://dexter-psychometrics.github.io/dexter/) we use an extended (polytomous) Rasch model to equate test forms and [classical test analysis](https://dexter-psychometrics.github.io/dexter/reference/tia_tables.html), [distractor plots](https://dexter-psychometrics.github.io/dexter/reference/distractor_plot.html) and the [interaction model](https://dexter-psychometrics.github.io/dexter/reference/fit_inter.html) for quality control of items. For calibration of the NRM and interacton model we can use conditional maximum likelihood (CML).
 
-CML calibration is not possible for fully adaptive tests or for Multi Stage tests with probabilistic routing rules. CML is currently also impractical for random tests (i.e. tests with items randomly selected from a bank). Classical analysis is also not feasible in these situations. So in these cases we must turn to Marginal Maximum Likelihood (MML) where we can use a marginal Rasch model (NRM, 1PL) for equating and a 2PL for quality control of the items. As the name implies, in MML estimation the likelihood that is maximized is marginal. The likelihood for a response vector $x$ for a single person is defined as:
+CML calibration is not possible for fully adaptive tests or for Multi Stage tests with probabilistic routing rules. CML is currently also impractical for random tests (i.e. tests with items randomly selected from a bank). Classical analysis is also not feasible in these situations. So in these cases we must turn to Marginal Maximum Likelihood (MML) where we can use a marginal Rasch model (1PL) for equating and a 2PL for quality control of the items. As the name implies, in MML estimation the likelihood that is maximized is marginal, over an assumed distribution of ability. The likelihood for a response vector $x$ for a single person is defined as:
 
 $$
 P(x) = \int P(x|\theta, \omega)f(\theta|\phi,Y)d\theta
 $$
 
-with $\theta$ denoting ability and $\omega$ denoting a set of item parameters and Y zero or more background variables. For unidimensional models, in practice $f(\theta|\phi,Y)$ is assumed to be a normal distribution or a combination of independent normal distributions. To identify the model, one or two population parameters can be fixed to an arbitrary value for a 1PL or a 2PL respectively, or the parameters of one or more items can be set to a fixed value. 
+with $\theta$ denoting ability and $\omega$ denoting a set of item parameters and $Y$ zero or more background variables. For unidimensional models, in practice $f(\theta|\phi,Y)$ is usually assumed to be a normal distribution or a combination of independent normal distributions with different parameters for each categorical value of $Y$. To identify the model, one or two population parameters can be fixed to an arbitrary value for a 1PL or a 2PL respectively, or the parameters of one or more items can be set to a fixed value. Here we want to focus on the background variable $Y$. 
 
-# Inclusion of background variables Y
+# Inclusion of background variables
 
 To illustrate the effect of including background variables, we will simulate some data. We assume a population that consists of 3 different subgroups with a different distribution of the true ability $\theta$.
 
