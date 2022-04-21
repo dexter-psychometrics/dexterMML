@@ -24,7 +24,7 @@ DexterMML is not on CRAN and can only be installed from github.
 
 ```{r, eval = FALSE}
 # install.packages("remotes")
-remotes::install_github("dexter-psychometrics/dexterMML", build_vignettes=TRUE)
+remotes::install_github("dexter-psychometrics/dexterMML", build_vignettes=TRUE,dependencies=TRUE)
 ```
 
 This will work on Windows computers, provided [Rtools](https://cran.r-project.org/bin/windows/Rtools/) is installed, and on Linux computers. Mac OS is *not* supported unless you have installed a C++ compiler with openmp support and configured R to use it.

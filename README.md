@@ -12,7 +12,7 @@ DexterMML is not on CRAN and can only be installed from github.
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("dexter-psychometrics/dexterMML", build_vignettes=TRUE)
+remotes::install_github("dexter-psychometrics/dexterMML", build_vignettes=TRUE,dependencies=TRUE)
 ```
 
 This will work on Windows computers, provided
@@ -95,7 +95,7 @@ pv2 = plausible_values.mml(dat,f2,covariates=group)
 
 cor(data.frame(theta_true=theta,pv_1pl=pv1$PV1,pv_2pl=pv2$PV1))
 #>            theta_true    pv_1pl    pv_2pl
-#> theta_true  1.0000000 0.8963820 0.9046078
-#> pv_1pl      0.8963820 1.0000000 0.9089848
-#> pv_2pl      0.9046078 0.9089848 1.0000000
+#> theta_true  1.0000000 0.9019932 0.9109214
+#> pv_1pl      0.9019932 1.0000000 0.9120085
+#> pv_2pl      0.9109214 0.9120085 1.0000000
 ```

@@ -297,7 +297,7 @@ void persons_ii(const int item1, const int item2, const ivec& ix,
 * Designs
 *****************************/
 
-// to do: want a test for this
+
 // [[Rcpp::export]]
 Rcpp::List design_matrices(const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& pg, const int nit, const int ng)
 {
@@ -311,8 +311,7 @@ Rcpp::List design_matrices(const arma::ivec& pni, const arma::ivec& pcni, const 
 		group.ones();		
 	}
 	else
-	{
-	
+	{	
 #pragma omp parallel for reduction(||: item, group)
 		for(int p=0; p<np; p++)
 		{
