@@ -1,3 +1,4 @@
+#include <omp.h>
 #include <RcppArmadillo.h>
 #include "data.h"
 #include "shared.h"
