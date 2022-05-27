@@ -17,8 +17,8 @@ remotes::install_github("dexter-psychometrics/dexterMML", build_vignettes=TRUE,d
 
 This will work on Windows computers, provided
 [Rtools](https://cran.r-project.org/bin/windows/Rtools/) is installed,
-and on Linux computers. Mac OS is *not* supported unless you have
-installed a C++ compiler with openmp support and configured R to use it.
+and on Linux computers. Separate more involved installation instructions for Mac can be found in the main folder, 
+these were kindly contributed by jvdneut. 
 
 ## Overview
 
