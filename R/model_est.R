@@ -203,7 +203,7 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
   sigma = rep(1, nrow(data$groups))
   
   # this changes the respons vectors px and ix in pre
-  # icatg hoefdt niet mee, icat is const
+  # icatg hoeft niet mee, icat is const
   a = categorize(pre$pni, pre$pcni, pre$icnp, pre$pi,
                  pre$icat, pre$imax,max(pre$ncat), pre$px, pre$ix)
   

@@ -108,6 +108,9 @@ start_2pl = function(a, ncat, icatg, ref_group, item_id, fixed_param=NULL)
       inner_join(fixed_param, by='item_id', suffix = c('','.ignore')) %>%
       arrange(.data$index, .data$item_score)
     
+    if(length(item_id) == n_distinct(fixed_param$item_id))
+      stop("Nothing to fit, all parameters have been fixed.")
+    
     fpar = split(fixed_param,fixed_param$index)
     
     for(x in fpar)
@@ -141,6 +144,9 @@ start_1pl = function(a, ncat, icatg, ref_group, item_id, fixed_param=NULL)
     fixed_param = tibble(item_id=item_id, index=1:nit) %>%
       inner_join(fixed_param, by='item_id', suffix = c('','.ignore')) %>%
       arrange(.data$index, .data$item_score)
+    
+    if(length(item_id) == n_distinct(fixed_param$item_id))
+      stop("Nothing to fit, all parameters have been fixed.")
     
     fpar = split(fixed_param,fixed_param$index)
     
