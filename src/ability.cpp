@@ -3,9 +3,6 @@
 using namespace arma;
 using Rcpp::Named;
 
-// the unweighted 2PL variant is probably biased
-// expected score==score is probably not the ML point
-// should use the derivative 
 
 template<bool WLE, bool USE_A>
 double SE_2pl(const double theta, const vec& A, const imat& a, const mat& b, const ivec& items, const ivec& ncat)

@@ -467,7 +467,7 @@ plot.parms_mml = function(x,items=NULL,nbins=5,ci=.95,...)
       mutate(conf_min = max_score * cmin(.data$expected/max_score, .data$n),
              conf_max = max_score * cmax(.data$expected/max_score, .data$n)) %>%
       mutate(outlier = .data$obs < .data$conf_min | .data$obs > .data$conf_max)
-    
+    # the confidence interval is not correct for polytomous items
     
     plot.args = merge_arglists(user.args,
                               default=default.args,
@@ -542,11 +542,18 @@ logLik.parms_mml = function(object, ...)
                                 object$pre$pi, object$pre$px, 
                                 quadpoints$nodes, quadpoints$weights, object$em$mu, object$em$sigma, object$pre$group)
     }
-    
-    
-    
   }
-  names(ll) = "log likelihood"
+  
+  if(object$model == '1PL')
+  {
+    attr(ll, "df") = sum(object$pre$ncat[object$pre$fixed==0] - 1L) + 2L * nrow(object$pop) - as.integer(!any(object$pre$fixed==1))
+  } else
+  {
+    attr(ll, "df") = sum(object$pre$ncat[object$pre$fixed==0]) + 2L*(nrow(object$pop) - as.integer(!any(object$pre$fixed==1)))
+  }
+  
+  attr(ll, "nobs") = nrow(object$pre$pi)
+  class(ll) = "logLik"
   ll
 }
 
