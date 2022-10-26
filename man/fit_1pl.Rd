@@ -23,7 +23,7 @@ fit_2pl(
 
 \item{predicate}{logical predicate to filter dataSrc, has no effect when dataSrc is a matrix}
 
-\item{group}{if dataSrc is a matrix then a vector of length `nrows(dataSrc)`, otherwise the names of one or more person
+\item{group}{if dataSrc is a matrix then a vector of length `nrow(dataSrc)`, otherwise the names of one or more person
 properties together grouping people. See details.}
 
 \item{fixed_param}{data.frame with columns: item_id, item_score, beta and, if model is 2PL, also alpha.}

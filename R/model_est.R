@@ -65,7 +65,7 @@ cal_settings = list(
 #'
 #' @param dataSrc a matrix, long format data.frame or a dexter database
 #' @param predicate logical predicate to filter dataSrc, has no effect when dataSrc is a matrix
-#' @param group if dataSrc is a matrix then a vector of length `nrows(dataSrc)`, otherwise the names of one or more person
+#' @param group if dataSrc is a matrix then a vector of length `nrow(dataSrc)`, otherwise the names of one or more person
 #' properties together grouping people. See details.
 #' @param fixed_param data.frame with columns: item_id, item_score, beta and, if model is 2PL, also alpha.
 #' @param se should standard errors be determined. For large datasets with many items this can take some time. Set
@@ -431,15 +431,7 @@ merge_arglists = function(args, default = NULL, override = NULL)
 plot.parms_mml = function(x,items=NULL,nbins=5,ci=.95,...)
 {
   parms=x
-  if(parms$model=='1PL')
-  {
-    A=rep(1,ncol(parms$em$b))
-    b=-parms$em$b/parms$em$a
-  } else
-  {
-    A=parms$em$A
-    b=parms$em$b
-  }
+  
   if(is.null(items))
     items = parms$item_id
   ii = match(items,parms$item_id)
@@ -447,27 +439,52 @@ plot.parms_mml = function(x,items=NULL,nbins=5,ci=.95,...)
     stop(paste('Items:', paste(items[is.na(ii)],collapse=', '),'not found.'),call.=FALSE)
   
   qnt = abs(qnorm((1-ci)/2))
-  cmin = function(p, n) pmax(0, p - qnt * sqrt(p*(1-p)/n))
-  cmax = function(p, n) pmin(1, p + qnt * sqrt(p*(1-p)/n))
+
+  # excluding zero, 2pl parametrisation
+  ste = function(a,A,b,theta,n)
+  {
+    sqrt(sapply(theta, function(tht)
+    {
+      p = exp(A*a*(tht-b))
+      s = 1+sum(p)
+      sa = sum(p*a*A)
+      sa2 = sum(p*(a*A)^2)
+      (s*sa2-sa^2)/s^2
+    })/n)
+  }
   
   user.args = list(...)
   default.args = list(bty='l',xlab = expression(theta), ylab='score',main='$item_id',col='grey80')
   
   for(i in ii)
   {
-    max_score = parms$pre$imax[i]
+    ncat = parms$pre$ncat[i]
+    a = parms$em$a[,i,drop=FALSE]
     indx = (parms$pre$icnp[i]+1L):parms$pre$icnp[i+1]
+    b = parms$em$b[,i,drop=FALSE]
+    
+    if(parms$model=='1PL')
+    {
+      # 2pl parametrisation
+      A=1L
+      b=-b/a
+    } else
+    {
+      A = parms$em$A[i]
+    }
+
     x = tibble(item_score=parms$em$a[parms$pre$ix[indx]+1L,i], 
-               theta=parms$em$thetabar[1L+parms$pre$ip[indx]]) %>%
-      mutate(bin=ntile(.data$theta,nbins)) %>%
-      group_by(.data$bin) %>%
-      summarise(m=mean(.data$theta),obs=mean(.data$item_score),n=n()) %>%
-      ungroup() %>%
-      mutate(expected = E_score(.data$m, A, parms$em$a, b, i-1L, parms$pre$ncat)) %>%
-      mutate(conf_min = max_score * cmin(.data$expected/max_score, .data$n),
-             conf_max = max_score * cmax(.data$expected/max_score, .data$n)) %>%
-      mutate(outlier = .data$obs < .data$conf_min | .data$obs > .data$conf_max)
-    # the confidence interval is not correct for polytomous items
+                 theta=parms$em$thetabar[1L+parms$pre$ip[indx]]) %>%
+        mutate(bin=ntile(.data$theta,nbins)) %>%
+        group_by(.data$bin) %>%
+        summarise(m=mean(.data$theta),obs=mean(.data$item_score),n=n()) %>%
+        ungroup() %>%
+        mutate(expected = drop(E_score(.data$m, A, a, b, 0L, ncat)),
+               se = ste(a[2:ncat],A,b[2:ncat],.data$m,.data$n),
+               conf_min = pmax(0, .data$expected - qnt*.data$se),
+               conf_max = pmin(max(a), .data$expected + qnt*.data$se)) %>%
+        mutate(outlier = .data$obs < .data$conf_min | .data$obs > .data$conf_max)
+    
     
     plot.args = merge_arglists(user.args,
                               default=default.args,
@@ -526,7 +543,7 @@ logLik.parms_mml = function(object, ...)
     }
     if(!is.null(dots$populations))
     {
-      idcols = setdiff(colnames(object$pop),c('mean','sd','group_n'))
+      idcols = colnames(object$pop)[1:(min(which(colnames(object$pop) %in% c('mean','sd','group_n')))-1)]
       pop = arrange(dots$populations, across(idcols))
       object$em$mu = pop$mean
       object$em$sigma = pop$sd

@@ -22,6 +22,9 @@ num_hess = function(e,delta=1e-5)
                            e$theta_grid, e$em$mu, e$em$sigma, pre$group, delta)
   }
 }
+
+
+
 # 
 # grd_2pl = function(e)
 # {
@@ -41,31 +44,3 @@ num_hess = function(e,delta=1e-5)
 # 
 # # quadpoints
 # usethis::use_data(quadpoints, internal = TRUE)
-
-
-# NR2 = function(e)
-# {
-#   #shortcut, would need to actually compute the ll derivative for mu/sig
-#   em=e$em; pre=e$pre
-#   design = design_matrices(pre$pni, pre$pcni, pre$pi, pre$group, nrow(e$items), nrow(e$pop))
-#   
-#   nr = NR_pl2(em$a, em$A, em$b, pre$ncat, em$theta, pre$fixed_items,
-#                    pre$ix, pre$pni, pre$pcni, pre$pi, pre$px, pre$group, pre$group_n,
-#                    pre$ip,pre$inp, pre$icnp,
-#                    em$mu, em$sigma, pre$ref_group,design$items,design$groups)
-#   
-#   e$nr=nr
-#   
-#   em$b = nr$b
-#   em$A = nr$A
-#   em$mu = nr$mu
-#   em$sigma = nr$sigma
-#   e$em=em
-#   # negelct updating pars, this is only for testing
-#   e$em$LL =  loglikelihood_2pl_GH(em$a, em$A, em$b, pre$ncat, pre$pni, pre$pcni, 
-#                        pre$pi, pre$px, 
-#                        quadpoints$nodes, quadpoints$weights, em$mu, em$sigma, pre$group)
-#   e
-# }
-
-
