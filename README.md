@@ -17,8 +17,9 @@ remotes::install_github("dexter-psychometrics/dexterMML", build_vignettes=TRUE,d
 
 This will work on Windows computers, provided
 [Rtools](https://cran.r-project.org/bin/windows/Rtools/) is installed,
-and on Linux computers. Mac OS is *not* supported unless you have
-installed a C++ compiler with openmp support and configured R to use it.
+and on Linux computers. Separate more involved installation instructions
+for Mac can be found in the main folder, these were kindly contributed
+by jvdneut.
 
 ## Overview
 
@@ -102,7 +103,7 @@ pv2 = plausible_values.mml(dat,f2,covariates=group)
 
 cor(data.frame(theta_true=theta,pv_1pl=pv1$PV1,pv_2pl=pv2$PV1))
 #>            theta_true    pv_1pl    pv_2pl
-#> theta_true  1.0000000 0.9073556 0.9075977
-#> pv_1pl      0.9073556 1.0000000 0.9144968
-#> pv_2pl      0.9075977 0.9144968 1.0000000
+#> theta_true  1.0000000 0.9003350 0.9143034
+#> pv_1pl      0.9003350 1.0000000 0.9144066
+#> pv_2pl      0.9143034 0.9144066 1.0000000
 ```
