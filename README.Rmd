@@ -46,7 +46,9 @@ DexterMML distinguishes itself from other MML R-packages by:
 
 It will be very easy to use if you are alrady familiar with dexter. If the user desires more flexibility in model choice and estimation options, they are better of using R packages [TAM](https://CRAN.R-project.org/package=TAM) or [mirt](https://CRAN.R-project.org/package=mirt) 
 
+## Important note
 
+DexterMML offers 1PL and 2PL estimation. In a 2PL it is possible for a person with fewer items correct to get a higher ability estimate than a person with more items correct, on the same test. _Use of a 2PL for scoring a summative test should therefore be deemed unethical_. 
 
 ## Usage
 

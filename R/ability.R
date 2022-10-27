@@ -38,13 +38,15 @@ abl_pre = function(dataSrc, pars, qtpredicate, env, group=NULL)
 
 #' Abilities for a 1 and 2pl
 #'
+#' Note that in a 2PL it is possible for a person with fewer items correct to get a higher ability estimate than
+#' a person with more items correct, on the same test. Use of a 2PL for scoring a summative test should therefore be deemed unethical.  
 #'
 #' @param dataSrc	a connection to a dexter database, a matrix, or a data.frame with columns: person_id, item_id, item_score
 #' @param parms	object produced by function fit_1pl or fit_2pl or possibly a data.frame of parameters
 #' @param predicate An optional expression to subset data, if NULL all data is used
 #' @param method Maximum Likelihood (MLE), Weighted Likelihood (WLE)
 #'
-#' @returns data.frame with variables person_id and theta and se
+#' @returns data.frame with variables person_id, theta and se
 #'
 #' @details
 #' 

@@ -17,8 +17,8 @@ remotes::install_github("dexter-psychometrics/dexterMML", build_vignettes=TRUE,d
 
 This will work on Windows computers, provided
 [Rtools](https://cran.r-project.org/bin/windows/Rtools/) is installed,
-and on Linux computers. Separate more involved installation instructions for Mac can be found in the main folder, 
-these were kindly contributed by jvdneut. 
+and on Linux computers. Mac OS is *not* supported unless you have
+installed a C++ compiler with openmp support and configured R to use it.
 
 ## Overview
 
@@ -51,6 +51,13 @@ the user desires more flexibility in model choice and estimation
 options, they are better of using R packages
 [TAM](https://CRAN.R-project.org/package=TAM) or
 [mirt](https://CRAN.R-project.org/package=mirt)
+
+## Important note
+
+DexterMML offers 1PL and 2PL estimation. In a 2PL it is possible for a
+person with fewer items correct to get a higher ability estimate than a
+person with more items correct, on the same test. *Use of a 2PL for
+scoring a summative test should therefore be deemed unethical*.
 
 ## Usage
 
@@ -95,7 +102,7 @@ pv2 = plausible_values.mml(dat,f2,covariates=group)
 
 cor(data.frame(theta_true=theta,pv_1pl=pv1$PV1,pv_2pl=pv2$PV1))
 #>            theta_true    pv_1pl    pv_2pl
-#> theta_true  1.0000000 0.9019932 0.9109214
-#> pv_1pl      0.9019932 1.0000000 0.9120085
-#> pv_2pl      0.9109214 0.9120085 1.0000000
+#> theta_true  1.0000000 0.9073556 0.9075977
+#> pv_1pl      0.9073556 1.0000000 0.9144968
+#> pv_2pl      0.9075977 0.9144968 1.0000000
 ```
