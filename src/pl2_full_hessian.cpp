@@ -33,7 +33,7 @@ arma::vec gradient_2pl(arma::imat& a, const arma::vec& A, const arma::mat& b, co
 	for(int i=0; i<nit; i++)
 	{	
 		ll_pl2_v2 f(itrace, theta, ip, pi, pcni, px, 
-							pgroup, inp, icnp, mu, sigma, i, a.col(i));
+							pgroup, inp, icnp, mu, sigma, i, a.col(i).head(ncat[i]));
 		
 		vec pars = b.col(i).head(ncat[i]);
 		pars[0] = A[i];
@@ -69,7 +69,7 @@ arma::vec gradient_2pl_p(arma::imat& a, const arma::vec& A, const arma::mat& b, 
 	for(int i=0; i<nit; i++)
 	{	
 		ll_pl2_v2 f(itrace, theta, ip, pi, pcni, px, 
-							pgroup, inp, icnp, mu, sigma, i, a.col(i));
+							pgroup, inp, icnp, mu, sigma, i, a.col(i).head(ncat[i]));
 		
 		vec pars = b.col(i).head(ncat[i]);
 		pars[0] = A[i];

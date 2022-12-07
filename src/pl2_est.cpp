@@ -218,7 +218,7 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 					continue;	
 				
 				ll_pl2_v2 f(itrace, theta, ip, pi, pcni, px, 
-								pgroup, inp, icnp, mu, sigma, i, a.col(i),
+								pgroup, inp, icnp, mu, sigma, i, a.col(i).head(ncat[i]),
 								A_prior, A_mu, A_sigma);
 				int err=0;
 				vec pars = m_step_2pl(f, A[i], b.col(i), ncat[i], tol, err);

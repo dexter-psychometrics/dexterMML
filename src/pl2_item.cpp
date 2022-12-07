@@ -114,7 +114,7 @@ double test_ll_v2(const arma::imat& a, const arma::vec& A, const arma::mat& b, c
 		itrace(i) = pl2_trace(theta, a.col(i), A[i], b.col(i), ncat[i]);
 
 	ll_pl2_v2 f(itrace, theta, ip, pi, pcni, px, 
-			pgroup, inp, icnp, mu, sigma, item, a.col(item));
+			pgroup, inp, icnp, mu, sigma, item, a.col(item).head(ncat[item]));
 	
 	
 	return f(pars);
@@ -134,7 +134,7 @@ arma::vec test_gr_v2(const arma::imat& a, const arma::vec& A, const arma::mat& b
 		itrace(i) = pl2_trace(theta, a.col(i), A[i], b.col(i), ncat[i]);
 
 	ll_pl2_v2 f(itrace, theta, ip, pi, pcni, px, 
-			pgroup, inp, icnp, mu, sigma, item, a.col(item));
+			pgroup, inp, icnp, mu, sigma, item, a.col(item).head(ncat[item]));
 	
 	vec g(pars.n_elem);
 	f.df(pars,g);
@@ -156,9 +156,10 @@ arma::mat test_hess_v2(const arma::imat& a, const arma::vec& A, const arma::mat&
 		itrace(i) = pl2_trace(theta, a.col(i), A[i], b.col(i), ncat[i]);
 
 	ll_pl2_v2 f(itrace, theta, ip, pi, pcni, px, 
-			pgroup, inp, icnp, mu, sigma, item, a.col(item));
+			pgroup, inp, icnp, mu, sigma, item, a.col(item).head(ncat[item]));
 	
 	mat h(pars.n_elem,pars.n_elem);
 	f.hess(pars,h);
 	return h;
 }			
+

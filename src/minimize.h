@@ -6,7 +6,7 @@
 
 /*****************************************************************************************************************
 * This implementation of nlm is a partial translation from R source code which is a translation of fortran uncmin 
-* which was written by Dennis Schnabel
+* which was written by Dennis and Schnabel
 *
 * dtrsl (used by nlm code) is a cpp translation from fortran code in linpack 
 * originally developed by Jack Dongarra, Jim Bunch, Cleve Moler and Pete Stewart.
