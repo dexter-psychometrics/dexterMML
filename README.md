@@ -47,7 +47,7 @@ DexterMML distinguishes itself from other MML R-packages by:
 -   being considerably faster
 -   support for the dexter data(base) structure
 
-It will be very easy to use if you are alrady familiar with dexter. If
+It will be very easy to use if you are already familiar with dexter. If
 the user desires more flexibility in model choice and estimation
 options, they are better of using R packages
 [TAM](https://CRAN.R-project.org/package=TAM) or
@@ -103,7 +103,7 @@ pv2 = plausible_values.mml(dat,f2,covariates=group)
 
 cor(data.frame(theta_true=theta,pv_1pl=pv1$PV1,pv_2pl=pv2$PV1))
 #>            theta_true    pv_1pl    pv_2pl
-#> theta_true  1.0000000 0.9003350 0.9143034
-#> pv_1pl      0.9003350 1.0000000 0.9144066
-#> pv_2pl      0.9143034 0.9144066 1.0000000
+#> theta_true  1.0000000 0.8986855 0.9046010
+#> pv_1pl      0.8986855 1.0000000 0.9093858
+#> pv_2pl      0.9046010 0.9093858 1.0000000
 ```

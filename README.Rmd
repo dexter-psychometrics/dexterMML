@@ -44,7 +44,7 @@ DexterMML distinguishes itself from other MML R-packages by:
 * being considerably faster
 * support for the dexter data(base) structure
 
-It will be very easy to use if you are alrady familiar with dexter. If the user desires more flexibility in model choice and estimation options, they are better of using R packages [TAM](https://CRAN.R-project.org/package=TAM) or [mirt](https://CRAN.R-project.org/package=mirt) 
+It will be very easy to use if you are already familiar with dexter. If the user desires more flexibility in model choice and estimation options, they are better of using R packages [TAM](https://CRAN.R-project.org/package=TAM) or [mirt](https://CRAN.R-project.org/package=mirt) 
 
 ## Important note
 

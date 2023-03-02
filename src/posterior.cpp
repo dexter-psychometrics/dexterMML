@@ -115,7 +115,7 @@ long double loglikelihood(field<mat>& itrace, const arma::ivec& pcni, const arma
 
 
 // GH likelihood for some extra precision
-long double loglikelihood_GH(field<cube> itrace, const ivec& ncat, 
+long double loglikelihood_GH(field<cube>& itrace, const ivec& ncat, 
 				const ivec& pni, const ivec& pcni, const ivec& pi, const ivec& px, 
 				const mat& theta, const vec& w, const vec& mu, const vec& sigma, const ivec& pgroup)
 {
