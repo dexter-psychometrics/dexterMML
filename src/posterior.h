@@ -13,5 +13,10 @@ arma::mat normalized_posterior(arma::field<arma::mat>& itrace, const arma::ivec&
 
 long double loglikelihood(arma::field<arma::mat>& itrace, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
 							const arma::vec& theta, const arma::vec& mu, const arma::vec& sigma, const arma::ivec& pgroup);
+							
+							
+long double loglikelihood_GH(arma::field<arma::cube>& itrace, const arma::ivec& ncat, 
+				const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, 
+				const arma::mat& theta, const arma::vec& w, const arma::vec& mu, const arma::vec& sigma, const arma::ivec& pgroup);
 
 #endif

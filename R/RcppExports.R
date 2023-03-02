@@ -129,3 +129,63 @@ test_nlm <- function(a, theta, r, par_in) {
     invisible(.Call(`_dexterMML_test_nlm`, a, theta, r, par_in))
 }
 
+test_ll_1plG <- function(theta, r, par) {
+    .Call(`_dexterMML_test_ll_1plG`, theta, r, par)
+}
+
+test_gradient_1plG <- function(theta, r, par) {
+    .Call(`_dexterMML_test_gradient_1plG`, theta, r, par)
+}
+
+test_hess_1plG <- function(theta, r, par) {
+    .Call(`_dexterMML_test_hess_1plG`, theta, r, par)
+}
+
+estimate_1plG <- function(b_start, pni, pcni, pi, px, theta_start, mu_start, sigma_start, gn, pgroup, ref_group = 0L, max_iter = 200L) {
+    .Call(`_dexterMML_estimate_1plG`, b_start, pni, pcni, pi, px, theta_start, mu_start, sigma_start, gn, pgroup, ref_group, max_iter)
+}
+
+loglikelihood_1plG_GH <- function(b, lguess, pni, pcni, pi, px, GH_theta, w, mu, sigma, pgroup) {
+    .Call(`_dexterMML_loglikelihood_1plG_GH`, b, lguess, pni, pcni, pi, px, GH_theta, w, mu, sigma, pgroup)
+}
+
+sim_1plGc <- function(b, guess, theta) {
+    .Call(`_dexterMML_sim_1plGc`, b, guess, theta)
+}
+
+test_ll_AG <- function(theta, r, par, a) {
+    .Call(`_dexterMML_test_ll_AG`, theta, r, par, a)
+}
+
+test_gradient_AG <- function(theta, r, par, a) {
+    .Call(`_dexterMML_test_gradient_AG`, theta, r, par, a)
+}
+
+test_hess_AG <- function(theta, r, par, a) {
+    .Call(`_dexterMML_test_hess_AG`, theta, r, par, a)
+}
+
+test_ll_AG_alpha <- function(a, theta, g, b, r) {
+    .Call(`_dexterMML_test_ll_AG_alpha`, a, theta, g, b, r)
+}
+
+test_gradient_AG_alpha <- function(a, theta, g, b, r) {
+    .Call(`_dexterMML_test_gradient_AG_alpha`, a, theta, g, b, r)
+}
+
+test_hess_AG_alpha <- function(a, theta, g, b, r) {
+    .Call(`_dexterMML_test_hess_AG_alpha`, a, theta, g, b, r)
+}
+
+estimate_1plAG <- function(b_start, pni, pcni, pi, px, theta_start, mu_start, sigma_start, gn, pgroup, ref_group = 0L, max_iter = 200L) {
+    .Call(`_dexterMML_estimate_1plAG`, b_start, pni, pcni, pi, px, theta_start, mu_start, sigma_start, gn, pgroup, ref_group, max_iter)
+}
+
+sim_1plAGc <- function(guess, a, b, theta) {
+    .Call(`_dexterMML_sim_1plAGc`, guess, a, b, theta)
+}
+
+loglikelihood_1plAG_GH <- function(g, a, b, pni, pcni, pi, px, GH_theta, w, mu, sigma, pgroup) {
+    .Call(`_dexterMML_loglikelihood_1plAG_GH`, g, a, b, pni, pcni, pi, px, GH_theta, w, mu, sigma, pgroup)
+}
+

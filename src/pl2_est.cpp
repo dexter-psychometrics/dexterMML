@@ -270,7 +270,7 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 	return Rcpp::List::create(Named("A")=A, Named("b")=b, Named("thetabar") = thetabar, Named("mu") = mu, Named("sigma") = sigma, 
 							  Named("niter")=iter, Named("theta")=theta, Named("prior_part") = prior_part, 
 		Named("debug")=Rcpp::List::create( 	Named("error")=stop, Named("maxdif_A")=maxdif_A, Named("maxdif_b")=maxdif_b,
-											Named("ll_history") = h_ll));
+											Named("ll_history") = h_ll,Named("r")=r));
 }
 
 
