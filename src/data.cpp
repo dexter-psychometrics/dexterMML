@@ -203,7 +203,7 @@ Rcpp::List df_pre(const arma::ivec& person_id, const arma::ivec& pgroup, const i
 // [[Rcpp::export]]
 bool duplicate_person_item(const arma::ivec& ip, const arma::ivec& icnp)
 {
-	const int nit = icnp.n_elem;
+	const int nit = icnp.n_elem-1;
 	int cnt = 0;
 	
 #pragma omp parallel for reduction(+: cnt)

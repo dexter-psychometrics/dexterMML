@@ -44,7 +44,7 @@ plausible_values.mml = function(dataSrc, parms, predicate=NULL, covariates=NULL,
                            n_prior_updates=80L, thin=60L,pgw = progress_width())
   
   colnames(pv) = sprintf("PV%i",1:ncol(pv))
-  cbind(select(pre$persons,-.data$c_group_nbr), as.data.frame(pv))
+  cbind(select(pre$persons,-"c_group_nbr"), as.data.frame(pv))
 }
 
 
@@ -63,7 +63,7 @@ sim_2pl = function(pars,theta)
   if(!'alpha' %in% colnames(pars))
     pars$alpha=1
   
-  pars = select(ungroup(pars),.data$item_id,.data$item_score,.data$alpha,.data$beta) %>%
+  pars = select(ungroup(pars),"item_id","item_score","alpha","beta") %>%
     mutate(item_score=as.integer(.data$item_score)) %>%
     arrange(.data$item_id,.data$item_score)
   

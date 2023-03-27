@@ -105,7 +105,7 @@ start_2pl = function(a, ncat, icatg, ref_group, item_id, fixed_param=NULL)
   if(!is.null(fixed_param))
   {
     fixed_param = tibble(item_id=item_id, index=1:nit) %>%
-      inner_join(fixed_param, by='item_id', suffix = c('','.ignore')) %>%
+      inner_join(fixed_param, by='item_id', suffix = c('','.ignore'),multiple='all') %>%
       arrange(.data$index, .data$item_score)
     
     if(length(item_id) == n_distinct(fixed_param$item_id))
@@ -142,7 +142,7 @@ start_1pl = function(a, ncat, icatg, ref_group, item_id, fixed_param=NULL)
   if(!is.null(fixed_param))
   {
     fixed_param = tibble(item_id=item_id, index=1:nit) %>%
-      inner_join(fixed_param, by='item_id', suffix = c('','.ignore')) %>%
+      inner_join(fixed_param, by='item_id', suffix = c('','.ignore'),multiple='all') %>%
       arrange(.data$index, .data$item_score)
     
     if(length(item_id) == n_distinct(fixed_param$item_id))

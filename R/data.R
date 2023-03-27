@@ -49,7 +49,7 @@ mml_pre = function(dataSrc, qtpredicate, env, group=NULL, sorted=TRUE)
       subgroups = persons[,group] %>% count(across(everything()), name='group_n')
       subgroups$c_group_nbr = 0:(nrow(subgroups)-1L)
       
-      persons = inner_join(persons, select(subgroups,-.data$group_n), by=group) %>%
+      persons = inner_join(persons, select(subgroups,-"group_n"), by=group) %>%
         arrange(.data$person_id)
 
     } else

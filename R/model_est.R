@@ -153,7 +153,7 @@ fit_2pl = function(dataSrc, predicate=NULL, group = NULL,
        priorA=priorA, priorA_mu=prior_alpha_mu, priorA_sigma=prior_alpha_sigma)
 }
 
-
+#to do: need some input checks here, at least correct columns and no duplicates in fixed_param
 est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL','2PL'),
                fixed_param=NULL, se=TRUE,
                priorA = 0L,
@@ -226,7 +226,7 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
                                  quadpoints$nodes, quadpoints$weights, em$mu, em$sigma, data$persons$c_group_nbr)
     
     severity = em_report(em$debug)
-    pop = select(data$groups, -.data$c_group_nbr)
+    pop = select(data$groups, -"c_group_nbr")
     pop$mean = drop(em$mu)
     pop$sd = drop(em$sigma)
     
@@ -292,7 +292,7 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
                    item_score = as.integer(unlist(mapply(function(i,k){ a[2:k,i] },1:nit,pre$ncat))),
                    beta = as.double(unlist(mapply(function(i,k){ em$b[2:k,i] },1:nit,pre$ncat))))
     
-    pop = select(data$groups, -.data$c_group_nbr)
+    pop = select(data$groups, -"c_group_nbr")
     pop$mean = drop(em$mu)
     pop$sd = drop(em$sigma)
     
@@ -411,7 +411,6 @@ merge_arglists = function(args, default = NULL, override = NULL)
   args
 }
 
-# plot looks weird, check, at least sorted is not necessary
 
 #' Plot for fitted MML models
 #' 
