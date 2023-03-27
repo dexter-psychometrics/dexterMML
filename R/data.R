@@ -66,6 +66,16 @@ mml_pre = function(dataSrc, qtpredicate, env, group=NULL, sorted=TRUE)
                  dat$item_id, dat$item_score, rg[2], nlevels(dat$person_id), nlevels(dat$item_id), sorted)
     item_id = levels(dat$item_id)
     
+    if(inherits(dataSrc,'data.frame'))
+    {
+      #raw get_resp_data does not check anything, if there are multiple responses per person we have to find them here
+      if(duplicate_person_item(pre$ip,pre$icnp))
+      {
+        stop("Your data.frame contains multiple responses to the same questions by the same persons. This is not allowed.",
+             call.=FALSE)
+      }
+    }
+    
   }
       
   

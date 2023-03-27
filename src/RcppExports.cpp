@@ -100,6 +100,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// duplicate_person_item
+bool duplicate_person_item(const arma::ivec& ip, const arma::ivec& icnp);
+RcppExport SEXP _dexterMML_duplicate_person_item(SEXP ipSEXP, SEXP icnpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::ivec& >::type ip(ipSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type icnp(icnpSEXP);
+    rcpp_result_gen = Rcpp::wrap(duplicate_person_item(ip, icnp));
+    return rcpp_result_gen;
+END_RCPP
+}
 // categorize
 arma::imat categorize(const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& icnp, const arma::ivec& pi, const arma::imat& icat, const arma::ivec& imax, const int max_cat, arma::ivec& px, arma::ivec& ix);
 RcppExport SEXP _dexterMML_categorize(SEXP pniSEXP, SEXP pcniSEXP, SEXP icnpSEXP, SEXP piSEXP, SEXP icatSEXP, SEXP imaxSEXP, SEXP max_catSEXP, SEXP pxSEXP, SEXP ixSEXP) {
@@ -674,6 +686,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_E_score", (DL_FUNC) &_dexterMML_E_score, 6},
     {"_dexterMML_mat_pre", (DL_FUNC) &_dexterMML_mat_pre, 4},
     {"_dexterMML_df_pre", (DL_FUNC) &_dexterMML_df_pre, 9},
+    {"_dexterMML_duplicate_person_item", (DL_FUNC) &_dexterMML_duplicate_person_item, 2},
     {"_dexterMML_categorize", (DL_FUNC) &_dexterMML_categorize, 9},
     {"_dexterMML_design_matrices", (DL_FUNC) &_dexterMML_design_matrices, 6},
     {"_dexterMML_check_connected_c", (DL_FUNC) &_dexterMML_check_connected_c, 3},

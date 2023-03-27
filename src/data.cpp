@@ -200,6 +200,22 @@ Rcpp::List df_pre(const arma::ivec& person_id, const arma::ivec& pgroup, const i
 		Named("icat") = icat, Named("icatg") = icatg, Named("ncat") = ncat, Named("imax") = imax, Named("isum") = isum, Named("psum") = psum);
 }
 
+// [[Rcpp::export]]
+bool duplicate_person_item(const arma::ivec& ip, const arma::ivec& icnp)
+{
+	const int nit = icnp.n_elem;
+	int cnt = 0;
+	
+#pragma omp parallel for reduction(+: cnt)
+	for(int i=0; i<nit; i++)
+	{
+		for(int j=icnp[i]; j<icnp[i+1]-1; j++)
+		{
+			cnt += (ip[j]==ip[j+1]);
+		}	
+	}
+	return cnt > 0;
+}
 
 
 

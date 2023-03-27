@@ -21,6 +21,10 @@ df_pre <- function(person_id, pgroup, ng, item_id, item_score, max_score, np, ni
     .Call(`_dexterMML_df_pre`, person_id, pgroup, ng, item_id, item_score, max_score, np, nit, sorted)
 }
 
+duplicate_person_item <- function(ip, icnp) {
+    .Call(`_dexterMML_duplicate_person_item`, ip, icnp)
+}
+
 categorize <- function(pni, pcni, icnp, pi, icat, imax, max_cat, px, ix) {
     .Call(`_dexterMML_categorize`, pni, pcni, icnp, pi, icat, imax, max_cat, px, ix)
 }
