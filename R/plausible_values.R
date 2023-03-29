@@ -71,7 +71,9 @@ sim_2pl = function(pars,theta)
   
   items = pars %>%
     group_by(.data$item_id) %>%
-    summarise(ncat=n()+1,alpha=first(.data$alpha)) 
+    summarise(ncat=n()+1,alpha=first(.data$alpha)) %>%
+    ungroup() %>%
+    arrange(.data$item_id)
   
   ncat=items$ncat
   
