@@ -471,12 +471,8 @@ int check_connected_c(const arma::imat& item, const arma::imat& group, const arm
 }
 
 
-// very unsure about the polytomous correctness of this after categorize a, test with weird a
-// when understood, add comments in several places
-
-
 // heuristic to estimate beta sequentially per population and add to one scale
-// not sure if polytomous is done very correclty
+
 // [[Rcpp::export]]
 arma::mat start_beta(const arma::imat& a, const arma::ivec& ncat, const arma::icube& icatg, const int ref_group,
 					 const arma::ivec& item_fixed, const arma::mat& fixed_beta)
@@ -514,7 +510,8 @@ arma::mat start_beta(const arma::imat& a, const arma::ivec& ncat, const arma::ic
 			{
 				for(int j=1;j<ncat[i]; j++)
 				{
-					beta.at(j,i) = nc * (std::log(icatg.at(a.at(j,i),i,g)) - std::log(icatg.at(0,i,g)))/j;
+					//beta.at(j,i) = nc * (std::log(icatg.at(a.at(j,i),i,g)) - std::log(icatg.at(0,i,g)))/j;
+					beta.at(j,i) = nc * (std::log(icatg.at(a.at(j,i),i,g)) - std::log(icatg.at(0,i,g)))/(j*a.at(j,i));
 				}
 				estimated[i] = 1;		
 			}
@@ -549,7 +546,8 @@ arma::mat start_beta(const arma::imat& a, const arma::ivec& ncat, const arma::ic
 			{
 				for(int j=1;j<ncat[i]; j++)
 				{
-					g_beta.at(j,i) = nc * (std::log(icatg.at(a.at(j,i),i,g)) - std::log(icatg.at(0,i,g)))/j;
+					//g_beta.at(j,i) = nc * (std::log(icatg.at(a.at(j,i),i,g)) - std::log(icatg.at(0,i,g)))/j;
+					g_beta.at(j,i) = nc * (std::log(icatg.at(a.at(j,i),i,g)) - std::log(icatg.at(0,i,g)))/(j*a.at(j,i));
 				}
 				g_estimated[i] = 1;		
 			}
