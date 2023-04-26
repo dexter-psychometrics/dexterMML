@@ -511,7 +511,7 @@ arma::mat start_beta(const arma::imat& a, const arma::ivec& ncat, const arma::ic
 				for(int j=1;j<ncat[i]; j++)
 				{
 					//beta.at(j,i) = nc * (std::log(icatg.at(a.at(j,i),i,g)) - std::log(icatg.at(0,i,g)))/j;
-					beta.at(j,i) = nc * (std::log(icatg.at(a.at(j,i),i,g)) - std::log(icatg.at(0,i,g)))/(j*a.at(j,i));
+					beta.at(j,i) = nc * (std::log(icatg.at(a.at(j,i),i,g)) - std::log(icatg.at(0,i,g)))/a.at(j,i);
 				}
 				estimated[i] = 1;		
 			}
@@ -547,7 +547,7 @@ arma::mat start_beta(const arma::imat& a, const arma::ivec& ncat, const arma::ic
 				for(int j=1;j<ncat[i]; j++)
 				{
 					//g_beta.at(j,i) = nc * (std::log(icatg.at(a.at(j,i),i,g)) - std::log(icatg.at(0,i,g)))/j;
-					g_beta.at(j,i) = nc * (std::log(icatg.at(a.at(j,i),i,g)) - std::log(icatg.at(0,i,g)))/(j*a.at(j,i));
+					g_beta.at(j,i) = nc * (std::log(icatg.at(a.at(j,i),i,g)) - std::log(icatg.at(0,i,g)))/a.at(j,i);
 				}
 				g_estimated[i] = 1;		
 			}

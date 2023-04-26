@@ -71,8 +71,7 @@ plot(coef(cml)$beta,coef(mml)$beta, xlab='beta cml', ylab='beta mml',bty='l')
 ```
 
 
-dexterMML can also fit a 2pl on an incomplete design and can be used when there is no pre-specified design, as in 
-random or adaptive tests.
+dexterMML can also fit a 2pl on an incomplete design and can be used when there is no pre-specified design, as in random or adaptive tests.
 
 ```{r,message=F}
 theta = c(rnorm(1000),rnorm(500,1,2),rnorm(500,-1,.5))
