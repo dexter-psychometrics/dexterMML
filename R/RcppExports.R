@@ -133,3 +133,7 @@ test_nlm <- function(a, theta, r, par_in) {
     invisible(.Call(`_dexterMML_test_nlm`, a, theta, r, par_in))
 }
 
+test_D1 <- function(a, theta, r, par_in) {
+    invisible(.Call(`_dexterMML_test_D1`, a, theta, r, par_in))
+}
+

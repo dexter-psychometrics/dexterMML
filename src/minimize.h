@@ -24,6 +24,98 @@ other: problem
 
 // simple 1 dimensional NR minimization for convex functions
 // since nlm does not work well for 1D problems and dichotomous rasch should be a convex function
+
+// pathologial case can typically handle par estimates up to ~200 away from optimum
+template <class T>
+double D1_pathological(const double est, T &funcd, int &err)
+{
+	arma::vec x,ll;
+	
+	{
+		//find 2 points that are not nan in an +/- 100 interval around the original estimate
+		double ax = est, bx=est+1, cx;
+		double fa = funcd(arma::vec{est}), fb, fc;
+		const double gold = 1.61;
+		
+		if(std::isnan(fa))
+		{
+			for(int i=0; i<50; i+=2)
+			{
+				fa = funcd(arma::vec{est+i});
+				if(!std::isnan(fa))
+				{
+					ax = est+i;
+					bx = est+i+2;
+				}
+				fa = funcd(arma::vec{est-i});
+				if(!std::isnan(fa))
+				{
+					ax = est-i;
+					bx = est-i-2;
+				}
+			}
+		}
+		fb = funcd(arma::vec{bx});
+		if(std::isnan(fb))
+		{
+			bx = ax-2;
+			fb = funcd(arma::vec{bx});
+		}
+		// bracket
+		if(fb > fa)
+		{
+			std::swap(fa,fb);
+			std::swap(ax,bx);
+		}
+		cx = bx+gold*(bx-ax);
+		fc = funcd(arma::vec{cx});
+		while(fb>fc)
+		{
+			if(fc < fa)
+			{
+				ax = cx;
+				fa = fc;
+				if(fb > fa)
+				{
+					std::swap(fa,fb);
+					std::swap(ax,bx);
+				}
+			}
+			cx = bx+gold*(bx-ax);
+			fc = funcd(arma::vec{cx});			
+		}
+		x = {ax,bx,cx};
+		ll = {fa,fb,fc};
+	}
+	
+	double prop, ll_prop;	
+	
+	for(int iter=0; iter<5; iter++)
+	{
+		const double num = SQR(x[1]-x[0]) * (ll[1]-ll[2]) - SQR(x[1]-x[2]) * (ll[1]-ll[0]);
+		const double dnm = (x[1]-x[0]) * (ll[1]-ll[2]) - (x[1]-x[2]) * (ll[1]-ll[0]);
+		
+		prop = x[1] - num/(2*dnm); 
+		ll_prop = funcd(arma::vec{prop});
+		
+		if(std::isnan(ll_prop) || ll_prop >= ll.max())
+			break;
+		
+		const int i = ll.index_max();
+		x[i] = prop; 
+		ll[i] = ll_prop;		
+		
+		
+	}
+	
+	prop = x[ll.index_min()];
+	
+	if(est==prop) err = 1;
+	
+	return prop;
+}
+
+// NR with a switch to pathl for steps > 5
 template <class T>
 void D1min(arma::vec& pars, const double gtol, int &iter, double &fret, T &funcd, int& err)
 {
@@ -46,9 +138,16 @@ void D1min(arma::vec& pars, const double gtol, int &iter, double &fret, T &funcd
 		funcd.hess(pars,h);
 	
 		step = g[0]/h[0];
-		if(std::abs(step)>max_step)
-			step = std::copysign(max_step, step);
-				
+		
+		if(std::isnan(step) || std::abs(step) > max_step)
+		{
+			// NR will be wildly inefficient since we're too far from the minimum
+			// take the pathological approach
+			pars[0] = D1_pathological(pars[0], funcd, err);
+			if(err>0) break;
+			continue;
+		}
+		
 		pars[0] -= step;
 		
 		if(std::abs(g[0]) < gtol || std::abs(step) < min_step )
@@ -57,8 +156,10 @@ void D1min(arma::vec& pars, const double gtol, int &iter, double &fret, T &funcd
 	}
 	if(iter==max_iter)
 		err=2;
-	
+	fret = funcd(pars);
 }
+
+
 
 /*
  *  R : A Computer Language for Statistical Data Analysis
@@ -829,7 +930,6 @@ void nlm(arma::vec& p, const double gtol, int &iter, double &fret, T &funcd, int
 				   iter);
 	p = xpls; 
 }
-
 
 
 #endif

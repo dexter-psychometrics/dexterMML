@@ -679,6 +679,19 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// test_D1
+void test_D1(arma::ivec& a, arma::vec theta, arma::mat& r, const arma::vec& par_in);
+RcppExport SEXP _dexterMML_test_D1(SEXP aSEXP, SEXP thetaSEXP, SEXP rSEXP, SEXP par_inSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::ivec& >::type a(aSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type r(rSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type par_in(par_inSEXP);
+    test_D1(a, theta, r, par_in);
+    return R_NilValue;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_theta_2pl", (DL_FUNC) &_dexterMML_theta_2pl, 10},
@@ -714,6 +727,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_loglikelihood_2pl_GH", (DL_FUNC) &_dexterMML_loglikelihood_2pl_GH, 13},
     {"_dexterMML_loglikelihood_1pl_GH", (DL_FUNC) &_dexterMML_loglikelihood_1pl_GH, 12},
     {"_dexterMML_test_nlm", (DL_FUNC) &_dexterMML_test_nlm, 4},
+    {"_dexterMML_test_D1", (DL_FUNC) &_dexterMML_test_D1, 4},
     {NULL, NULL, 0}
 };
 

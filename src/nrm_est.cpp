@@ -79,8 +79,8 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 	long double ll, old_ll=-std::numeric_limits<long double>::max();
 	double maxdif_b=0;
 	
-	bool adapt_theta = true;
-	
+	bool adapt_theta = ng > 1 || ref_group < 0;
+
 	for(; iter<max_iter; iter++)
 	{
 		for(int i=0; i<nit; i++)
@@ -131,6 +131,12 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 		}
 			
 		if(ref_group >= 0) identify_1pl(mu, ref_group, b);
+
+		maxdif_b = abs(b-old_b).max();
+		prog.update(maxdif_b, iter);		
+
+		if(maxdif_b < 0.0001)
+			break;
 		
 		if(adapt_theta)
 		{
@@ -139,12 +145,6 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 				for(int k=1; k<=max_a;k++)
 					exp_at.at(k,t) = std::exp(k*theta[t]);		
 		}		
-		
-		maxdif_b = abs(b-old_b).max();
-		prog.update(maxdif_b, iter);		
-		
-		if(maxdif_b < 0.0001)
-			break;
 		
 		old_ll = ll;
 		
