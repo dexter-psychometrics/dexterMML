@@ -34,7 +34,7 @@ void sample_musig(const arma::ivec& popn, arma::vec& mu,
 			smu+=mu[j];
 		}
 		mu_all = R::rnorm(smu/n, sigma_all/std::sqrt((double)J));
-		sigma = std::sqrt(n*SQR(sigma)/R::rchisq((double)n-1));
+		sigma = std::sqrt(n*SQR(sigma)/R::rchisq((double)n));
 		sigma_all=0;
 		for(int j=0; j<J; j++) sigma_all += SQR(mu[j]-mu_all);
 		sigma_all = std::sqrt(sigma_all/R::rchisq((double)J -1));

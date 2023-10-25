@@ -5,7 +5,7 @@
 #' For use in cases where CML is not possible, such as an adaptive test
 #' or a multi stage test with unknown routing rules (it happens).
 #'
-#' In all other cases using CML (i.e. dexter or dexterMST) is strongly preferrable.
+#' In all other cases, using CML (i.e. dexter or dexterMST) is strongly preferrable.
 #'
 #' DexterMML distinguishes itself from other MML R-packages by:
 #'

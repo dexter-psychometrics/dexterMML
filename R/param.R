@@ -127,7 +127,7 @@ start_2pl = function(a, ncat, icatg, ref_group, item_id, fixed_param=NULL)
       }
     }
     ref_group = -1L
-    A[fixed_items==0L] = exp(mean(log(A[fixed_items==1L])))
+    A[fixed_items==0L] = exp(mean(log(A[fixed_items==1L & A>0])))
   }
   b = start_beta(a,ncat,icatg,ref_group,fixed_items, fixb)
   list(A=A, b=b, fixed_items=fixed_items, ref_group=ref_group)
