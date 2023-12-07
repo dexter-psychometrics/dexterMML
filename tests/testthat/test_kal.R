@@ -14,7 +14,14 @@ test_that('1pl verb agg confirms to dexter',{
 
   expect_gt(cor(p$SE_beta,coef(e)$SE_beta,use='complete.obs'),.99)
 
-  a.cml=ability(db,f,item_id!='S3DoShout',method='WLE',standard_errors=TRUE)
+  if('standard_errors' %in% names(formals(dexter::ability)))
+  {
+    a.cml=ability(db,f,item_id!='S3DoShout',method='WLE',standard_errors=TRUE)
+  } else
+  {
+    a.cml=ability(db,f,item_id!='S3DoShout',method='WLE')
+  }
+  
   a.mml=ability.mml(db,e,item_id!='S3DoShout',method='WLE')
   
   expect_lt(mean(abs(a.cml$theta-a.mml$theta)),.01)

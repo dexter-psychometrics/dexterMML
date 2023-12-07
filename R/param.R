@@ -194,7 +194,8 @@ simple_pars = function(parms, items=NULL)
       df$item_id = as.integer(factor(df$item_id))
     }
     
-    df = arrange(df,.data$item_id,.data$item_score)
+    df = arrange(df,.data$item_id,.data$item_score) %>%
+      mutate(index = dense_rank(.data$item_id))
     
     
     ncat = max(table(df$item_id))
@@ -216,13 +217,13 @@ simple_pars = function(parms, items=NULL)
     }
     
     out$icat[1,] = 1L
-    items = split(df,df$item_id)
-    
-    for(i in seq_along(items))
+
+    for(itm in split(df,df$item_id))
     {
-      itm = items[[i]]
       b = if(out$model=='1PL'){-from_dexter(itm$item_score, itm$beta)/itm$item_score}else{itm$beta}
       n = nrow(itm)
+      
+      i = itm$index[1]
       
       out$b[2:(n+1),i] = b
       out$a[2:(n+1),i] = itm$item_score

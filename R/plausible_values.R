@@ -64,8 +64,10 @@ sim_2pl = function(pars,theta)
     pars$alpha=1
   
   pars = select(ungroup(pars),"item_id","item_score","alpha","beta") %>%
-    mutate(item_score=as.integer(.data$item_score)) %>%
-    arrange(.data$item_id,.data$item_score)
+    mutate(item_score=as.integer(.data$item_score),
+           item_id=factor(as.character(.data$item_id))) %>%
+    arrange(.data$item_id,.data$item_score) %>%
+    mutate(index=dense_rank(.data$item_id))
   
   #check alpha equal?
   
@@ -80,15 +82,15 @@ sim_2pl = function(pars,theta)
   a=matrix(0L,max(items$ncat),nrow(items))
   b=matrix(0,max(items$ncat),nrow(items))
   
-  pars = split(pars,pars$item_id)
-  for(i in seq_along(pars))
+  for(itm in split(pars,pars$item_id))
   {
-    a[2:ncat[i],i]=pars[[i]]$item_score
-    b[2:ncat[i],i]=pars[[i]]$beta
+    i=itm$index[1]
+    a[2:ncat[i],i]=itm$item_score
+    b[2:ncat[i],i]=itm$beta
   }
   
   dat = sim_2plc(a, items$alpha, b, ncat,theta)
-  colnames(dat) = items$item_id
+  colnames(dat) = as.character(items$item_id)
   dat
 }
 

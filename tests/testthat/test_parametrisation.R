@@ -35,11 +35,24 @@ test_that('1pl verb agg confirms to dexter',{
   # we would possibly test 2pl theta against some other program, this is just internal consistency
   
   f2 = fit_2pl(db,se=FALSE)
-  theta.mml = ability.mml(db, f2, method='WLE')
-  theta.mml_cf = ability.mml(db, coef(f2), method='WLE')
+  
+  rsp = get_responses(db) %>%
+    group_by(person_id) %>%
+    slice_sample(n=20) %>%
+    ungroup()
+    
+  theta.mml = ability.mml(rsp, f2, method='WLE')
+  
+  # also test possible issues with sorting of capital letters
+  
+  rsp = rsp %>% mutate(item_id = gsub('S2','s2',item_id))
+  coef_f2 = coef(f2) %>% mutate(item_id = gsub('S2','s2',item_id))
+  theta.mml_cf = ability.mml(rsp, coef_f2, method='WLE')
   
   tst = inner_join(theta.mml_cf, theta.mml, by='person_id')
-  expect_lt(max(abs(tst$theta.x-tst$theta.y)), 1e-10, label=' dexter vs mml theta')
+  expect_lt(max(abs(tst$theta.x-tst$theta.y)), 1e-10, label='coef vs parms object theta')
+  
+  close_project(db)
   
 })
 
