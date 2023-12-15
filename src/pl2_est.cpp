@@ -236,32 +236,42 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 			}
 		}
 		
+		if(min_error > 0)
+		{
+			stop += 1;
+			break;
+		}		
+		
+		if(!A.is_finite() || !b.is_finite())
+		{
+			A = old_A;
+			b = old_b;
+			stop += 2;
+			break;
+		}
+		
+		if(iter > 100 && min(abs(A)) < 0.005)
+		{
+			stop += 8;
+			break;
+		}			
+	
+		maxdif_b = (abs(b-old_b)).max();
+		maxdif_A = max(abs(A-old_A));			
+		
+		if(maxdif_b < .0001 && maxdif_A < .0001)
+			break;
+			
 		if(adapt_theta)
 			scale_theta(mu, sigma, gn, theta_start, theta);
 		
 		for(int i=0; i<nit; i++)
 			pl2_trace(theta, a.col(i), A[i], b.col(i), ncat[i],itrace(i));
-		
-		if(min_error > 0)
-		{
-			stop += 1;
-			break;
-		}
-		if(iter > 100 && min(abs(A)) < 0.005)
-		{
-			stop += 8;
-			break;
-		}	
-	
-		maxdif_b = (abs(b-old_b)).max();
-		maxdif_A = max(abs(A-old_A));
-	
+			
 		prog.update(std::max(maxdif_b, maxdif_A), iter);
-				
-		if(maxdif_b < .0001 && maxdif_A < .0001)
-			break;
 		
 	}
+	
 	if(iter>=max_iter-1)
 		stop += 4;
 		
