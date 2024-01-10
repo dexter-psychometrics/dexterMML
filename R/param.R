@@ -104,8 +104,8 @@ start_2pl = function(a, ncat, icatg, ref_group, item_id, fixed_param=NULL)
   
   if(!is.null(fixed_param))
   {
-    fixed_param = tibble(item_id=item_id, index=1:nit) %>%
-      inner_join(fixed_param, by='item_id', suffix = c('','.ignore'),multiple='all') %>%
+    fixed_param = tibble(item_id=item_id, index=1:nit) |>
+      inner_join(fixed_param, by='item_id', suffix = c('','.ignore'),multiple='all') |>
       arrange(.data$index, .data$item_score)
     
     if(length(item_id) == n_distinct(fixed_param$item_id))
@@ -141,8 +141,8 @@ start_1pl = function(a, ncat, icatg, ref_group, item_id, fixed_param=NULL)
   
   if(!is.null(fixed_param))
   {
-    fixed_param = tibble(item_id=item_id, index=1:nit) %>%
-      inner_join(fixed_param, by='item_id', suffix = c('','.ignore'),multiple='all') %>%
+    fixed_param = tibble(item_id=item_id, index=1:nit) |>
+      inner_join(fixed_param, by='item_id', suffix = c('','.ignore'),multiple='all') |>
       arrange(.data$index, .data$item_score)
     
     if(length(item_id) == n_distinct(fixed_param$item_id))
@@ -194,7 +194,7 @@ simple_pars = function(parms, items=NULL)
       df$item_id = as.integer(factor(df$item_id))
     }
     
-    df = arrange(df,.data$item_id,.data$item_score) %>%
+    df = arrange(df,.data$item_id,.data$item_score) |>
       mutate(index = dense_rank(.data$item_id))
     
     
@@ -207,8 +207,8 @@ simple_pars = function(parms, items=NULL)
     if('alpha' %in% colnames(df))
     {
       out$model='2PL'
-      out$A = distinct(df,.data$item_id,.keep_all=TRUE) %>%
-        arrange(.data$item_id) %>%
+      out$A = distinct(df,.data$item_id,.keep_all=TRUE) |>
+        arrange(.data$item_id) |>
         pull(.data$alpha)
     } else
     {
@@ -261,5 +261,4 @@ simple_pars = function(parms, items=NULL)
   }
   stop("expected a parms_mml object")
 }
-
 

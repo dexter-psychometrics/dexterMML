@@ -63,18 +63,18 @@ sim_2pl = function(pars,theta)
   if(!'alpha' %in% colnames(pars))
     pars$alpha=1
   
-  pars = select(ungroup(pars),"item_id","item_score","alpha","beta") %>%
+  pars = select(ungroup(pars),"item_id","item_score","alpha","beta") |>
     mutate(item_score=as.integer(.data$item_score),
-           item_id=factor(as.character(.data$item_id))) %>%
-    arrange(.data$item_id,.data$item_score) %>%
+           item_id=factor(as.character(.data$item_id))) |>
+    arrange(.data$item_id,.data$item_score) |>
     mutate(index=dense_rank(.data$item_id))
   
   #check alpha equal?
   
-  items = pars %>%
-    group_by(.data$item_id) %>%
-    summarise(ncat=n()+1,alpha=first(.data$alpha)) %>%
-    ungroup() %>%
+  items = pars |>
+    group_by(.data$item_id) |>
+    summarise(ncat=n()+1,alpha=first(.data$alpha)) |>
+    ungroup() |>
     arrange(.data$item_id)
   
   ncat=items$ncat
@@ -93,6 +93,5 @@ sim_2pl = function(pars,theta)
   colnames(dat) = as.character(items$item_id)
   dat
 }
-
 
 

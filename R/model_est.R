@@ -473,15 +473,15 @@ plot.parms_mml = function(x,items=NULL,nbins=5,ci=.95,...)
     }
 
     x = tibble(item_score=parms$em$a[parms$pre$ix[indx]+1L,i], 
-                 theta=parms$em$thetabar[1L+parms$pre$ip[indx]]) %>%
-        mutate(bin=ntile(.data$theta,nbins)) %>%
-        group_by(.data$bin) %>%
-        summarise(m=mean(.data$theta),obs=mean(.data$item_score),n=n()) %>%
-        ungroup() %>%
+                 theta=parms$em$thetabar[1L+parms$pre$ip[indx]]) |>
+        mutate(bin=ntile(.data$theta,nbins)) |>
+        group_by(.data$bin) |>
+        summarise(m=mean(.data$theta),obs=mean(.data$item_score),n=n()) |>
+        ungroup() |>
         mutate(expected = drop(E_score(.data$m, A, a, b, 0L, ncat)),
                se = ste(a[2:ncat],A,b[2:ncat],.data$m,.data$n),
                conf_min = pmax(0, .data$expected - qnt*.data$se),
-               conf_max = pmin(max(a), .data$expected + qnt*.data$se)) %>%
+               conf_max = pmin(max(a), .data$expected + qnt*.data$se)) |>
         mutate(outlier = .data$obs < .data$conf_min | .data$obs > .data$conf_max)
     
     
@@ -514,11 +514,11 @@ logLik.parms_mml = function(object, ...)
     {
       
       items = inner_join(dots$items, mutate(object$items[,c('item_id','item_score')], indx = row_number()), 
-                         by=c('item_id','item_score')) %>%
-        group_by(.data$item_id) %>%
-        mutate(ii = min(.data$indx)) %>%
-        ungroup() %>%
-        mutate(ii = dense_rank(.data$ii)) %>%
+                         by=c('item_id','item_score')) |>
+        group_by(.data$item_id) |>
+        mutate(ii = min(.data$indx)) |>
+        ungroup() |>
+        mutate(ii = dense_rank(.data$ii)) |>
         arrange(.data$indx)
       
       if(nrow(items) == nrow(object$items))
@@ -572,5 +572,4 @@ logLik.parms_mml = function(object, ...)
   class(ll) = "logLik"
   ll
 }
-
 

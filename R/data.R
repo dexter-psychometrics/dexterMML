@@ -23,7 +23,7 @@ mml_pre = function(dataSrc, qtpredicate, env, group=NULL, sorted=TRUE)
     } else
     {
       persons = tibble(person_id=person_id, group_id=factor(group), c_group_nbr = as.integer(.data$group_id)-1L)
-      subgroups = count(persons, .data$c_group_nbr, name='group_n') %>%
+      subgroups = count(persons, .data$c_group_nbr, name='group_n') |>
         arrange(.data$c_group_nbr)
       subgroups$group_id = levels(persons$group_id)
     }
@@ -44,12 +44,12 @@ mml_pre = function(dataSrc, qtpredicate, env, group=NULL, sorted=TRUE)
       if(!is.character(group))
         stop("Group should be a character vector")
       
-      persons = distinct(dat[,c('person_id',group)], .data$person_id, .keep_all=TRUE) %>% as_tibble()
+      persons = distinct(dat[,c('person_id',group)], .data$person_id, .keep_all=TRUE) |> as_tibble()
       
-      subgroups = persons[,group] %>% count(across(everything()), name='group_n')
+      subgroups = persons[,group] |> count(across(everything()), name='group_n')
       subgroups$c_group_nbr = 0:(nrow(subgroups)-1L)
       
-      persons = inner_join(persons, select(subgroups,-"group_n"), by=group) %>%
+      persons = inner_join(persons, select(subgroups,-"group_n"), by=group) |>
         arrange(.data$person_id)
 
     } else
@@ -112,4 +112,3 @@ check_connected = function(design, fixed_items)
     warning(paste("Unconnected design.",msg,"Ideally you should use a connected design."), call.=FALSE)
   }
 }
-
