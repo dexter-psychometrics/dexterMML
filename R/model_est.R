@@ -23,21 +23,21 @@ em_report = function(em)
 {
   if(em$err>0)
   {
-    flags = bitflag(em$err,1:4)
+    flags = bitflag(em$err,1:5)
     msg = c("minimization error occurred","could not increase likelihood further","maximum iterations reached",
-            "alpha parameters near zero")[flags]
+            "alpha parameters near zero","Standard deviation in one of the groups is near zero, consider removing this group from the calibration")[flags]
     msg = paste0(paste0(msg,collapse=' and '),'.')
     
     if(is.null(em$maxdif_A)) em$maxdif_A=0
     
     precision = max(em$maxdif_A, em$maxdif_b)
    
-     if(flags[4])
+    if(flags[4])
     {
       warning("Some discrimination parameters are too close to zero, the model is unidentified")
     }
 
-    if(precision < .001)
+    if(precision < .001 & !flags[5])
     {
       message("The EM solution has a lower accuracy (~",round(precision,5),"). Reasons: ",msg,
               " See the section 'troubleshooting' in the help documentation for possible solutions.")

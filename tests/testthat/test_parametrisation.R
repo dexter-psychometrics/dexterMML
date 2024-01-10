@@ -36,17 +36,17 @@ test_that('1pl verb agg confirms to dexter',{
   
   f2 = fit_2pl(db,se=FALSE)
   
-  rsp = get_responses(db) %>%
-    group_by(person_id) %>%
-    slice_sample(n=20) %>%
+  rsp = get_responses(db) |>
+    group_by(person_id) |>
+    slice_sample(n=20) |>
     ungroup()
     
   theta.mml = ability.mml(rsp, f2, method='WLE')
   
   # also test possible issues with sorting of capital letters
   
-  rsp = rsp %>% mutate(item_id = gsub('S2','s2',item_id))
-  coef_f2 = coef(f2) %>% mutate(item_id = gsub('S2','s2',item_id))
+  rsp = rsp |> mutate(item_id = gsub('S2','s2',item_id))
+  coef_f2 = coef(f2) |> mutate(item_id = gsub('S2','s2',item_id))
   theta.mml_cf = ability.mml(rsp, coef_f2, method='WLE')
   
   tst = inner_join(theta.mml_cf, theta.mml, by='person_id')

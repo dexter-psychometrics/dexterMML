@@ -112,7 +112,7 @@ Yet, even though we misspecified the population distribution, there is no visibl
 
 ```{r}
 # an imperfect difficulty categorization
-items = items %>%
+items = items |>
   mutate(df_cat = ntile(beta + runif(100,-.2,.2), 5),
          j = row_number()) 
 
@@ -183,6 +183,5 @@ is not general and in practice many failures are made.
 In conclusion, whenever relevant background variables are known it is always safest to include them in an MML calibration, at least from a psychometric standpoint^[from a societal standpoint, this can be a wholly different matter]. Whenever a targeted testing approach is used (i.e. a background variable influences the design), omission of the background variable will always lead to bias. This bias can range from the barely noticeable to the extreme, depending in a largely unknown and unverifiable manner on aspects of the design and the population distributions. 
 
 There are other ways of misspecifying a population distribution, e.g. the true population distribution might be skewed instead of Normal but, at least when estimating a 1PL or 2PL, in practice MML estimation is quite robust against this other type of misspecification so can be safely used.
-
 
 

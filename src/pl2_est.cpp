@@ -117,7 +117,7 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 	vec old_A=A;
 	mat old_b=b;
 	
-	mat mu_hist(ng,max_iter,fill::zeros), sd_hist(ng,max_iter,fill::zeros), A_hist(nit,max_iter,fill::zeros), b_hist(nit,max_iter,fill::zeros);
+	//mat mu_hist(ng,max_iter,fill::zeros), sd_hist(ng,max_iter,fill::zeros), A_hist(nit,max_iter,fill::zeros), b_hist(nit,max_iter,fill::zeros);
 	
 	bool adapt_theta = ng > 1 || ref_group < 0;
 
@@ -194,17 +194,30 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 			sigma[g] = std::sqrt(sum_sigma2[g]/gn[g] - mu[g] * mu[g]);
 		}
 		
-		mu_hist.col(iter) = mu;
-		sd_hist.col(iter) = sigma;
-		b_hist.col(iter) = trans(b.row(1));
-		A_hist.col(iter) = A;
-		
 		if(ref_group >= 0) 
 		{ 
 			identify_2pl(mu, sigma, ref_group, A, b, A_prior);
 			mu[ref_group] = 0;
 			sigma[ref_group] = 1;
+		}		
+		
+		if(!mu.is_finite() || !sigma.is_finite() || sigma.min() < 1e-8)
+		{
+			sigma.elem(find_nonfinite(sigma)).zeros();
+			stop += 16;
+			break;
 		}
+		
+		
+		
+		/*
+		mu_hist.col(iter) = mu;
+		sd_hist.col(iter) = sigma;
+		b_hist.col(iter) = trans(b.row(1));
+		A_hist.col(iter) = A;
+		*/
+		
+		
 		
 		if(any_m2)
 		{
@@ -250,6 +263,8 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 			break;
 		}
 		
+		
+		
 		if(iter > 100 && min(abs(A)) < 0.005)
 		{
 			stop += 8;
@@ -280,7 +295,7 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 	return Rcpp::List::create(Named("A")=A, Named("b")=b, Named("thetabar") = thetabar, Named("mu") = mu, Named("sigma") = sigma, 
 							  Named("niter")=iter, Named("theta")=theta, Named("prior_part") = prior_part, 
 		Named("debug")=Rcpp::List::create( 	Named("error")=stop, Named("maxdif_A")=maxdif_A, Named("maxdif_b")=maxdif_b,
-											Named("ll_history") = h_ll));
+											Named("ll_history") = h_ll,Named("sig2") = sum_sigma2));
 }
 
 

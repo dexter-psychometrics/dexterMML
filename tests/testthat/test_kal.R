@@ -50,7 +50,7 @@ test_that('2pl with simdata and missing cats',{
 
   e=fit_2pl(dat,group=group)
   
-  cf = inner_join(coef(e), p, by=c('item_id','item_score'), suffix=c('','.true')) %>%
+  cf = inner_join(coef(e), p, by=c('item_id','item_score'), suffix=c('','.true')) |>
     mutate(df_alpha = (alpha-alpha.true),
            df_beta = (beta-beta.true)) 
   
