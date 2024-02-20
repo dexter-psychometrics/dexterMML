@@ -119,11 +119,7 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 				b.at(k,i) = pars[k-1];
 			}
 		}
-		if(min_error>0)
-		{
-			stop += 1;
-			break;
-		}
+		
 		for(int g=0;g<ng;g++)
 		{			
 			mu[g] = sum_theta[g]/gn[g];		
@@ -131,6 +127,19 @@ Rcpp::List estimate_nrm(arma::imat& a, const arma::mat& b_start, const arma::ive
 		}
 			
 		if(ref_group >= 0) identify_1pl(mu, ref_group, b);
+		
+		if(!mu.is_finite() || !sigma.is_finite() || sigma.min() < 1e-8)
+		{
+			sigma.elem(find_nonfinite(sigma)).zeros();
+			stop += 16;
+			break;
+		}
+
+		if(min_error>0)
+		{
+			stop += 1;
+			break;
+		}
 
 		maxdif_b = abs(b-old_b).max();
 		prog.update(maxdif_b, iter);		

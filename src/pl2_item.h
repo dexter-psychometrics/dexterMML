@@ -4,6 +4,10 @@
 #include <RcppArmadillo.h>
 #include "shared.h"
 
+#define PRIOR_NONE 0
+#define PRIOR_LOGNORMAL 1
+#define PRIOR_NORMAL 2
+
 arma::mat pl2_trace(const arma::vec& theta, const arma::ivec& a, const double A,  const arma::vec& b, const int ncat);
 void pl2_trace(const arma::vec& theta, const arma::ivec& a, const double A,  const arma::vec& b, const int ncat, arma::mat& out);
 
@@ -23,12 +27,12 @@ struct ll_pl2_base
 	
 	double prior_part_ll(const double A)
 	{
-		if(A_prior==1) //lognormal
+		if(A_prior==PRIOR_LOGNORMAL ) 
 		{
 			if(A<=0) return std::numeric_limits<double>::infinity();
 			return std::log(asig) - std::log(std::exp(-SQR(amu-std::log(A))/(2*asig2))/A) + std::log(2.0)/2 + std::log(arma::datum::pi)/2; 
 		} 
-		else if(A_prior==2) //normal
+		else if(A_prior == PRIOR_NORMAL)
 		{
 			return -R::dnorm(A,amu,asig,true);
 		}
@@ -37,12 +41,12 @@ struct ll_pl2_base
 	
 	double prior_part_df(const double A)
 	{		
-		if(A_prior==1) //lognormal
+		if(A_prior == PRIOR_LOGNORMAL) 
 		{
 			if(A<=0) return -std::numeric_limits<double>::infinity();
 			return (asig2 + std::log(A) - amu)/(A*asig2);
 		} 
-		else if(A_prior==2) //normal
+		else if(A_prior == PRIOR_NORMAL)
 		{
 			return (A-amu)/SQR(asig);
 		}
@@ -51,12 +55,12 @@ struct ll_pl2_base
 	
 	double prior_part_hess(const double A)
 	{
-		if(A_prior==1) //lognormal
+		if(A_prior == PRIOR_LOGNORMAL) 
 		{
 			if(A<=0) return std::numeric_limits<double>::infinity();
 			return (amu-asig2 - std::log(A) +1)/(SQR(A)*asig2);
 		} 
-		else if(A_prior==2) //normal
+		else if(A_prior == PRIOR_NORMAL) 
 		{
 			return 1/SQR(asig);
 		}

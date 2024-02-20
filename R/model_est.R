@@ -272,12 +272,19 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
     
     check_connected(design, fixed_items)
     
+    #if there is a prior, it migth make sense to set the A's to the mean of the prior
+    prior_float = is.null(priorA_mu)
+    if(prior_float)
+    {
+      priorA_mu = if_else(priorA==1,0,1)
+    }
+    
     em = estimate_pl2(a, start$A, start$b, pre$ncat,
                       pre$pni, pre$pcni, pre$pi, pre$px,
                       theta_grid, mu, sigma, data$groups$group_n, data$persons$c_group_nbr, fixed_items, 
                       pre$ip, pre$inp, pre$icnp,
                       ref_group,
-                      A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,
+                      A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,prior_float = prior_float,
                       use_m2=150L,max_iter=max_em_iterations,pgw=pgw, max_pre = cal_settings$pre_iter)
     
     

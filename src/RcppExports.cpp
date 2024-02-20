@@ -365,8 +365,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // estimate_pl2
-Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat& b_start, const arma::ivec& ncat, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, const arma::vec& theta_start, const arma::vec& mu_start, const arma::vec& sigma_start, const arma::ivec& gn, const arma::ivec& pgroup, const arma::ivec& item_fixed, const arma::ivec ip, const arma::ivec& inp, const arma::ivec& icnp, const int ref_group, const int A_prior, const double A_mu, const double A_sigma, const int use_m2, const int max_iter, const int pgw, const int max_pre);
-RcppExport SEXP _dexterMML_estimate_pl2(SEXP aSEXP, SEXP A_startSEXP, SEXP b_startSEXP, SEXP ncatSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP theta_startSEXP, SEXP mu_startSEXP, SEXP sigma_startSEXP, SEXP gnSEXP, SEXP pgroupSEXP, SEXP item_fixedSEXP, SEXP ipSEXP, SEXP inpSEXP, SEXP icnpSEXP, SEXP ref_groupSEXP, SEXP A_priorSEXP, SEXP A_muSEXP, SEXP A_sigmaSEXP, SEXP use_m2SEXP, SEXP max_iterSEXP, SEXP pgwSEXP, SEXP max_preSEXP) {
+Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat& b_start, const arma::ivec& ncat, const arma::ivec& pni, const arma::ivec& pcni, const arma::ivec& pi, const arma::ivec& px, const arma::vec& theta_start, const arma::vec& mu_start, const arma::vec& sigma_start, const arma::ivec& gn, const arma::ivec& pgroup, const arma::ivec& item_fixed, const arma::ivec ip, const arma::ivec& inp, const arma::ivec& icnp, const int ref_group, const int A_prior, double A_mu, const double A_sigma, const bool prior_float, const int use_m2, const int max_iter, const int pgw, const int max_pre);
+RcppExport SEXP _dexterMML_estimate_pl2(SEXP aSEXP, SEXP A_startSEXP, SEXP b_startSEXP, SEXP ncatSEXP, SEXP pniSEXP, SEXP pcniSEXP, SEXP piSEXP, SEXP pxSEXP, SEXP theta_startSEXP, SEXP mu_startSEXP, SEXP sigma_startSEXP, SEXP gnSEXP, SEXP pgroupSEXP, SEXP item_fixedSEXP, SEXP ipSEXP, SEXP inpSEXP, SEXP icnpSEXP, SEXP ref_groupSEXP, SEXP A_priorSEXP, SEXP A_muSEXP, SEXP A_sigmaSEXP, SEXP prior_floatSEXP, SEXP use_m2SEXP, SEXP max_iterSEXP, SEXP pgwSEXP, SEXP max_preSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -389,13 +389,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::ivec& >::type icnp(icnpSEXP);
     Rcpp::traits::input_parameter< const int >::type ref_group(ref_groupSEXP);
     Rcpp::traits::input_parameter< const int >::type A_prior(A_priorSEXP);
-    Rcpp::traits::input_parameter< const double >::type A_mu(A_muSEXP);
+    Rcpp::traits::input_parameter< double >::type A_mu(A_muSEXP);
     Rcpp::traits::input_parameter< const double >::type A_sigma(A_sigmaSEXP);
+    Rcpp::traits::input_parameter< const bool >::type prior_float(prior_floatSEXP);
     Rcpp::traits::input_parameter< const int >::type use_m2(use_m2SEXP);
     Rcpp::traits::input_parameter< const int >::type max_iter(max_iterSEXP);
     Rcpp::traits::input_parameter< const int >::type pgw(pgwSEXP);
     Rcpp::traits::input_parameter< const int >::type max_pre(max_preSEXP);
-    rcpp_result_gen = Rcpp::wrap(estimate_pl2(a, A_start, b_start, ncat, pni, pcni, pi, px, theta_start, mu_start, sigma_start, gn, pgroup, item_fixed, ip, inp, icnp, ref_group, A_prior, A_mu, A_sigma, use_m2, max_iter, pgw, max_pre));
+    rcpp_result_gen = Rcpp::wrap(estimate_pl2(a, A_start, b_start, ncat, pni, pcni, pi, px, theta_start, mu_start, sigma_start, gn, pgroup, item_fixed, ip, inp, icnp, ref_group, A_prior, A_mu, A_sigma, prior_float, use_m2, max_iter, pgw, max_pre));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -713,7 +714,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dexterMML_num_hessian_2pl", (DL_FUNC) &_dexterMML_num_hessian_2pl, 16},
     {"_dexterMML_num_hessian_nrm", (DL_FUNC) &_dexterMML_num_hessian_nrm, 11},
     {"_dexterMML_loglikelihood_2pl", (DL_FUNC) &_dexterMML_loglikelihood_2pl, 12},
-    {"_dexterMML_estimate_pl2", (DL_FUNC) &_dexterMML_estimate_pl2, 25},
+    {"_dexterMML_estimate_pl2", (DL_FUNC) &_dexterMML_estimate_pl2, 26},
     {"_dexterMML_gradient_2pl", (DL_FUNC) &_dexterMML_gradient_2pl, 14},
     {"_dexterMML_full_hessian_2pl", (DL_FUNC) &_dexterMML_full_hessian_2pl, 25},
     {"_dexterMML_test_ll_p2", (DL_FUNC) &_dexterMML_test_ll_p2, 5},

@@ -40,7 +40,7 @@ vec m_step_2pl(T &f, const double A, const vec& b, const int ncat, const double 
 			
 	nlm(pars, tol, itr, ll_itm, f, err);	
 			
-	if(f.A_prior!=1 && (std::abs(A) < .05 || max(abs(pars.tail(ncat-1))) > 50))
+	if(f.A_prior != PRIOR_LOGNORMAL && (std::abs(A) < .05 || max(abs(pars.tail(ncat-1))) > 50))
 	{
 		// 2pl can be poorly identified with local minima
 		// on opposite sides of A=0, attempt to break out with a restart of nlm
@@ -64,7 +64,7 @@ vec m_step_2pl(T &f, const double A, const vec& b, const int ncat, const double 
 void identify_2pl(vec& mu, vec& sigma, const int ref_group, vec& A, mat& b, const int A_prior)
 {
 	const double mm = mu[ref_group], ss = sigma[ref_group];
-	if(A_prior == 0)
+	if(A_prior == PRIOR_NONE)
 	{
 		mu = (mu - mm)/ss;
 		sigma /= ss;
@@ -85,12 +85,13 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 						const arma::vec& theta_start, const arma::vec& mu_start, const arma::vec& sigma_start, const arma::ivec& gn, const arma::ivec& pgroup, 
 						const arma::ivec& item_fixed,
 						const arma::ivec ip, const arma::ivec& inp, const arma::ivec& icnp,
-						const int ref_group=0, const int A_prior=0, const double A_mu=0, const double A_sigma=0.5, 
+						const int ref_group=0, const int A_prior=0, double A_mu=0, const double A_sigma=0.5, const bool prior_float=false, 
 						const int use_m2 = 150, const int max_iter=200, const int pgw=80, const int max_pre=10)
 {
 	const int nit = a.n_cols, nt = theta_start.n_elem, np = pni.n_elem, ng=gn.n_elem;
 	
 	const bool any_m2 = any(inp < use_m2);
+	
 	
 	progress_est prog(max_iter, pgw);
 	
@@ -162,7 +163,7 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 			}			
 		}
 		old_ll = prior_part+ll;
-
+		prior_part = 0;
 		old_A=A;
 		old_b=b;	
 		
@@ -249,6 +250,12 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 			}
 		}
 		
+		if(A_prior == PRIOR_LOGNORMAL && prior_float)
+		{
+			// this still needs changing the standard errors
+			A_mu = mean(log(A));
+		}
+
 		if(min_error > 0)
 		{
 			stop += 1;
