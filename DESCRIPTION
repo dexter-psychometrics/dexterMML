@@ -1,7 +1,7 @@
 Package: dexterMML
 Type: Package
 Title: MML estimation supplement to dexter
-Version: 0.4.3
+Version: 0.4.4
 Date: 2024-01-10
 Author: Jesse Koops, Timo Bechger, Ivailo Partchev, Gunter Maris
 Maintainer: Jesse Koops <jesse.koops@cito.nl>
@@ -15,7 +15,7 @@ Imports:
   Rcpp (>= 1.0.4.6),
   dplyr,
   rlang,
-  dexter (>= 1.1.5),
+  dexter (>= 1.4.0),
   stats
 LinkingTo: Rcpp, RcppArmadillo, dqrng, BH, sitmo
 Suggests: 
@@ -25,5 +25,5 @@ Suggests:
   Cairo,
   tufte
 Encoding: UTF-8
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.3
 VignetteBuilder: knitr

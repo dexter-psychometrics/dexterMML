@@ -251,10 +251,10 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 		}
 		
 		if(A_prior == PRIOR_LOGNORMAL && prior_float)
-		{
-			// this still needs changing the standard errors
 			A_mu = mean(log(A));
-		}
+		
+		if(A_prior == PRIOR_NORMAL && prior_float)
+			A_mu = mean(A);
 
 		if(min_error > 0)
 		{
@@ -300,7 +300,7 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 	prog.close();		
 	
 	return Rcpp::List::create(Named("A")=A, Named("b")=b, Named("thetabar") = thetabar, Named("mu") = mu, Named("sigma") = sigma, 
-							  Named("niter")=iter, Named("theta")=theta, Named("prior_part") = prior_part, 
+							  Named("niter")=iter, Named("theta")=theta, Named("prior_part") = prior_part, Named("A_mu") = A_mu,
 		Named("debug")=Rcpp::List::create( 	Named("error")=stop, Named("maxdif_A")=maxdif_A, Named("maxdif_b")=maxdif_b,
 											Named("ll_history") = h_ll,Named("sig2") = sum_sigma2));
 }

@@ -73,7 +73,8 @@ cal_settings = list(
 #' @param prior_alpha if the estimation does not converge or gives extreme results, usually in an adaptive test or with too few
 #' observations for some items in your data, you can attempt to use a prior to improve the results. Choice of
 #' lognormal or normal
-#' @param prior_alpha_mu first moment of prior distribution on discrimination parameters.
+#' @param prior_alpha_mu first moment of prior distribution on discrimination parameters. Set to NULL to have
+#' the first moment estimated from the data (floating prior).
 #' @param prior_alpha_sigma second moment of prior distribution on discrimination parameters.
 #'
 #' @return an object of type parms_mml, see \code{\link{coef.parms_mml}} and \code{\link{plot.parms_mml}}.
@@ -272,7 +273,6 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
     
     check_connected(design, fixed_items)
     
-    #if there is a prior, it migth make sense to set the A's to the mean of the prior
     prior_float = is.null(priorA_mu)
     if(prior_float)
     {
@@ -325,7 +325,7 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
                                 pre$ix, pre$pni, pre$pcni, pre$pi, pre$px, data$persons$c_group_nbr, data$groups$group_n,
                                 pre$ip,pre$inp, pre$icnp,
                                 em$mu, em$sigma, ref_group,design$items,design$groups,
-                                A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma,
+                                A_prior=as.integer(priorA), A_mu=em$A_mu, A_sigma=priorA_sigma,prior_float = prior_float,
                                 prog_width=pgw)
         
         SE = sqrt(-diag(solve(hess)))
@@ -359,7 +359,7 @@ est = function(dataSrc, qtpredicate=NULL, env=NULL, group = NULL, model= c('1PL'
       }
     }
     out = list(items=items,pop=pop,em=em,pre=pre,hess=hess,
-               prior=list(A_prior=as.integer(priorA), A_mu=priorA_mu, A_sigma=priorA_sigma))
+               prior=list(A_prior=as.integer(priorA), A_mu=em$A_mu, A_sigma=priorA_sigma))
   }
   out$theta_grid = theta_grid
   out$item_id = data$item_id

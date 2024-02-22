@@ -85,8 +85,8 @@ gradient_2pl <- function(a, A, b, ncat, pcni, pi, px, theta, mu, sigma, pgroup, 
     .Call(`_dexterMML_gradient_2pl`, a, A, b, ncat, pcni, pi, px, theta, mu, sigma, pgroup, ip, inp, icnp)
 }
 
-full_hessian_2pl <- function(a, A, b, ncat, theta, item_fixed, ix, pni, pcni, pi, px, pgroup, gn, ip, inp, icnp, mu, sigma, ref_group, dsg_ii, dsg_gi, A_prior = 0L, A_mu = 0, A_sigma = 0.5, prog_width = 80L) {
-    .Call(`_dexterMML_full_hessian_2pl`, a, A, b, ncat, theta, item_fixed, ix, pni, pcni, pi, px, pgroup, gn, ip, inp, icnp, mu, sigma, ref_group, dsg_ii, dsg_gi, A_prior, A_mu, A_sigma, prog_width)
+full_hessian_2pl <- function(a, A, b, ncat, theta, item_fixed, ix, pni, pcni, pi, px, pgroup, gn, ip, inp, icnp, mu, sigma, ref_group, dsg_ii, dsg_gi, A_prior = 0L, A_mu = 0, A_sigma = 0.5, prior_float = FALSE, prog_width = 80L) {
+    .Call(`_dexterMML_full_hessian_2pl`, a, A, b, ncat, theta, item_fixed, ix, pni, pcni, pi, px, pgroup, gn, ip, inp, icnp, mu, sigma, ref_group, dsg_ii, dsg_gi, A_prior, A_mu, A_sigma, prior_float, prog_width)
 }
 
 test_ll_p2 <- function(a, theta, r, par, prior = 0L) {

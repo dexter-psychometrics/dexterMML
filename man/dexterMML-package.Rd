@@ -10,7 +10,7 @@ For use in cases where CML is not possible, such as an adaptive test
 or a multi stage test with unknown routing rules (it happens).
 }
 \details{
-In all other cases using CML (i.e. dexter or dexterMST) is strongly preferrable.
+In all other cases, using CML (i.e. dexter or dexterMST) is strongly preferrable.
 
 DexterMML distinguishes itself from other MML R-packages by:
 
@@ -24,7 +24,7 @@ DexterMML distinguishes itself from other MML R-packages by:
 Useful links:
 \itemize{
   \item \url{https://dexter-psychometrics.github.io/dexter/}
-  \item Report bugs at \url{https://github.com/dexter-psychometrics/dexter/issues}
+  \item Report bugs at \url{https://github.com/dexter-psychometrics/dexterMML/issues}
 }
 
 }

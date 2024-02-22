@@ -119,7 +119,7 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 						const arma::ivec& ip, const arma::ivec& inp, const arma::ivec& icnp,
 						const arma::vec& mu, const arma::vec& sigma, const int ref_group,
 						const arma::imat& dsg_ii, const arma::imat& dsg_gi, 
-						const int A_prior=0, const double A_mu=0, const double A_sigma=0.5, const int prog_width=80)
+						const int A_prior=0, const double A_mu=0, const double A_sigma=0.5, const bool prior_float=false, const int prog_width=80)
 {
 	const int ng = mu.n_elem, nit=a.n_cols, max_cat=ncat.max(), nt=theta.n_elem, np=pni.n_elem;
 	
@@ -142,7 +142,7 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 		if(g != ref_group)
 			g_indx[g+1] +=2;
 	}
-	const int npar = g_indx[ng];
+	const int npar = g_indx[ng] + int(prior_float);
 
 	const vec sigma2 = square(sigma);
 	
@@ -481,13 +481,24 @@ arma::mat full_hessian_2pl(const arma::imat& a, const arma::vec& A, const arma::
 	{
 		const double asig2 = SQR(A_sigma);
 		for(int i=0; i<nit; i++) if(item_fixed[i]==0)
+		{
 			hess.at(i_indx[i],i_indx[i]) -= (A_mu-asig2 - std::log(A[i]) + 1)/(SQR(A[i])*asig2); 
+			if(prior_float)
+				hess.at(i_indx[i],npar-1) = 1/(A[i] * asig2);
+		}	
+		if(prior_float) hess.at(npar-1,npar-1) = -(nit-accu(item_fixed))/asig2; 
 	}
 	else if(A_prior==2)
 	{
+		
 		const double a_part = 1/SQR(A_sigma);
 		for(int i=0; i<nit; i++) if(item_fixed[i]==0)
+		{
 			hess.at(i_indx[i],i_indx[i]) -= a_part; 
+			if(prior_float)
+				hess.at(i_indx[i],npar-1) = a_part;
+		}
+		if(prior_float) hess.at(npar-1,npar-1) = -(nit-accu(item_fixed))/SQR(A_sigma); 
 	}
 	//lower tri
 	for(int i=0;i<npar;i++)

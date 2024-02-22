@@ -35,7 +35,8 @@ to false to save time.}
 observations for some items in your data, you can attempt to use a prior to improve the results. Choice of
 lognormal or normal}
 
-\item{prior_alpha_mu}{first moment of prior distribution on discrimination parameters.}
+\item{prior_alpha_mu}{first moment of prior distribution on discrimination parameters. Set to NULL to have
+the first moment estimated from the data (floating prior).}
 
 \item{prior_alpha_sigma}{second moment of prior distribution on discrimination parameters.}
 }
