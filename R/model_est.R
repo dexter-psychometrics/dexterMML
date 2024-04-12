@@ -432,6 +432,9 @@ merge_arglists = function(args, default = NULL, override = NULL)
 #' Default = 0.95 for a 95\% confidence interval
 #' @param ... further arguments to plot
 #' 
+#' @return 
+#' Silently, a data.frame with observed and expected values possibly useful to create a numerical fit measure.
+#' 
 #' @method plot parms_mml
 #' 
 plot.parms_mml = function(x,items=NULL,nbins=5,ci=.95,...)
@@ -462,7 +465,7 @@ plot.parms_mml = function(x,items=NULL,nbins=5,ci=.95,...)
   user.args = list(...)
   default.args = list(bty='l',xlab = expression(theta), ylab='score',main='$item_id',col='grey80')
   
-  for(i in ii)
+  plt = lapply(ii, function(i)
   {
     ncat = parms$pre$ncat[i]
     a = parms$em$a[,i,drop=FALSE]
@@ -478,22 +481,27 @@ plot.parms_mml = function(x,items=NULL,nbins=5,ci=.95,...)
     {
       A = parms$em$A[i]
     }
-
-    x = tibble(item_score=parms$em$a[parms$pre$ix[indx]+1L,i], 
-                 theta=parms$em$thetabar[1L+parms$pre$ip[indx]]) |>
-        mutate(bin=ntile(.data$theta,nbins)) |>
-        group_by(.data$bin) |>
-        summarise(m=mean(.data$theta),obs=mean(.data$item_score),n=n()) |>
-        ungroup() |>
-        mutate(expected = drop(E_score(.data$m, A, a, b, 0L, ncat)),
-               se = ste(a[2:ncat],A,b[2:ncat],.data$m,.data$n),
-               conf_min = pmax(0, .data$expected - qnt*.data$se),
-               conf_max = pmin(max(a), .data$expected + qnt*.data$se)) |>
-        mutate(outlier = .data$obs < .data$conf_min | .data$obs > .data$conf_max)
     
-    
+    tibble(item_score=parms$em$a[parms$pre$ix[indx]+1L,i], 
+               theta=parms$em$thetabar[1L+parms$pre$ip[indx]]) |>
+      mutate(bin=ntile(.data$theta,nbins)) |>
+      group_by(.data$bin) |>
+      summarise(m=mean(.data$theta),obs=mean(.data$item_score),n=n()) |>
+      ungroup() |>
+      mutate(expected = drop(E_score(.data$m, A, a, b, 0L, ncat)),
+             se = ste(a[2:ncat],A,b[2:ncat],.data$m,.data$n),
+             conf_min = pmax(0, .data$expected - qnt*.data$se),
+             conf_max = pmin(max(a), .data$expected + qnt*.data$se)) |>
+      mutate(outlier = .data$obs < .data$conf_min | .data$obs > .data$conf_max)
+  })
+  
+  names(plt) = sapply(ii, function(i) parms$item_id[i])
+  
+  for(i in seq_along(plt))
+  {
+    x=plt[[i]]
     plot.args = merge_arglists(user.args,
-                              default=default.args,
+                               default=default.args,
                                override=list(x = x$m,y = x$expected, type="l",
                                              ylim=c(0,parms$pre$imax[i])))
     plot.args$main = gsub('$item_id',parms$item_id[i],plot.args$main,fixed=TRUE)
@@ -501,12 +509,13 @@ plot.parms_mml = function(x,items=NULL,nbins=5,ci=.95,...)
     
     arw = filter(x,.data$conf_min<.data$conf_max)
     arrows(arw$m, arw$conf_min, 
-             arw$m, arw$conf_max, 
-             length=0.05, angle=90, code=3, col=plot.args$col)
-
+           arw$m, arw$conf_max, 
+           length=0.05, angle=90, code=3, col=plot.args$col)
+    
     points(x$m,x$obs,bg=x$outlier*2,pch=21)
     lines(x$m,x$obs)
   }
+  invisible(plt)
 }
 
 
