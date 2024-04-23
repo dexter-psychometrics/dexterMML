@@ -497,9 +497,11 @@ plot.parms_mml = function(x,items=NULL,nbins=5,ci=.95,...)
   
   names(plt) = sapply(ii, function(i) parms$item_id[i])
   
-  for(i in seq_along(plt))
+  for(plot_indx in seq_along(plt))
   {
-    x=plt[[i]]
+    x = plt[[plot_indx]]
+    i = ii[plot_indx]
+    
     plot.args = merge_arglists(user.args,
                                default=default.args,
                                override=list(x = x$m,y = x$expected, type="l",
