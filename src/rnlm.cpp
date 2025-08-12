@@ -17,8 +17,8 @@ void test_nlm(arma::ivec& a, arma::vec theta, arma::mat& r, const arma::vec& par
 
 	nlm(par, gtol, iter, fret, f, err);
 	
-	printf("par: %f, %f\nvalue at min: %f\niter: %i\nerror code: %i\n",par[0],par[1],fret, iter,err);
-	fflush(stdout);
+	Rprintf("par: %f, %f\nvalue at min: %f\niter: %i\nerror code: %i\n",par[0],par[1],fret, iter,err);
+
 }
 
 // [[Rcpp::export]]
@@ -38,6 +38,6 @@ void test_D1(arma::ivec& a, arma::vec theta, arma::mat& r, const arma::vec& par_
 	vec par = par_in;
 	D1min(par, tol, iter, fret, f, err); 
 	
-	printf("par: %f\nvalue at min: %f\niter: %i\nerror code: %i\n",par[0],fret, iter,err);
-	fflush(stdout);
+	Rprintf("par: %f\nvalue at min: %f\niter: %i\nerror code: %i\n",par[0],fret, iter,err);
+
 }

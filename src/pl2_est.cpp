@@ -118,8 +118,6 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 	vec old_A=A;
 	mat old_b=b;
 	
-	//mat mu_hist(ng,max_iter,fill::zeros), sd_hist(ng,max_iter,fill::zeros), A_hist(nit,max_iter,fill::zeros), b_hist(nit,max_iter,fill::zeros);
-	
 	bool adapt_theta = ng > 1 || ref_group < 0;
 
 	for(int itr=0; itr<max_pre; itr++)
@@ -143,7 +141,7 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 		if( ll < old_ll + 0.1 ) break;
 		old_ll=ll;			
 	}
-
+	
 	old_ll=-std::numeric_limits<long double>::max(); // reset as prior part was not taken into account in pre
 	
 	for(; iter<max_iter; iter++)
@@ -208,18 +206,7 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 			stop += 16;
 			break;
 		}
-		
-		
-		
-		/*
-		mu_hist.col(iter) = mu;
-		sd_hist.col(iter) = sigma;
-		b_hist.col(iter) = trans(b.row(1));
-		A_hist.col(iter) = A;
-		*/
-		
-		
-		
+
 		if(any_m2)
 		{
 			for(int i=0; i<nit; i++)
@@ -304,14 +291,4 @@ Rcpp::List estimate_pl2(arma::imat& a, const arma::vec& A_start, const arma::mat
 		Named("debug")=Rcpp::List::create( 	Named("error")=stop, Named("maxdif_A")=maxdif_A, Named("maxdif_b")=maxdif_b,
 											Named("ll_history") = h_ll,Named("sig2") = sum_sigma2));
 }
-
-
-
-
-
-
-
-
-
-
 

@@ -80,14 +80,15 @@ cal_settings = list(
 #' @return an object of type parms_mml, see \code{\link{coef.parms_mml}} and \code{\link{plot.parms_mml}}.
 #'
 #' @details
-#' In a 1PL item difficulties are estimated according to the Nominal Response Model.
+#' In a 1PL item difficulties are estimated according to a marginal Nominal Response Model (an extension of the PCM), 
+#'  similar to \code{\link[dexter]{fit_enorm}}.
 #' In a 2PL, the items also get a discrimination. This
 #' can be interpreted as a noise factor in the item measurement analogous to item test
 #' correlations in classical test theory. Both the 1PL and 2PL model can handle polytomous data and respect the item
 #' scores. Missing categories (e.g. an item scored 0,1,4) are allowed.
 #'
 #' In the 2pl the probability of response \ifelse{html}{\out{a<sub>ij</sub>}}{\eqn{{a}_{i,j}}} for person p (that is a response to item i, category j with score \ifelse{html}{\out{a<sub>ij</sub>}}{\deqn{{a}_{i,j}}}) is:
-#' \ifelse{html}{\out{<table style="display: inline;"><tr><td style="text-align: center;border-bottom: 1px solid black;">e<sup>(-&beta;<sub>ij</sub>+&theta;<sub>p</sub>)&alpha;<sub>i</sub>a<sub>ij</sub></sup></td></tr><tr><td style="text-align: center;"><table style="display: inline;"><tr><td rowspan="2">&sum;</td><td style="font-size:50\%;">m</td><td rowspan="2">e<sup>(-&beta;<sub>ik</sub>+&theta;<sub>p</sub>)&alpha;<sub>i</sub>a<sub>ik</sub></sup></td></tr><tr><td style="font-size:50\%;">k=1</td></tr></table></td></tr></table>}}{\deqn{\frac{e^{\left(- {\beta}_{i,j} + {\theta}_{p}\right) {a}_{i,j} {\alpha}_{i}}}{\sum_{k=1}^{m} e^{\left(- {\beta}_{i,k} + {\theta}_{p}\right) {a}_{i,k} {\alpha}_{i}}}}}       
+#' \ifelse{html}{\out{<table style="display: inline;"><tr><td style="text-align: center;border-bottom: 1px solid black;">e<sup>(-&beta;<sub>ij</sub>+&theta;<sub>p</sub>)&alpha;<sub>i</sub>a<sub>ij</sub></sup></td></tr><tr><td style="text-align: center;"><table style="display: inline;"><tr><td rowspan="2">1 + &sum;</td><td style="font-size:50\%;">m</td><td rowspan="2">e<sup>(-&beta;<sub>ik</sub>+&theta;<sub>p</sub>)&alpha;<sub>i</sub>a<sub>ik</sub></sup></td></tr><tr><td style="font-size:50\%;">k=1</td></tr></table></td></tr></table>}}{\deqn{\frac{e^{\left(- {\beta}_{i,j} + {\theta}_{p}\right) {a}_{i,j} {\alpha}_{i}}}{1 + \sum_{k=1}^{m} e^{\left(- {\beta}_{i,k} + {\theta}_{p}\right) {a}_{i,k} {\alpha}_{i}}}}}       
 #'
 #' @section CML or MML:                                
 #'
@@ -560,8 +561,15 @@ logLik.parms_mml = function(object, ...)
     }
     if(!is.null(dots$populations))
     {
-      idcols = colnames(object$pop)[1:(min(which(colnames(object$pop) %in% c('mean','sd','group_n')))-1)]
-      pop = arrange(dots$populations, across(idcols))
+      join_cols = colnames(object$pop)
+      join_cols = join_cols[!join_cols %in% c('group_n','mean','sd','SE_mean','SE_sd')]
+      pop = object$pop[,join_cols] |>
+        mutate(ii = row_number()) |>
+        inner_join(dots$populations, by=join_cols) |>
+        arrange(.data$ii)
+      
+      stopifnot(nrow(pop)==nrow(object$pop))
+      
       object$em$mu = pop$mean
       object$em$sigma = pop$sd
     }
