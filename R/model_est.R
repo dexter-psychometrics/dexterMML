@@ -498,25 +498,29 @@ plot.parms_mml = function(x,items=NULL,nbins=5,ci=.95,...)
   
   names(plt) = sapply(ii, function(i) parms$item_id[i])
   
-  for(plot_indx in seq_along(plt))
+  if(is.null(user.args$plot) || user.args$plot==TRUE)
   {
-    x = plt[[plot_indx]]
-    i = ii[plot_indx]
-    
-    plot.args = merge_arglists(user.args,
-                               default=default.args,
-                               override=list(x = x$m,y = x$expected, type="l",
-                                             ylim=c(0,parms$pre$imax[i])))
-    plot.args$main = gsub('$item_id',parms$item_id[i],plot.args$main,fixed=TRUE)
-    do.call(plot,plot.args)
-    
-    arw = filter(x,.data$conf_min<.data$conf_max)
-    arrows(arw$m, arw$conf_min, 
-           arw$m, arw$conf_max, 
-           length=0.05, angle=90, code=3, col=plot.args$col)
-    
-    points(x$m,x$obs,bg=x$outlier*2,pch=21)
-    lines(x$m,x$obs)
+    user.args = user.args[names(user.args)!='plot']
+    for(plot_indx in seq_along(plt))
+    {
+      x = plt[[plot_indx]]
+      i = ii[plot_indx]
+      
+      plot.args = merge_arglists(user.args,
+                                 default=default.args,
+                                 override=list(x = x$m,y = x$expected, type="l",
+                                               ylim=c(0,parms$pre$imax[i])))
+      plot.args$main = gsub('$item_id',parms$item_id[i],plot.args$main,fixed=TRUE)
+      do.call(plot,plot.args)
+      
+      arw = filter(x,.data$conf_min<.data$conf_max)
+      arrows(arw$m, arw$conf_min, 
+             arw$m, arw$conf_max, 
+             length=0.05, angle=90, code=3, col=plot.args$col)
+      
+      points(x$m,x$obs,bg=x$outlier*2,pch=21)
+      lines(x$m,x$obs)
+    }
   }
   invisible(plt)
 }
